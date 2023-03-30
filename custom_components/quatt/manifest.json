@@ -1,0 +1,12 @@
+{
+  "domain": "quatt",
+  "name": "Quatt",
+  "codeowners": [
+    "@marcoboers"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/marcoboers/home-assistant-quatt",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/marcoboers/home-assistant-quatt/issues",
+  "version": "0.0.0"
+}
