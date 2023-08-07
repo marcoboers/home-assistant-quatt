@@ -28,7 +28,6 @@ Do you have [HACS](https://hacs.xyz/) installed?
 1. Download _all_ the files from the `custom_components/quatt/` directory (folder) in this repository.
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Quatt"
 
 ## Configuration
 

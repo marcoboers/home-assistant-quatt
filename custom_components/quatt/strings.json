@@ -4,13 +4,15 @@
             "user": {
                 "description": "Set up your Quatt to allow monitoring.",
                 "data": {
-                    "host": "[%key:common::config_flow::data::host%]",
-                    "port": "[%key:common::config_flow::data::port%]"
+                    "ip_address": "[%key:common::config_flow::data::ip%]"
+                },
+                "data_description": {
+                    "ip_address": "Without http:// and port"
                 }
             }
         },
         "error": {
-          "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
         }
     }
 }
