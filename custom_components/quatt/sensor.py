@@ -1,46 +1,60 @@
 """Sensor platform for quatt."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-
-from .const import DOMAIN
-from .coordinator import BlueprintDataUpdateCoordinator
-from .entity import IntegrationBlueprintEntity
-
-ENTITY_DESCRIPTIONS = (
-    SensorEntityDescription(
-        key="quatt",
-        name="Integration Sensor",
-        icon="mdi:format-quote-close",
-    ),
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
 )
+
+import homeassistant.util.dt as dt_util
+
+from .const import DOMAIN, SENSORS
+from .coordinator import QuattDataUpdateCoordinator
+from .entity import QuattEntity
+
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Set up the sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
+    _LOGGER.debug("Heatpump 1 active: %s", coordinator.heatpump1Active())
+    _LOGGER.debug("Heatpump 2 active: %s", coordinator.heatpump2Active())
     async_add_devices(
-        IntegrationBlueprintSensor(
+        QuattSensor(
             coordinator=coordinator,
+            sensor_key=entity_description.key,
             entity_description=entity_description,
         )
-        for entity_description in ENTITY_DESCRIPTIONS
+        for entity_description in SENSORS
     )
 
 
-class IntegrationBlueprintSensor(IntegrationBlueprintEntity, SensorEntity):
+class QuattSensor(QuattEntity, SensorEntity):
     """quatt Sensor class."""
 
     def __init__(
         self,
-        coordinator: BlueprintDataUpdateCoordinator,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
         entity_description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor class."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, sensor_key)
         self.entity_description = entity_description
 
     @property
     def native_value(self) -> str:
         """Return the native value of the sensor."""
-        return self.coordinator.data.get("body")
+        value = self.coordinator.getValue(self.entity_description.key)
+
+        if not value:
+            return value
+
+        if self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
+            value = dt_util.parse_datetime(value)
+
+        return value

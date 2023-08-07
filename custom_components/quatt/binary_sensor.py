@@ -2,49 +2,46 @@
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
 
-from .const import DOMAIN
-from .coordinator import BlueprintDataUpdateCoordinator
-from .entity import IntegrationBlueprintEntity
+from .const import BINARY_SENSORS, DOMAIN
+from .coordinator import QuattDataUpdateCoordinator
+from .entity import QuattEntity
 
-ENTITY_DESCRIPTIONS = (
-    BinarySensorEntityDescription(
-        key="quatt",
-        name="Integration Blueprint Binary Sensor",
-        device_class=BinarySensorDeviceClass.CONNECTIVITY,
-    ),
-)
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Set up the binary_sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_devices(
-        IntegrationBlueprintBinarySensor(
+        QuattBinarySensor(
             coordinator=coordinator,
+            sensor_key=entity_description.key,
             entity_description=entity_description,
         )
-        for entity_description in ENTITY_DESCRIPTIONS
+        for entity_description in BINARY_SENSORS
     )
 
 
-class IntegrationBlueprintBinarySensor(IntegrationBlueprintEntity, BinarySensorEntity):
+class QuattBinarySensor(QuattEntity, BinarySensorEntity):
     """quatt binary_sensor class."""
 
     def __init__(
         self,
-        coordinator: BlueprintDataUpdateCoordinator,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
         entity_description: BinarySensorEntityDescription,
     ) -> None:
         """Initialize the binary_sensor class."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, sensor_key)
         self.entity_description = entity_description
 
     @property
     def is_on(self) -> bool:
         """Return true if the binary_sensor is on."""
-        return self.coordinator.data.get("title", "") == "foo"
+        return self.coordinator.getValue(self.entity_description.key)

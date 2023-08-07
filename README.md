@@ -36,8 +36,7 @@ Do you have [HACS](https://hacs.xyz/) installed?
 1. Click on `Integrations`
 1. Click on `+ Add integration`
 1. Search for and select `Quatt`
-[//]: # (1. Enter you `emailaddress/phone` you also use in the **Quatt** app)
-[//]: # (1. You will get an email/sms to verify the login.)
+1. Enter the ip address of you Quatt CIC (without http:// or port number)
 1. Click "Save"
 1. Enjoy
 
