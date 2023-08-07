@@ -1,5 +1,8 @@
 name: "Release"
 
+permissions:
+  contents: write
+  
 on:
   release:
     types:
@@ -26,6 +29,6 @@ jobs:
           zip quatt.zip -r ./
 
       - name: "Upload the ZIP file to the release"
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v1
         with:
           files: ${{ github.workspace }}/custom_components/quatt/quatt.zip
