@@ -2,17 +2,17 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration have a look here: https://github.com/marcoboers/home_assistant_quatt",
+                "description": "Set up your Quatt heatpump for monitoring.",
                 "data": {
-                    "username": "Username",
-                    "password": "Password"
+                    "ip_address": "IP address"
+                },
+                "data_description": {
+                    "ip_address": "Without http:// and port"
                 }
             }
         },
         "error": {
-            "auth": "Username/Password is wrong.",
-            "connection": "Unable to connect to the server.",
-            "unknown": "Unknown error occurred."
+            "cannot_connect": "Failed to connect"
         }
     }
 }

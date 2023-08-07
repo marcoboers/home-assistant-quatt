@@ -1,0 +1,18 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Configureer Quatt warmtepomp voor monitoring.",
+                "data": {
+                    "ip_address": "IP adres"
+                },
+                "data_description": {
+                    "ip_address": "Zonder http:// en poort"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Fout bij het verbinden"
+        }
+    }
+}
