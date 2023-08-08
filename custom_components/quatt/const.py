@@ -52,6 +52,14 @@ BINARY_SENSORS = [
         name="Boiler flame",
         key="boiler.otFbFlameOn",
     ),
+    SensorEntityDescription(
+        name="Boiler heating",
+        key="boiler.otTbCH",
+    ),
+    SensorEntityDescription(
+        name="Boiler on/off mode",
+        key="boiler.oTtbTurnOnOffBoilerOn",
+    ),
     # Thermostat
     SensorEntityDescription(name="Thermostat heating", key="thermostat.otFtChEnabled"),
     SensorEntityDescription(
@@ -146,14 +154,6 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
-    ),
-    SensorEntityDescription(
-        name="Boiler heating",
-        key="boiler.otTbCH",
-    ),
-    SensorEntityDescription(
-        name="Boiler on/off mode",
-        key="boiler.oTtbTurnOnOffBoilerOn",
     ),
     # Flowmeter
     SensorEntityDescription(
