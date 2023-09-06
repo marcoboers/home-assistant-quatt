@@ -15,10 +15,12 @@ _Unofficial integration for Quatt Heat Pump._
 ### Install with HACS (recommended)
 
 Do you have [HACS](https://hacs.xyz/) installed?
-1. Search integrations for **Quatt**
+1. [Click here](https://my.home-assistant.io/redirect/hacs_repository/?owner=marcoboers&repository=home-assistant-quatt&category=integration) or add repository manually
+  a. Select Integrations, then select the 3-dots in the upper-right corner, then select Custom Repositories.
+  a. Put the Reposity URL in the Repository field, then select Integration in the Category dropdown list and click Add.
+1. Search integrations for **Quatt** 
 1. Click `Install`
 1. Restart Home Assistant
-1. See [Setup](#setup)
 
 ### Install manually
 
@@ -35,7 +37,7 @@ Do you have [HACS](https://hacs.xyz/) installed?
 1. Click on `Integrations`
 1. Click on `+ Add integration`
 1. Search for and select `Quatt`
-1. Enter the ip address of you Quatt CIC (without http:// or port number)
+1. Enter the ip address of you Quatt CIC (1.2.3.4 without http:// or port number)
 1. Click "Save"
 1. Enjoy
 
@@ -49,7 +51,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [buymecoffeebadge]: https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png
 [commits-shield]: https://img.shields.io/github/commit-activity/y/marcoboers/home-assistant-quatt.svg?style=for-the-badge
 [commits]: https://github.com/marcoboers/home-assistant-quatt/commits/main
-[hacs]: https://github.com/hacs/integration
+[hacs]: https://my.home-assistant.io/redirect/hacs_repository/?owner=marcoboers&repository=home-assistant-quatt&category=integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
