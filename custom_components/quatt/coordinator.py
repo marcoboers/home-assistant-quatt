@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
@@ -16,7 +17,7 @@ from .api import (
     QuattApiClientAuthenticationError,
     QuattApiClientError,
 )
-from .const import DOMAIN, LOGGER
+from .const import CONF_POWER_SENSOR, DOMAIN, LOGGER
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
@@ -39,6 +40,12 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=10),
         )
 
+        self._power_sensor_id: str = (
+            self.config_entry.data.get(CONF_POWER_SENSOR)
+            if len(self.config_entry.data.get(CONF_POWER_SENSOR, "")) > 6
+            else None
+        )
+
     async def _async_update_data(self):
         """Update data via library."""
         try:
@@ -57,6 +64,56 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         """Check if heatpump 2 is active."""
         LOGGER.debug(self.getValue("hp2"))
         return self.getValue("hp2") is not None
+
+    def boilerOpenTherm(self):
+        """Check if boiler is connected to CIC ofer OpenTherm."""
+        LOGGER.debug(self.getValue("boiler.otFbChModeActive"))
+        return self.getValue("boiler.otFbChModeActive") is not None
+
+    def electicalPower(self):
+        """Get heatpump power from sensor"""
+        LOGGER.debug("electicalPower %s", self.hass.states.get(self._power_sensor_id))
+        if self.hass.states.get(self._power_sensor_id) is None:
+            return None
+        if self.hass.states.get(self._power_sensor_id).state not in [
+            STATE_UNAVAILABLE,
+            STATE_UNKNOWN,
+        ]:
+            return self.hass.states.get(self._power_sensor_id).state
+
+    def computedWaterDelta(self):
+        temperatureWaterOut = self.getValue("hp1.temperatureWaterOut")
+        temperatureWaterIn = self.getValue("hp1.temperatureWaterIn")
+        LOGGER.debug("computedWaterDelta.temperatureWaterOut %s", temperatureWaterOut)
+        LOGGER.debug("computedWaterDelta.temperatureWaterIn %s", temperatureWaterIn)
+        if temperatureWaterOut is None or temperatureWaterIn is None:
+            return None
+        if temperatureWaterOut < temperatureWaterIn:
+            return None
+        return temperatureWaterOut - temperatureWaterIn
+
+    def computedHeatPower(self):
+        computedWaterDelta = self.computedWaterDelta()
+        flowRate = self.getValue("flowMeter.flowRate")
+        LOGGER.debug("computedHeatPower.computedWaterDelta %s", computedWaterDelta)
+        LOGGER.debug("computedHeatPower.flowRate %s", flowRate)
+        if computedWaterDelta is None or flowRate is None:
+            return None
+        return round(
+            computedWaterDelta * flowRate * 1.137888,
+            2,
+        )
+
+    def computedCop(self):
+        electicalPower = self.electicalPower()
+        computedHeatPower = self.computedHeatPower()
+        LOGGER.debug("computedCop.electicalPower %s", electicalPower)
+        LOGGER.debug("computedCop.computedHeatPower %s", computedHeatPower)
+        if electicalPower is None or computedHeatPower is None:
+            return None
+        if electicalPower == 0:
+            return None
+        return round(computedHeatPower / electicalPower, 2)
 
     def getValue(self, value_path: str):
         """Check retrieve a value by dot notation."""
@@ -77,6 +134,9 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
                     LOGGER.debug(" in %s %s", value, type(value))
                     return None
 
+            elif len(key) > 8 and key[0:8] == "computed" and key in dir(self):
+                method = getattr(self, key)
+                return method()
             elif key not in value:
                 LOGGER.warning("Could not find %s of %s", key, value_path)
                 LOGGER.debug("in %s", value)

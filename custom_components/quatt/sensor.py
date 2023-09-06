@@ -23,6 +23,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator = hass.data[DOMAIN][entry.entry_id]
     _LOGGER.debug("Heatpump 1 active: %s", coordinator.heatpump1Active())
     _LOGGER.debug("Heatpump 2 active: %s", coordinator.heatpump2Active())
+    _LOGGER.debug("boiler OpenTherm: %s", coordinator.boilerOpenTherm())
     async_add_devices(
         QuattSensor(
             coordinator=coordinator,
