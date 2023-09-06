@@ -71,7 +71,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         return self.getValue("boiler.otFbChModeActive") is not None
 
     def electicalPower(self):
-        """Get heatpump power from sensor"""
+        """Get heatpump power from sensor."""
         LOGGER.debug("electicalPower %s", self.hass.states.get(self._power_sensor_id))
         if self.hass.states.get(self._power_sensor_id) is None:
             return None
@@ -82,6 +82,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return self.hass.states.get(self._power_sensor_id).state
 
     def computedWaterDelta(self):
+        """Compute waterDelta."""
         temperatureWaterOut = self.getValue("hp1.temperatureWaterOut")
         temperatureWaterIn = self.getValue("hp1.temperatureWaterIn")
         LOGGER.debug("computedWaterDelta.temperatureWaterOut %s", temperatureWaterOut)
@@ -93,6 +94,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         return temperatureWaterOut - temperatureWaterIn
 
     def computedHeatPower(self):
+        """Compute heatPower."""
         computedWaterDelta = self.computedWaterDelta()
         flowRate = self.getValue("flowMeter.flowRate")
         LOGGER.debug("computedHeatPower.computedWaterDelta %s", computedWaterDelta)
@@ -105,6 +107,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     def computedCop(self):
+        """Compute COP."""
         electicalPower = self.electicalPower()
         computedHeatPower = self.computedHeatPower()
         LOGGER.debug("computedCop.electicalPower %s", electicalPower)
@@ -125,7 +128,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
             if key.isdigit():
                 key = int(key)
-                if type(value) is not list or len(value) < key:
+                if not isinstance(value, list) or len(value) < key:
                     LOGGER.warning(
                         "Could not find %d of %s",
                         key,
