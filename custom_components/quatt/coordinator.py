@@ -119,7 +119,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         return round(computedHeatPower / electicalPower, 2)
 
     def computedSupervisoryControlMode(self):
-        """Map the numeric supervisoryControlMode to a textual status"""
+        """Map the numeric supervisoryControlMode to a textual status."""
         state = self.getValue("qc.supervisoryControlMode")
         mapping = {
             0: "Standby",
