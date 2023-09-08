@@ -118,6 +118,28 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         return round(computedHeatPower / electicalPower, 2)
 
+    def computedSupervisoryControlMode(self):
+        """Map the numeric supervisoryControlMode to a textual status"""
+        state = self.getValue("qc.supervisoryControlMode")
+        mapping = {
+            0: "Standby",
+            1: "Standby - heating",
+            2: "Heating - heatpump only",
+            3: "Heating - heatpump + boiler",
+            4: "Heating - boiler only",
+            96: "Anti-freeze protection - boiler on",
+            97: "Anti-freeze protection - boiler pre-pump",
+            98: "Anti-freeze protection - water circulation",
+            99: "Fault - circulation pump on",
+        }
+
+        if state in mapping:
+            return mapping[state]
+        elif state >= 100:
+            return "Commissioning modes"
+        else:
+            return None
+
     def getValue(self, value_path: str):
         """Check retrieve a value by dot notation."""
         keys = value_path.split(".")

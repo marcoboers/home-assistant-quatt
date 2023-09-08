@@ -213,11 +213,14 @@ SENSORS = [
     ),
     # QC
     SensorEntityDescription(
-        name="Quatt QC supervisoryControlMode", key="qc.supervisoryControlMode"
+        name="QC supervisoryControlMode", key="qc.supervisoryControlMode"
+    ),
+    SensorEntityDescription(
+        name="QC supervisory control mode", key="qc.computedSupervisoryControlMode"
     ),
     # System
     SensorEntityDescription(
-        name="Quatt system hostname",
+        name="system hostname",
         key="system.hostName",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
