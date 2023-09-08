@@ -14,6 +14,8 @@ DOMAIN = "quatt"
 VERSION = "0.1.0"
 ATTRIBUTION = "marcoboers"
 
+CONF_POWER_SENSOR = "power_sensor"
+
 BINARY_SENSORS = [
     # Heatpump 1
     SensorEntityDescription(
@@ -110,6 +112,24 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
+    SensorEntityDescription(
+        name="HP1 waterDelta",
+        key="hp1.computedWaterDelta",
+        icon="mdi:thermometer",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+    ),
+    SensorEntityDescription(
+        name="HP1 heatPower",
+        key="hp1.computedHeatPower",
+        icon="mdi:heat-wave",
+        device_class=SensorDeviceClass.POWER,
+    ),
+    SensorEntityDescription(
+        name="HP1 COP",
+        key="hp1.computedCop",
+        icon="mdi:heat-pump",
+    ),
     # Heatpump 2
     SensorEntityDescription(
         name="HP2 workingmode",
@@ -193,11 +213,14 @@ SENSORS = [
     ),
     # QC
     SensorEntityDescription(
-        name="Quatt QC supervisoryControlMode", key="qc.supervisoryControlMode"
+        name="QC supervisoryControlMode", key="qc.supervisoryControlMode"
+    ),
+    SensorEntityDescription(
+        name="QC supervisory control mode", key="qc.computedSupervisoryControlMode"
     ),
     # System
     SensorEntityDescription(
-        name="Quatt system hostname",
+        name="system hostname",
         key="system.hostName",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -13,7 +14,11 @@ from .api import (
     QuattApiClientCommunicationError,
     QuattApiClientError,
 )
-from .const import DOMAIN, LOGGER
+from .const import (
+    DOMAIN,
+    LOGGER,
+    CONF_POWER_SENSOR,
+)
 
 
 class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -58,6 +63,11 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
                         ),
+                    ),
+                    vol.Optional(CONF_POWER_SENSOR): selector.EntitySelector(
+                        selector.EntityFilterSelectorConfig(
+                            device_class=SensorDeviceClass.ENERGY
+                        )
                     ),
                 }
             ),
