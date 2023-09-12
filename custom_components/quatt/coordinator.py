@@ -72,6 +72,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def electicalPower(self):
         """Get heatpump power from sensor."""
+        if self._power_sensor_id is None:
+            return None
         LOGGER.debug("electicalPower %s", self.hass.states.get(self._power_sensor_id))
         if self.hass.states.get(self._power_sensor_id) is None:
             return None
