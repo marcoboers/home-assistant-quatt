@@ -50,6 +50,9 @@ All sensors from the the local API feed are available. In addition to those, the
 * heatPower: power of heat produced
 * COP: realtime COP (requires power sensor)
 
+Sensors for heatpump 2 are disabled by default. These can be enabled manually:
+Go to Quatt -> device -> "+6 entities not shown" -> click on a disabled sensor -> click gear -> click enable.
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
