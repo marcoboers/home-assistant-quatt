@@ -38,8 +38,17 @@ Do you have [HACS](https://hacs.xyz/) installed?
 1. Click on `+ Add integration`
 1. Search for and select `Quatt`
 1. Enter the ip address of you Quatt CIC (1.2.3.4 without http:// or port number)
+1. (optional) select a power sensor in order to get a COP sensor (currently only for heatpump 1)
 1. Click "Save"
 1. Enjoy
+
+## Sensors
+
+All sensors from the the local API feed are available. In addition to those, there are the following computed sensors (currently only for heatpump 1):
+* Textual representation of the QC supervisoryControlMode (status)
+* waterDelta: difference between inlet and outlet water temperature
+* heatPower: power of heat produced
+* COP: realtime COP (requires power sensor)
 
 ## Contributions are welcome!
 
