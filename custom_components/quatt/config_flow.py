@@ -34,7 +34,7 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         _errors = {}
         if user_input is not None:
             try:
-                await self._test_credentials(
+                cic_hostname = await self._test_credentials(
                     ip_address=user_input[CONF_IP_ADDRESS],
                 )
             except QuattApiClientAuthenticationError as exception:
@@ -48,7 +48,7 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 _errors["base"] = "unknown"
             else:
                 return self.async_create_entry(
-                    title=user_input[CONF_IP_ADDRESS],
+                    title=cic_hostname,
                     data=user_input,
                 )
 
@@ -66,7 +66,7 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Optional(CONF_POWER_SENSOR): selector.EntitySelector(
                         selector.EntityFilterSelectorConfig(
-                            device_class=SensorDeviceClass.ENERGY
+                            device_class=SensorDeviceClass.POWER
                         )
                     ),
                 }
@@ -74,10 +74,11 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
-    async def _test_credentials(self, ip_address: str) -> None:
+    async def _test_credentials(self, ip_address: str) -> str:
         """Validate credentials."""
         client = QuattApiClient(
             ip_address=ip_address,
             session=async_create_clientsession(self.hass),
         )
-        await client.async_get_data()
+        data = await client.async_get_data()
+        return data["system"]["hostName"]

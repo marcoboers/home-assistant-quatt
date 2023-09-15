@@ -118,7 +118,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         if electicalPower == 0:
             return None
-        return round(computedHeatPower / electicalPower, 2)
+        return round(computedHeatPower / float(electicalPower), 2)
 
     def computedSupervisoryControlMode(self):
         """Map the numeric supervisoryControlMode to a textual status."""

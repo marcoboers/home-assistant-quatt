@@ -123,6 +123,7 @@ SENSORS = [
         name="HP1 heatPower",
         key="hp1.computedHeatPower",
         icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
