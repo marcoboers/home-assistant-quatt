@@ -127,6 +127,25 @@ SENSORS = [
         device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
+        name="HP1 powerInput",
+        key="hp1.powerInput",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+    ),
+    SensorEntityDescription(
+        name="HP1 power",
+        key="hp1.power",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+    ),
+    SensorEntityDescription(
+        name="HP1 Quatt COP",
+        key="hp1.computedQuattCop",
+        icon="mdi:heat-pump",
+    ),
+    SensorEntityDescription(
         name="HP1 COP",
         key="hp1.computedCop",
         icon="mdi:heat-pump",

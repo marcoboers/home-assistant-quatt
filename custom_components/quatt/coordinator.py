@@ -120,6 +120,18 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         return round(computedHeatPower / float(electicalPower), 2)
 
+    def computedQuattCop(self):
+        """Compute Quatt COP."""
+        powerInput = self.getValue("hp1.powerInput")
+        powerOutput = self.getValue("hp1.power")
+        LOGGER.debug("computedQuattCop.powerInput %s", powerInput)
+        LOGGER.debug("computedQuattCop.powerOutput %s", powerOutput)
+        if powerInput is None or powerOutput is None:
+            return None
+        if powerInput == 0:
+            return None
+        return round(powerOutput / float(powerInput), 2)
+
     def computedSupervisoryControlMode(self):
         """Map the numeric supervisoryControlMode to a textual status."""
         state = self.getValue("qc.supervisoryControlMode")
