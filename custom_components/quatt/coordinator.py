@@ -131,7 +131,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         if powerInput == 0:
             return None
         return round(powerOutput / float(powerInput), 2)
-     
+
     def computedSupervisoryControlMode(self):
         """Map the numeric supervisoryControlMode to a textual status."""
         state = self.getValue("qc.supervisoryControlMode")
