@@ -144,11 +144,13 @@ SENSORS = [
         name="HP1 Quatt COP",
         key="hp1.computedQuattCop",
         icon="mdi:heat-pump",
+        native_unit_of_measurement="CoP",
     ),
     SensorEntityDescription(
         name="HP1 COP",
         key="hp1.computedCop",
         icon="mdi:heat-pump",
+        native_unit_of_measurement="CoP",
     ),
     # Heatpump 2
     SensorEntityDescription(
@@ -207,7 +209,7 @@ SENSORS = [
         name="FlowMeter flowRate",
         key="flowMeter.flowRate",
         icon="mdi:gauge",
-        unit_of_measurement="l/h",
+        native_unit_of_measurement="l/h",
     ),
     # Thermostat
     SensorEntityDescription(

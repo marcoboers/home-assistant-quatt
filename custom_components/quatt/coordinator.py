@@ -93,7 +93,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         if temperatureWaterOut < temperatureWaterIn:
             return None
-        return temperatureWaterOut - temperatureWaterIn
+        return round(temperatureWaterOut - temperatureWaterIn, 2)
 
     def computedHeatPower(self):
         """Compute heatPower."""
