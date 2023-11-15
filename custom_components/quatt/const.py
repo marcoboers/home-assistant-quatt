@@ -182,6 +182,26 @@ SENSORS = [
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
     ),
+    SensorEntityDescription(
+        name="HP2 powerInput",
+        key="hp2.powerInput",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+    ),
+    SensorEntityDescription(
+        name="HP2 power",
+        key="hp2.power",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+    ),
+    SensorEntityDescription(
+        name="HP2 Quatt COP",
+        key="hp2.computedQuattCop",
+        icon="mdi:heat-pump",
+        native_unit_of_measurement="CoP",
+    ),
     # Boiler
     SensorEntityDescription(
         name="Boiler temperature water inlet",
