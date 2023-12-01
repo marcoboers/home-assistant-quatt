@@ -97,6 +97,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP1 temperatureWaterIn",
@@ -104,6 +105,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP1 temperatureWaterOut",
@@ -111,6 +113,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP1 waterDelta",
@@ -118,6 +121,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP1 heatPower",
@@ -125,6 +129,7 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         name="HP1 powerInput",
@@ -132,6 +137,7 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         name="HP1 power",
@@ -139,18 +145,21 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         name="HP1 Quatt COP",
         key="hp1.computedQuattCop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP1 COP",
         key="hp1.computedCop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
+        suggested_display_precision=2,
     ),
     # Heatpump 2
     SensorEntityDescription(
@@ -165,6 +174,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP2 temperatureWaterIn",
@@ -173,6 +183,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP2 temperatureWaterOut",
@@ -181,6 +192,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="HP2 powerInput",
@@ -188,6 +200,7 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         name="HP2 power",
@@ -195,12 +208,14 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         name="HP2 Quatt COP",
         key="hp2.computedQuattCop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
+        suggested_display_precision=2,
     ),
     # Boiler
     SensorEntityDescription(
@@ -209,6 +224,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="Boiler temperature water outlet",
@@ -216,6 +232,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     # Flowmeter
     SensorEntityDescription(
@@ -224,12 +241,14 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="FlowMeter flowRate",
         key="flowMeter.flowRate",
         icon="mdi:gauge",
         native_unit_of_measurement="l/h",
+        suggested_display_precision=2,
     ),
     # Thermostat
     SensorEntityDescription(
@@ -238,6 +257,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         name="Thermostat room setpoint",
@@ -245,6 +265,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         name="Thermostat room temperature",
@@ -252,6 +273,7 @@ SENSORS = [
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=2,
     ),
     # QC
     SensorEntityDescription(
