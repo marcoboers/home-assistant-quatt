@@ -153,6 +153,7 @@ SENSORS = [
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     SensorEntityDescription(
         name="HP1 COP",
@@ -160,6 +161,7 @@ SENSORS = [
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     # Heatpump 2
     SensorEntityDescription(
@@ -216,6 +218,7 @@ SENSORS = [
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     # Boiler
     SensorEntityDescription(
