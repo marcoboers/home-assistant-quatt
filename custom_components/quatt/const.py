@@ -202,6 +202,7 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
@@ -210,6 +211,7 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
@@ -217,6 +219,7 @@ SENSORS = [
         key="hp2.computedQuattCop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
+        entity_registry_enabled_default=False,
         suggested_display_precision=2,
         state_class="measurement",
     ),
