@@ -91,8 +91,6 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         LOGGER.debug("computedWaterDelta.temperatureWaterIn %s", temperatureWaterIn)
         if temperatureWaterOut is None or temperatureWaterIn is None:
             return None
-        if temperatureWaterOut < temperatureWaterIn:
-            return None
         return round(temperatureWaterOut - temperatureWaterIn, 2)
 
     def computedHeatPower(self):
