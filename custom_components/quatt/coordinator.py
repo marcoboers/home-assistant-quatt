@@ -126,9 +126,13 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         LOGGER.debug("computedQuattCop.powerOutput %s", powerOutput)
         if powerInput is None or powerOutput is None:
             return None
+        powerOutput = float(powerOutput)
+        if powerOutput == 0:
+            return None
+        powerInput = float(powerInput)
         if powerInput == 0:
             return None
-        return round(powerOutput / float(powerInput), 2)
+        return round(powerOutput / powerInput, 2)
 
     def computedSupervisoryControlMode(self):
         """Map the numeric supervisoryControlMode to a textual status."""
