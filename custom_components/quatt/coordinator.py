@@ -83,7 +83,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         ]:
             return self.hass.states.get(self._power_sensor_id).state
 
-    def computedWaterDelta(self):
+    def computedWaterDelta(self, parent_key: str = None):
         """Compute waterDelta."""
         temperatureWaterOut = self.getValue("hp1.temperatureWaterOut")
         temperatureWaterIn = self.getValue("hp1.temperatureWaterIn")
@@ -93,7 +93,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         return round(temperatureWaterOut - temperatureWaterIn, 2)
 
-    def computedHeatPower(self):
+    def computedHeatPower(self, parent_key: str = None):
         """Compute heatPower."""
         computedWaterDelta = self.computedWaterDelta()
         flowRate = self.getValue("flowMeter.flowRate")
@@ -106,7 +106,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             2,
         )
 
-    def computedCop(self):
+    def computedCop(self, parent_key: str = None):
         """Compute COP."""
         electicalPower = self.electicalPower()
         computedHeatPower = self.computedHeatPower()
@@ -118,7 +118,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         return round(computedHeatPower / float(electicalPower), 2)
 
-    def computedQuattCop(self):
+    def computedQuattCop(self, parent_key: str = None):
         """Compute Quatt COP."""
         powerInput = self.getValue("hp1.powerInput")
         powerOutput = self.getValue("hp1.power")
@@ -134,7 +134,23 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         return round(powerOutput / powerInput, 2)
 
-    def computedSupervisoryControlMode(self):
+    def computedDefrost(self, parent_key: str = None):
+        """Compute Quatt Defrost State."""
+        powerInput = self.getValue("hp1.powerInput")
+        powerOutput = self.getValue("hp1.power")
+        LOGGER.debug("computedDefrost.powerInput %s", powerInput)
+        LOGGER.debug("computedDefrost.powerOutput %s", powerOutput)
+        if powerInput is None or powerOutput is None:
+            return None
+        powerOutput = float(powerOutput)
+        if powerOutput == 0:
+            return None
+        powerInput = float(powerInput)
+        if powerInput == 0:
+            return None
+        return powerOutput < -100 and powerInput > 100
+
+    def computedSupervisoryControlMode(self, parent_key: str = None):
         """Map the numeric supervisoryControlMode to a textual status."""
         state = self.getValue("qc.supervisoryControlMode")
         mapping = {
@@ -160,6 +176,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         """Check retrieve a value by dot notation."""
         keys = value_path.split(".")
         value = self.data
+        parent_key = None
         for key in keys:
             if value is None:
                 return None
@@ -177,11 +194,12 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
             elif len(key) > 8 and key[0:8] == "computed" and key in dir(self):
                 method = getattr(self, key)
-                return method()
+                return method(parent_key)
             elif key not in value:
                 LOGGER.warning("Could not find %s of %s", key, value_path)
                 LOGGER.debug("in %s", value)
                 return None
             value = value[key]
+            parent_key = key
 
         return value

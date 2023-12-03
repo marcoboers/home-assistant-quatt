@@ -28,6 +28,11 @@ BINARY_SENSORS = [
         key="hp1.limitedByCop",
         translation_key="hp_silentModeStatus",
     ),
+    SensorEntityDescription(
+        name="HP1 defrost",
+        key="hp1.computedDefrost",
+        translation_key="hp_silentModeStatus",
+    ),
     # Heatpump 2
     SensorEntityDescription(
         name="HP2 silentMode",
