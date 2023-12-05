@@ -114,9 +114,13 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         LOGGER.debug("computedCop.computedHeatPower %s", computedHeatPower)
         if electicalPower is None or computedHeatPower is None:
             return None
+        computedHeatPower = float(computedHeatPower)
+        if computedHeatPower == 0:
+            return None
+        electicalPower = float(electicalPower)
         if electicalPower == 0:
             return None
-        return round(computedHeatPower / float(electicalPower), 2)
+        return round(computedHeatPower / electicalPower, 2)
 
     def computedQuattCop(self, parent_key: str = None):
         """Compute Quatt COP."""
