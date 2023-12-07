@@ -85,22 +85,33 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def computedWaterDelta(self, parent_key: str = None):
         """Compute waterDelta."""
-        temperatureWaterOut = self.getValue("hp1.temperatureWaterOut")
-        temperatureWaterIn = self.getValue("hp1.temperatureWaterIn")
-        LOGGER.debug("computedWaterDelta.temperatureWaterOut %s", temperatureWaterOut)
-        LOGGER.debug("computedWaterDelta.temperatureWaterIn %s", temperatureWaterIn)
+        if parent_key is None:
+            parent_key = ""
+            temperatureWaterOut = self.getValue("hp2.temperatureWaterOut")
+            temperatureWaterIn = self.getValue("hp1.temperatureWaterIn")
+        else:
+            temperatureWaterOut = self.getValue(parent_key + ".temperatureWaterOut")
+            temperatureWaterIn = self.getValue(parent_key + ".temperatureWaterIn")
+
+        LOGGER.debug("%s.computedWaterDelta.temperatureWaterOut %s", parent_key, temperatureWaterOut)
+        LOGGER.debug("%s.computedWaterDelta.temperatureWaterIn %s", parent_key, temperatureWaterIn)
+
         if temperatureWaterOut is None or temperatureWaterIn is None:
             return None
+
         return round(temperatureWaterOut - temperatureWaterIn, 2)
 
     def computedHeatPower(self, parent_key: str = None):
         """Compute heatPower."""
         computedWaterDelta = self.computedWaterDelta()
         flowRate = self.getValue("flowMeter.flowRate")
+
         LOGGER.debug("computedHeatPower.computedWaterDelta %s", computedWaterDelta)
         LOGGER.debug("computedHeatPower.flowRate %s", flowRate)
+
         if computedWaterDelta is None or flowRate is None:
             return None
+
         return round(
             computedWaterDelta * flowRate * 1.137888,
             2,
@@ -110,48 +121,71 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         """Compute COP."""
         electicalPower = self.electicalPower()
         computedHeatPower = self.computedHeatPower()
+
         LOGGER.debug("computedCop.electicalPower %s", electicalPower)
         LOGGER.debug("computedCop.computedHeatPower %s", computedHeatPower)
+
         if electicalPower is None or computedHeatPower is None:
             return None
+
         computedHeatPower = float(computedHeatPower)
         if computedHeatPower == 0:
             return None
+
         electicalPower = float(electicalPower)
         if electicalPower == 0:
             return None
+
         return round(computedHeatPower / electicalPower, 2)
 
     def computedQuattCop(self, parent_key: str = None):
         """Compute Quatt COP."""
-        powerInput = self.getValue("hp1.powerInput")
-        powerOutput = self.getValue("hp1.power")
-        LOGGER.debug("computedQuattCop.powerInput %s", powerInput)
-        LOGGER.debug("computedQuattCop.powerOutput %s", powerOutput)
+        if parent_key is None:
+            parent_key = ""
+            powerInput = self.getValue("hp1.powerInput") + self.getValue("hp2.powerInput")
+            powerOutput = self.getValue("hp1.power") + self.getValue("hp2.power")
+        else:
+            powerInput = self.getValue(parent_key + ".powerInput")
+            powerOutput = self.getValue(parent_key + ".power")
+
+        LOGGER.debug("%s.computedQuattCop.powerInput %s", parent_key, powerInput)
+        LOGGER.debug("%s.computedQuattCop.powerOutput %s", parent_key, powerOutput)
+
         if powerInput is None or powerOutput is None:
             return None
+
         powerOutput = float(powerOutput)
         if powerOutput == 0:
             return None
+
         powerInput = float(powerInput)
         if powerInput == 0:
             return None
+
         return round(powerOutput / powerInput, 2)
 
     def computedDefrost(self, parent_key: str = None):
         """Compute Quatt Defrost State."""
-        powerInput = self.getValue("hp1.powerInput")
-        powerOutput = self.getValue("hp1.power")
-        LOGGER.debug("computedDefrost.powerInput %s", powerInput)
-        LOGGER.debug("computedDefrost.powerOutput %s", powerOutput)
+        if parent_key is None:
+            return None
+        else:
+            powerInput = self.getValue(parent_key + ".powerInput")
+            powerOutput = self.getValue(parent_key + ".power")
+
+        LOGGER.debug("%s.computedDefrost.powerInput %s", parent_key, powerInput)
+        LOGGER.debug("%s.computedDefrost.powerOutput %s", parent_key, powerOutput)
+
         if powerInput is None or powerOutput is None:
             return None
+
         powerOutput = float(powerOutput)
         if powerOutput == 0:
             return None
+
         powerInput = float(powerInput)
         if powerInput == 0:
             return None
+
         return powerOutput < -100 and powerInput > 100
 
     def computedSupervisoryControlMode(self, parent_key: str = None):
