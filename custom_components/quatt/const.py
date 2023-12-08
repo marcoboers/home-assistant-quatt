@@ -239,6 +239,24 @@ SENSORS = [
     ),
     # Combined
     SensorEntityDescription(
+        name="Total powerInput",
+        key="computedPowerInput",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        suggested_display_precision=0,
+    ),
+    SensorEntityDescription(
+        name="Total power",
+        key="computedPower",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        suggested_display_precision=0,
+    ),
+    SensorEntityDescription(
         name="Total waterDelta",
         key="computedWaterDelta",
         icon="mdi:thermometer",

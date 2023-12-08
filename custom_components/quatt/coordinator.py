@@ -117,6 +117,20 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             2,
         )
 
+    def computedPowerInput(self, parent_key: str = None):
+        """Compute total powerInput."""
+        powerInputHp1 = self.getValue("hp1.powerInput", 0)
+        powerInputHp2 = self.getValue("hp2.powerInput", 0)
+
+        return float(powerInputHp1) + float(powerInputHp2)
+
+    def computedPower(self, parent_key: str = None):
+        """Compute total powerInput."""
+        powerHp1 = self.getValue("hp1.power", 0)
+        powerHp2 = self.getValue("hp2.power", 0)
+
+        return float(powerHp1) + float(powerHp2)
+
     def computedCop(self, parent_key: str = None):
         """Compute COP."""
         electicalPower = self.electicalPower()
@@ -142,8 +156,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         """Compute Quatt COP."""
         if parent_key is None:
             parent_key = ""
-            powerInput = self.getValue("hp1.powerInput") + self.getValue("hp2.powerInput")
-            powerOutput = self.getValue("hp1.power") + self.getValue("hp2.power")
+            powerInput = self.getValue("hp1.powerInput", 0) + self.getValue("hp2.powerInput", 0)
+            powerOutput = self.getValue("hp1.power", 0) + self.getValue("hp2.power", 0)
         else:
             powerInput = self.getValue(parent_key + ".powerInput")
             powerOutput = self.getValue(parent_key + ".power")
@@ -210,14 +224,14 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             return None
 
-    def getValue(self, value_path: str):
+    def getValue(self, value_path: str, default: float = None):
         """Check retrieve a value by dot notation."""
         keys = value_path.split(".")
         value = self.data
         parent_key = None
         for key in keys:
             if value is None:
-                return None
+                return default
 
             if key.isdigit():
                 key = int(key)
@@ -228,7 +242,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
                         value_path,
                     )
                     LOGGER.debug(" in %s %s", value, type(value))
-                    return None
+                    return default
 
             elif len(key) > 8 and key[0:8] == "computed" and key in dir(self):
                 method = getattr(self, key)
@@ -236,7 +250,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             elif key not in value:
                 LOGGER.warning("Could not find %s of %s", key, value_path)
                 LOGGER.debug("in %s", value)
-                return None
+                return default
             value = value[key]
             parent_key = key
 
