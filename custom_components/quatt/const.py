@@ -31,7 +31,6 @@ BINARY_SENSORS = [
     SensorEntityDescription(
         name="HP1 defrost",
         key="hp1.computedDefrost",
-        translation_key="hp_silentModeStatus",
     ),
     # Heatpump 2
     SensorEntityDescription(
@@ -45,6 +44,10 @@ BINARY_SENSORS = [
         key="hp2.limitedByCop",
         translation_key="hp_silentModeStatus",
         entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        name="HP2 defrost",
+        key="hp2.computedDefrost",
     ),
     # Boiler
     SensorEntityDescription(
