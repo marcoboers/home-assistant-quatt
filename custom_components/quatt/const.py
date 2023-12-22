@@ -22,15 +22,19 @@ BINARY_SENSORS = [
         name="HP1 silentMode",
         key="hp1.silentModeStatus",
         translation_key="hp_silentModeStatus",
+        icon="mdi:sleep",
     ),
     SensorEntityDescription(
         name="HP1 limitedByCop",
         key="hp1.limitedByCop",
         translation_key="hp_silentModeStatus",
+        icon="mdi:arrow-collapse-up",
     ),
     SensorEntityDescription(
         name="HP1 defrost",
         key="hp1.computedDefrost",
+        translation_key="hp_silentModeStatus",
+        icon="mdi:snowflake",
     ),
     # Heatpump 2
     SensorEntityDescription(
@@ -38,50 +42,67 @@ BINARY_SENSORS = [
         key="hp2.silentModeStatus",
         translation_key="hp_silentModeStatus",
         entity_registry_enabled_default=False,
+        icon="mdi:sleep",
     ),
     SensorEntityDescription(
         name="HP2 limitedByCop",
         key="hp2.limitedByCop",
         translation_key="hp_silentModeStatus",
         entity_registry_enabled_default=False,
+        icon="mdi:arrow-collapse-up",
     ),
     SensorEntityDescription(
         name="HP2 defrost",
         key="hp2.computedDefrost",
+        icon="mdi:snowflake",
     ),
     # Boiler
     SensorEntityDescription(
         name="Boiler heating",
         key="boiler.otFbChModeActive",
+        icon="mdi:heating-coil",
     ),
     SensorEntityDescription(
         name="Boiler domestic hot water",
         key="boiler.otFbDhwActive",
+        icon="mdi:water-boiler",
     ),
     SensorEntityDescription(
         name="Boiler flame",
         key="boiler.otFbFlameOn",
+        icon="mdi:fire",
     ),
     SensorEntityDescription(
         name="Boiler heating",
         key="boiler.otTbCH",
+        icon="mdi:heating-coil",
     ),
     SensorEntityDescription(
         name="Boiler on/off mode",
         key="boiler.oTtbTurnOnOffBoilerOn",
+        icon="mdi:water-boiler",
     ),
     # Thermostat
-    SensorEntityDescription(name="Thermostat heating", key="thermostat.otFtChEnabled"),
+    SensorEntityDescription(
+        name="Thermostat heating",
+        key="thermostat.otFtChEnabled",
+        icon="mdi:home-thermometer",
+    ),
     SensorEntityDescription(
         name="Thermostat domestic hot water",
         key="thermostat.otFtDhwEnabled",
+        icon="mdi:water-thermometer",
     ),
     SensorEntityDescription(
-        name="Thermostat cooling", key="thermostat.otFtCoolingEnabled"
+        name="Thermostat cooling",
+        key="thermostat.otFtCoolingEnabled",
+        icon="mdi:snowflake-thermometer",
     ),
     # QC
     SensorEntityDescription(
-        name="QC pump protection", key="qc.stickyPumpProtectionEnabled"
+        name="QC pump protection",
+        key="qc.stickyPumpProtectionEnabled",
+        icon="mdi:shield-refresh-outline",
     ),
 ]
 
@@ -98,6 +119,7 @@ SENSORS = [
     SensorEntityDescription(
         name="HP1 workingmode",
         key="hp1.getMainWorkingMode",
+        icon="mdi:auto-mode",
     ),
     SensorEntityDescription(
         name="HP1 temperatureOutside",
@@ -126,7 +148,7 @@ SENSORS = [
     SensorEntityDescription(
         name="HP1 waterDelta",
         key="hp1.computedWaterDelta",
-        icon="mdi:thermometer",
+        icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
@@ -142,7 +164,7 @@ SENSORS = [
     SensorEntityDescription(
         name="HP1 powerInput",
         key="hp1.powerInput",
-        icon="mdi:heat-wave",
+        icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
@@ -175,6 +197,7 @@ SENSORS = [
     SensorEntityDescription(
         name="HP2 workingmode",
         key="hp2.getMainWorkingMode",
+        icon="mdi:auto-mode",
         entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
@@ -207,7 +230,7 @@ SENSORS = [
     SensorEntityDescription(
         name="HP2 waterDelta",
         key="hp2.computedWaterDelta",
-        icon="mdi:thermometer",
+        icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
@@ -216,7 +239,7 @@ SENSORS = [
     SensorEntityDescription(
         name="HP2 powerInput",
         key="hp2.powerInput",
-        icon="mdi:heat-wave",
+        icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         entity_registry_enabled_default=False,
@@ -244,7 +267,7 @@ SENSORS = [
     SensorEntityDescription(
         name="Total powerInput",
         key="computedPowerInput",
-        icon="mdi:heat-wave",
+        icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         entity_registry_enabled_default=False,
@@ -262,7 +285,7 @@ SENSORS = [
     SensorEntityDescription(
         name="Total waterDelta",
         key="computedWaterDelta",
-        icon="mdi:thermometer",
+        icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
