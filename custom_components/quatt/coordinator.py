@@ -104,7 +104,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
     def computedHeatPower(self, parent_key: str = None):
         """Compute heatPower."""
         computedWaterDelta = self.computedWaterDelta()
-        flowRate = self.getValue("flowMeter.flowRate")
+        flowRate = self.getValue("qc.flowRateFiltered")
 
         LOGGER.debug("computedHeatPower.computedWaterDelta %s", computedWaterDelta)
         LOGGER.debug("computedHeatPower.flowRate %s", flowRate)
