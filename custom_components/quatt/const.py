@@ -328,7 +328,7 @@ SENSORS = [
     ),
     SensorEntityDescription(
         name="FlowMeter flowRate",
-        key="flowMeter.flowRate",
+        key="qc.flowRateFiltered",
         icon="mdi:gauge",
         native_unit_of_measurement="l/h",
         suggested_display_precision=2,
