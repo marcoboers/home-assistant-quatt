@@ -1,4 +1,5 @@
 """DataUpdateCoordinator for quatt."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -248,8 +249,10 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
                 method = getattr(self, key)
                 return method(parent_key)
             elif key not in value:
-                LOGGER.warning("Could not find %s of %s", key, value_path)
-                LOGGER.debug("in %s", value)
+                """Ignore any warnings about hp2 - for single quatt installations it is valid that hp2 does not exist."""
+                if key != "hp2":
+                    LOGGER.warning("Could not find %s of %s", key, value_path)
+                    LOGGER.debug("in %s", value)
                 return default
             value = value[key]
             parent_key = key
