@@ -2,17 +2,35 @@
     "config": {
         "step": {
             "user": {
-                "description": "Configurar a tua monitorização da bomba  Quatt  .",
+                "description": "Configurar a tua monitorização da bomba Quatt.",
                 "data": {
-                    "ip_address": "Endereço IP"
+                    "ip_address": "Endereço IP / nome do host"
                 },
                 "data_description": {
-                    "ip_address": "sem http:// e porta"
+                    "ip_address": "Sem http:// e porta."
                 }
             }
         },
         "error": {
-            "cannot_connect": "Falha na ligação"
+            "cannot_connect": "Falha na ligação."
+        },
+        "abort": {
+            "already_configured": "O dispositivo já está configurado."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "description": "Opções do Quatt",
+                "data": {
+                    "scan_interval": "Intervalo de atualização (Segundos)",
+                    "power_sensor": "Sensor de potência (Opcional)"
+                },
+                "data_description": {
+                    "scan_interval": "Número de segundos entre a solicitação de informações do Quatt.",
+                    "power_sensor": "Sensor de energia externo que mede o consumo de energia atual do Quatt."
+                }
+            }
         }
     }
 }
