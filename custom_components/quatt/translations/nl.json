@@ -4,33 +4,15 @@
             "user": {
                 "description": "Configureer Quatt warmtepomp voor monitoring.",
                 "data": {
-                    "ip_address": "IP-adres / hostnaam"
+                    "ip_address": "IP adres"
                 },
                 "data_description": {
-                    "ip_address": "Zonder http:// en poort."
+                    "ip_address": "Zonder http:// en poort"
                 }
             }
         },
         "error": {
-            "cannot_connect": "Fout bij het verbinden."
-        },
-        "abort": {
-            "already_configured": "Apparaat is al geconfigureerd."
-        }
-    },
-    "options": {
-        "step": {
-            "init": {
-                "description": "Quatt opties",
-                "data": {
-                    "scan_interval": "Update-interval (seconden)",
-                    "power_sensor": "Vermogenssensor (Optioneel)"
-                },
-                "data_description": {
-                    "scan_interval": "Aantal seconden tussen het opvragen van informatie van de Quatt.",
-                    "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet."
-                }
-            }
+            "cannot_connect": "Fout bij het verbinden"
         }
     }
 }

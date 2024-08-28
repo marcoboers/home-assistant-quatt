@@ -8,9 +8,7 @@
     "@marcoboers"
   ],
   "config_flow": true,
-  "single_config_entry": false,
   "documentation": "https://github.com/marcoboers/home-assistant-quatt",
-  "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/marcoboers/home-assistant-quatt/issues",
   "requirements": [],

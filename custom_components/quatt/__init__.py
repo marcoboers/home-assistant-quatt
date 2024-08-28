@@ -6,17 +6,17 @@ https://github.com/marcoboers/home-assistant-quatt
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL, Platform
+from homeassistant.const import CONF_IP_ADDRESS, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import QuattApiClient
-from .const import CONF_POWER_SENSOR, DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
+from .const import DOMAIN
 from .coordinator import QuattDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
-    Platform.BINARY_SENSOR,
     Platform.SENSOR,
+    Platform.BINARY_SENSOR,
 ]
 
 
@@ -26,7 +26,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator = QuattDataUpdateCoordinator(
         hass=hass,
-        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         client=QuattApiClient(
             ip_address=entry.data[CONF_IP_ADDRESS],
             session=async_get_clientsession(hass),
@@ -36,8 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    # On update of the options reload the entry which reloads the coordinator
-    entry.async_on_unload(entry.add_update_listener(update_listener))
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
 
@@ -49,33 +47,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unloaded
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Update listener."""
-    await hass.config_entries.async_reload(entry.entry_id)
-
-
-async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Migrate old entry."""
-
-    if config_entry.version == 1:
-        # Migrate CONF_POWER_SENSOR from data to options
-        # Set the unique_id of the cic
-        LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
-
-        new_data = {**config_entry.data}
-        new_options = {**config_entry.options}
-
-        if CONF_POWER_SENSOR in new_data:
-            new_options[CONF_POWER_SENSOR] = new_data.pop(CONF_POWER_SENSOR)
-
-        # Update the version to 2
-        config_entry.version = 2
-
-        hass.config_entries.async_update_entry(
-            config_entry,
-            data=new_data,  # Updated data without CONF_POWER_SENSOR
-            options=new_options,  # Updated options with CONF_POWER_SENSOR
-            version=config_entry.version
-        )
-
-    return True
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload config entry."""
+    await async_unload_entry(hass, entry)
+    await async_setup_entry(hass, entry)
