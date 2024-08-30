@@ -55,7 +55,6 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 _errors["base"] = "unknown"
             else:
                 # Check if this cic has already been configured
-                # Pre-version 2 config flows are not detected!
                 await self.async_set_unique_id(cic_hostname)
                 self._abort_if_unique_id_configured()
 
