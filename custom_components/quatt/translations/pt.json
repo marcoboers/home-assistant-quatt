@@ -1,5 +1,6 @@
 {
     "config": {
+        "flow_title": "CIC: {name}",
         "step": {
             "user": {
                 "description": "Configurar a tua monitorização da bomba  Quatt  .",
@@ -9,6 +10,9 @@
                 "data_description": {
                     "ip_address": "sem http:// e porta"
                 }
+            },
+            "confirm": {
+                "description": "Deseja iniciar a configuração?"
             }
         },
         "error": {

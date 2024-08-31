@@ -9,6 +9,9 @@
                 "data_description": {
                     "ip_address": "Without http:// and port"
                 }
+            },
+            "confirm": {
+                "description": "[%key:common::config_flow::description::confirm_setup%]"
             }
         },
         "error": {

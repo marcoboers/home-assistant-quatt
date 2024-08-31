@@ -1,5 +1,6 @@
 {
     "config": {
+        "flow_title": "CIC: {name}",
         "step": {
             "user": {
                 "description": "Configureer Quatt warmtepomp voor monitoring.",
@@ -9,6 +10,9 @@
                 "data_description": {
                     "ip_address": "Zonder http:// en poort"
                 }
+            },
+            "confirm": {
+                "description": "Wilt u de configuratie starten?"
             }
         },
         "error": {

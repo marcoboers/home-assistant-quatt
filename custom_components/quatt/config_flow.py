@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import ipaddress
+
 import voluptuous as vol
 
-from homeassistant import config_entries
+from homeassistant import config_entries, data_entry_flow
+from homeassistant.components import dhcp
 from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL
 from homeassistant.core import callback
 from homeassistant.helpers import selector
@@ -28,10 +36,37 @@ from .const import (
 )
 
 
-class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
     VERSION = 2
+
+    def __init__(self) -> None:
+        """Initialize a Quatt flow."""
+        self.ip_address: str | None = None
+        self.hostname: str | None = None
+
+
+    async def _test_credentials(self, ip_address: str) -> str:
+        """Validate credentials."""
+        client = QuattApiClient(
+            ip_address=ip_address,
+            session=async_create_clientsession(self.hass),
+        )
+        data = await client.async_get_data()
+        return data["system"]["hostName"]
+
+
+    def is_valid_ip(self, ip_str) -> bool:
+        """Check for valid ip."""
+        try:
+            # Attempt to create an IPv4 or IPv6 address object
+            ipaddress.ip_address(ip_str)
+        except ValueError:
+            # If a ValueError is raised, the IP address is invalid
+            return False
+        return True
+
 
     async def async_step_user(
         self,
@@ -80,14 +115,86 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
-    async def _test_credentials(self, ip_address: str) -> str:
-        """Validate credentials."""
-        client = QuattApiClient(
-            ip_address=ip_address,
-            session=async_create_clientsession(self.hass),
+
+    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> ConfigFlowResult:
+        """Handle DHCP discovery."""
+        LOGGER.debug(
+            "DHCP discovery detected Quatt CIC: %s with ip-address: %s",
+            discovery_info.hostname,
+            discovery_info.ip
         )
-        data = await client.async_get_data()
-        return data["system"]["hostName"]
+
+        # Check if the device is already configured
+        await self.async_set_unique_id(discovery_info.hostname)
+        self.ip_address = discovery_info.ip
+        self.hostname = discovery_info.hostname
+
+        # Check if already have an configuration for this unique_id and domain
+        if (
+            entry := self.hass.config_entries.async_entry_for_domain_unique_id(
+                self.handler, self.unique_id
+            )
+        ):
+            if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
+                # Configuration is an ip-address, update it
+                LOGGER.debug(
+                    "DHCP discovery detected Quatt CIC: %s with ip-address: %s, updating ip for existing entry",
+                    discovery_info.hostname,
+                    discovery_info.ip
+                )
+
+                self._abort_if_unique_id_configured(
+                    updates={CONF_IP_ADDRESS: discovery_info.ip},
+                )
+            else:
+                self._abort_if_unique_id_configured()
+
+        # Get the status page to validate that we are dealing with a Quatt because the DHCP match is only on "cic-*"
+        try:
+            await self._test_credentials(ip_address=discovery_info.ip)
+        except (
+            QuattApiClientAuthenticationError,
+            QuattApiClientCommunicationError,
+            QuattApiClientError
+        ):
+            # For all exceptions we abort the flow
+            LOGGER.debug(
+                "DHCP discovery no match: %s with ip-address: %s",
+                discovery_info.hostname,
+                discovery_info.ip
+            )
+            return self.async_abort(reason="no_match")
+        else:
+            LOGGER.debug(
+                "DHCP discovery detected Quatt CIC: %s with ip-address: %s, no existing entry",
+                discovery_info.hostname,
+                discovery_info.ip
+            )
+
+            self.context.update(
+                {
+                    "title_placeholders": {
+                        "name": discovery_info.hostname
+                    }
+                }
+            )
+
+            return await self.async_step_confirm()
+
+
+    async def async_step_confirm(
+        self, user_input=None
+    ) -> data_entry_flow.ConfigFlowResult:
+        """Allow the user to confirm adding the device."""
+        if user_input is not None:
+            # Use the hostname instead of the ip
+            return self.async_create_entry(
+                title=self.hostname,
+                data={CONF_IP_ADDRESS: self.ip_address}
+            )
+
+        return self.async_show_form(step_id="confirm")
+
 
     @staticmethod
     @callback
@@ -96,7 +203,7 @@ class QuattFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return QuattOptionsFlowHandler(config_entry)
 
 
-class QuattOptionsFlowHandler(config_entries.OptionsFlow):
+class QuattOptionsFlowHandler(OptionsFlow):
     """Options flow for Quatt."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
