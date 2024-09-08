@@ -6,7 +6,7 @@ https://github.com/marcoboers/home-assistant-quatt
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL, Platform
+from homeassistant.const import CONF_IP_ADDRESS, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
@@ -23,8 +23,8 @@ from .const import CONF_POWER_SENSOR, DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
 from .coordinator import QuattDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
-    Platform.BINARY_SENSOR,
     Platform.SENSOR,
+    Platform.BINARY_SENSOR,
 ]
 
 
@@ -34,7 +34,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator = QuattDataUpdateCoordinator(
         hass=hass,
-        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         client=QuattApiClient(
             ip_address=entry.data[CONF_IP_ADDRESS],
             session=async_get_clientsession(hass),
@@ -44,8 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    # On update of the options reload the entry which reloads the coordinator
-    entry.async_on_unload(entry.add_update_listener(update_listener))
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
 

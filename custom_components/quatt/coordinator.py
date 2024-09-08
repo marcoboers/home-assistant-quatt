@@ -7,10 +7,17 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import QuattApiClient, QuattApiClientAuthenticationError, QuattApiClientError
+from .api import (
+    QuattApiClient,
+    QuattApiClientAuthenticationError,
+    QuattApiClientError,
+)
 from .const import CONF_POWER_SENSOR, DOMAIN, LOGGER
 
 
@@ -23,7 +30,6 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass: HomeAssistant,
-        update_interval: int,
         client: QuattApiClient,
     ) -> None:
         """Initialize."""
@@ -32,12 +38,12 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             hass=hass,
             logger=LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=update_interval),
+            update_interval=timedelta(seconds=10),
         )
 
         self._power_sensor_id: str = (
-            self.config_entry.options.get(CONF_POWER_SENSOR, "")
-            if (self.config_entry is not None) and (len(self.config_entry.options.get(CONF_POWER_SENSOR, "")) > 6)
+            self.config_entry.data.get(CONF_POWER_SENSOR)
+            if len(self.config_entry.data.get(CONF_POWER_SENSOR, "")) > 6
             else None
         )
 
@@ -77,7 +83,6 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             STATE_UNKNOWN,
         ]:
             return self.hass.states.get(self._power_sensor_id).state
-        return None
 
     def computedWaterDelta(self, parent_key: str = None):
         """Compute waterDelta."""
@@ -89,16 +94,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             temperatureWaterOut = self.getValue(parent_key + ".temperatureWaterOut")
             temperatureWaterIn = self.getValue(parent_key + ".temperatureWaterIn")
 
-        LOGGER.debug(
-            "%s.computedWaterDelta.temperatureWaterOut %s",
-            parent_key,
-            temperatureWaterOut,
-        )
-        LOGGER.debug(
-            "%s.computedWaterDelta.temperatureWaterIn %s",
-            parent_key,
-            temperatureWaterIn,
-        )
+        LOGGER.debug("%s.computedWaterDelta.temperatureWaterOut %s", parent_key, temperatureWaterOut)
+        LOGGER.debug("%s.computedWaterDelta.temperatureWaterIn %s", parent_key, temperatureWaterIn)
 
         if temperatureWaterOut is None or temperatureWaterIn is None:
             return None
@@ -160,9 +157,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         """Compute Quatt COP."""
         if parent_key is None:
             parent_key = ""
-            powerInput = self.getValue("hp1.powerInput", 0) + self.getValue(
-                "hp2.powerInput", 0
-            )
+            powerInput = self.getValue("hp1.powerInput", 0) + self.getValue("hp2.powerInput", 0)
             powerOutput = self.getValue("hp1.power", 0) + self.getValue("hp2.power", 0)
         else:
             powerInput = self.getValue(parent_key + ".powerInput")
@@ -254,7 +249,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
                 method = getattr(self, key)
                 return method(parent_key)
             elif key not in value:
-                # Ignore any warnings about hp2 - for single quatt installations it is valid that hp2 does not exist.
+                """Ignore any warnings about hp2 - for single quatt installations it is valid that hp2 does not exist."""
                 if key != "hp2":
                     LOGGER.warning("Could not find %s of %s", key, value_path)
                     LOGGER.debug("in %s", value)
