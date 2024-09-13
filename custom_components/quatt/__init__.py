@@ -83,7 +83,11 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         # The old version does not have a unique_id so we get the CIC hostname and set it
         # Return that the migration failed in case the retrieval fails
         try:
-            new_unique_id = await _get_cic_hostname(hass=hass, ip_address=config_entry.data[CONF_IP_ADDRESS])
+            hostname_unique_id = await _get_cic_hostname(hass=hass, ip_address=config_entry.data[CONF_IP_ADDRESS])
+            # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+            # This enables the correct match on DHCP hostname
+            if len(hostname_unique_id) >= 3:
+                hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
         except QuattApiClientAuthenticationError as exception:
             LOGGER.warning(exception)
             return False
@@ -108,7 +112,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 config_entry,
                 data=new_data,
                 options=new_options,
-                unique_id=new_unique_id,
+                unique_id=hostname_unique_id,
                 version=config_entry.version
             )
 
