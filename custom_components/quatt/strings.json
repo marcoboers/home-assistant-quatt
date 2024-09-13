@@ -2,12 +2,12 @@
     "config": {
         "step": {
             "user": {
-                "description": "Set up your Quatt to allow monitoring.",
+                "description": "Set up your Quatt heatpump for monitoring.",
                 "data": {
                     "ip_address": "[%key:common::config_flow::data::ip%]"
                 },
                 "data_description": {
-                    "ip_address": "Without http:// and port"
+                    "ip_address": "Without http:// and port."
                 }
             },
             "confirm": {
@@ -16,6 +16,24 @@
         },
         "error": {
             "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
+        },
+        "abort": {
+            "already_configured": "[%key:common::config_flow::abort::already_configured%]"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "description": "Quatt options",
+                "data": {
+                    "scan_interval": "Update interval (Seconds)",
+                    "power_sensor": "Power sensor (Optional)"
+                },
+                "data_description": {
+                    "scan_interval": "Number of seconds between requesting information from the Quatt.",
+                    "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt."
+                }
+            }
         }
     }
 }
