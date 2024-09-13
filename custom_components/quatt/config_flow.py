@@ -124,8 +124,14 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             discovery_info.ip
         )
 
+        # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+        # This enables the correct match on DHCP hostname
+        hostname_unique_id = discovery_info.hostname
+        if len(hostname_unique_id) >= 3:
+            hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
+
         # Check if the device is already configured
-        await self.async_set_unique_id(discovery_info.hostname)
+        await self.async_set_unique_id(hostname_unique_id)
         self.ip_address = discovery_info.ip
         self.hostname = discovery_info.hostname
 
