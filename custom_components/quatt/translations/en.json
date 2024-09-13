@@ -5,10 +5,10 @@
             "user": {
                 "description": "Set up your Quatt heatpump for monitoring.",
                 "data": {
-                    "ip_address": "IP address"
+                    "ip_address": "IP address / hostname"
                 },
                 "data_description": {
-                    "ip_address": "Without http:// and port"
+                    "ip_address": "Without http:// and port."
                 }
             },
             "confirm": {
@@ -16,7 +16,25 @@
             }
         },
         "error": {
-            "cannot_connect": "Failed to connect"
+            "cannot_connect": "Failed to connect."
+        },
+        "abort": {
+            "already_configured": "Device is already configured."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "description": "Quatt options",
+                "data": {
+                    "scan_interval": "Update interval (Seconds)",
+                    "power_sensor": "Power sensor (Optional)"
+                },
+                "data_description": {
+                    "scan_interval": "Number of seconds between requesting information from the Quatt.",
+                    "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt."
+                }
+            }
         }
     }
 }
