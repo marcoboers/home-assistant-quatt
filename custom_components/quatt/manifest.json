@@ -8,9 +8,18 @@
     "@marcoboers"
   ],
   "config_flow": true,
+  "dhcp": [
+    {
+      "hostname": "cic-*"
+    },
+    {
+      "registered_devices": true
+    }
+  ],
   "documentation": "https://github.com/marcoboers/home-assistant-quatt",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/marcoboers/home-assistant-quatt/issues",
   "requirements": [],
+  "single_config_entry": false,
   "version": "0.0.1"
 }

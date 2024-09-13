@@ -1,5 +1,6 @@
 {
     "config": {
+        "flow_title": "CIC: {name}",
         "step": {
             "user": {
                 "description": "Set up your Quatt heatpump for monitoring.",
@@ -9,6 +10,9 @@
                 "data_description": {
                     "ip_address": "Without http:// and port"
                 }
+            },
+            "confirm": {
+                "description": "Do you want to start setup?"
             }
         },
         "error": {
