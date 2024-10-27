@@ -28,6 +28,7 @@ class QuattEntity(CoordinatorEntity):
         #     manufacturer=NAME,
         # )
 
+
     @property
     def device_info(self):
         """Return the device information."""

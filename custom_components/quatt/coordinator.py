@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+import math
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -41,6 +42,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             else None
         )
 
+
     async def _async_update_data(self):
         """Update data via library."""
         try:
@@ -50,20 +52,24 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         except QuattApiClientError as exception:
             raise UpdateFailed(exception) from exception
 
+
     def heatpump1Active(self):
         """Check if heatpump 1 is active."""
         LOGGER.debug(self.getValue("hp1"))
         return self.getValue("hp1") is not None
+
 
     def heatpump2Active(self):
         """Check if heatpump 2 is active."""
         LOGGER.debug(self.getValue("hp2"))
         return self.getValue("hp2") is not None
 
+
     def boilerOpenTherm(self):
         """Check if boiler is connected to CIC ofer OpenTherm."""
         LOGGER.debug(self.getValue("boiler.otFbChModeActive"))
         return self.getValue("boiler.otFbChModeActive") is not None
+
 
     def electicalPower(self):
         """Get heatpump power from sensor."""
@@ -79,7 +85,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return self.hass.states.get(self._power_sensor_id).state
         return None
 
-    def computedWaterDelta(self, parent_key: str = None):
+
+    def computedWaterDelta(self, parent_key: str | None = None):
         """Compute waterDelta."""
         if parent_key is None:
             parent_key = ""
@@ -105,9 +112,10 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
         return round(temperatureWaterOut - temperatureWaterIn, 2)
 
-    def computedHeatPower(self, parent_key: str = None):
+
+    def computedHeatPower(self, parent_key: str | None = None):
         """Compute heatPower."""
-        computedWaterDelta = self.computedWaterDelta()
+        computedWaterDelta = self.computedWaterDelta(parent_key)
         flowRate = self.getValue("qc.flowRateFiltered")
 
         LOGGER.debug("computedHeatPower.computedWaterDelta %s", computedWaterDelta)
@@ -116,29 +124,37 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         if computedWaterDelta is None or flowRate is None:
             return None
 
-        return round(
+        value = round(
             computedWaterDelta * flowRate * 1.137888,
             2,
         )
 
-    def computedPowerInput(self, parent_key: str = None):
+        # Prevent negative sign for 0 values (like: -0.0)
+        if value == 0:
+            return math.copysign(0.0, 1)
+        return value
+
+
+    def computedPowerInput(self, parent_key: str | None = None):
         """Compute total powerInput."""
         powerInputHp1 = self.getValue("hp1.powerInput", 0)
         powerInputHp2 = self.getValue("hp2.powerInput", 0)
 
         return float(powerInputHp1) + float(powerInputHp2)
 
-    def computedPower(self, parent_key: str = None):
+
+    def computedPower(self, parent_key: str | None = None):
         """Compute total powerInput."""
         powerHp1 = self.getValue("hp1.power", 0)
         powerHp2 = self.getValue("hp2.power", 0)
 
         return float(powerHp1) + float(powerHp2)
 
-    def computedCop(self, parent_key: str = None):
+
+    def computedCop(self, parent_key: str | None = None):
         """Compute COP."""
         electicalPower = self.electicalPower()
-        computedHeatPower = self.computedHeatPower()
+        computedHeatPower = self.computedHeatPower(parent_key)
 
         LOGGER.debug("computedCop.electicalPower %s", electicalPower)
         LOGGER.debug("computedCop.computedHeatPower %s", computedHeatPower)
@@ -147,23 +163,25 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
 
         computedHeatPower = float(computedHeatPower)
-        if computedHeatPower == 0:
-            return None
-
         electicalPower = float(electicalPower)
         if electicalPower == 0:
             return None
 
         return round(computedHeatPower / electicalPower, 2)
 
-    def computedQuattCop(self, parent_key: str = None):
+
+    def computedQuattCop(self, parent_key: str | None = None):
         """Compute Quatt COP."""
         if parent_key is None:
             parent_key = ""
-            powerInput = self.getValue("hp1.powerInput", 0) + self.getValue(
-                "hp2.powerInput", 0
+            powerInput = (
+                self.getValue("hp1.powerInput", 0) +
+                self.getValue("hp2.powerInput", 0)
             )
-            powerOutput = self.getValue("hp1.power", 0) + self.getValue("hp2.power", 0)
+            powerOutput = (
+                self.getValue("hp1.power", 0) +
+                self.getValue("hp2.power", 0)
+            )
         else:
             powerInput = self.getValue(parent_key + ".powerInput")
             powerOutput = self.getValue(parent_key + ".power")
@@ -175,22 +193,20 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
 
         powerOutput = float(powerOutput)
-        if powerOutput == 0:
-            return None
-
         powerInput = float(powerInput)
         if powerInput == 0:
             return None
 
         return round(powerOutput / powerInput, 2)
 
-    def computedDefrost(self, parent_key: str = None):
+
+    def computedDefrost(self, parent_key: str | None = None):
         """Compute Quatt Defrost State."""
         if parent_key is None:
             return None
-        else:
-            powerInput = self.getValue(parent_key + ".powerInput")
-            powerOutput = self.getValue(parent_key + ".power")
+
+        powerInput = self.getValue(parent_key + ".powerInput")
+        powerOutput = self.getValue(parent_key + ".power")
 
         LOGGER.debug("%s.computedDefrost.powerInput %s", parent_key, powerInput)
         LOGGER.debug("%s.computedDefrost.powerOutput %s", parent_key, powerOutput)
@@ -199,16 +215,12 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return None
 
         powerOutput = float(powerOutput)
-        if powerOutput == 0:
-            return None
-
         powerInput = float(powerInput)
-        if powerInput == 0:
-            return None
 
         return powerOutput < -100 and powerInput > 100
 
-    def computedSupervisoryControlMode(self, parent_key: str = None):
+
+    def computedSupervisoryControlMode(self, parent_key: str | None = None):
         """Map the numeric supervisoryControlMode to a textual status."""
         state = self.getValue("qc.supervisoryControlMode")
         mapping = {
@@ -225,12 +237,12 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
         if state in mapping:
             return mapping[state]
-        elif state >= 100:
+        if state >= 100:
             return "Commissioning modes"
-        else:
-            return None
+        return None
 
-    def getValue(self, value_path: str, default: float = None):
+
+    def getValue(self, value_path: str, default: float | None = None):
         """Check retrieve a value by dot notation."""
         keys = value_path.split(".")
         value = self.data
