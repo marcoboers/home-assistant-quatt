@@ -10,8 +10,7 @@ from homeassistant.components.binary_sensor import (
 
 from .const import DOMAIN
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattEntity
-from .sensor_entity_description import QuattSensorEntityDescription
+from .entity import QuattEntity, QuattSensorEntityDescription
 
 BINARY_SENSORS = [
     # Heatpump 1

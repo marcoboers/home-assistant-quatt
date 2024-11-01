@@ -9,8 +9,7 @@ import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattEntity
-from .sensor_entity_description import QuattSensorEntityDescription
+from .entity import QuattEntity, QuattSensorEntityDescription
 
 SENSORS = [
     # Time
@@ -19,6 +18,7 @@ SENSORS = [
         key="time.tsHuman",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.TIMESTAMP,
+        entity_registry_enabled_default=False,
     ),
     # Heatpump 1
     QuattSensorEntityDescription(
@@ -33,6 +33,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 temperatureWaterIn",
@@ -41,6 +42,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 temperatureWaterOut",
@@ -49,6 +51,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 waterDelta",
@@ -57,6 +60,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 heatPower",
@@ -65,6 +69,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 powerInput",
@@ -73,6 +78,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 power",
@@ -81,6 +87,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="HP1 Quatt COP",
@@ -112,6 +119,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -121,6 +129,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -130,6 +139,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -139,6 +149,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -148,6 +159,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -157,6 +169,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -177,6 +190,7 @@ SENSORS = [
         device_class=SensorDeviceClass.POWER,
         entity_registry_enabled_default=False,
         suggested_display_precision=0,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -187,6 +201,7 @@ SENSORS = [
         device_class=SensorDeviceClass.POWER,
         entity_registry_enabled_default=False,
         suggested_display_precision=0,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -197,6 +212,7 @@ SENSORS = [
         device_class=SensorDeviceClass.TEMPERATURE,
         entity_registry_enabled_default=False,
         suggested_display_precision=2,
+        state_class="measurement",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
@@ -217,6 +233,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="Boiler temperature water outlet",
@@ -225,6 +242,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     # Flowmeter
     QuattSensorEntityDescription(
@@ -234,13 +252,15 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="FlowMeter flowRate",
         key="qc.flowRateFiltered",
         icon="mdi:gauge",
-        native_unit_of_measurement="l/h",
-        suggested_display_precision=2,
+        native_unit_of_measurement="L/h",
+        suggested_display_precision=0,
+        state_class="measurement",
     ),
     # Thermostat
     QuattSensorEntityDescription(
@@ -250,6 +270,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="Thermostat room setpoint",
@@ -258,6 +279,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=1,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="Thermostat room temperature",
@@ -266,6 +288,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
+        state_class="measurement",
     ),
     # QC
     QuattSensorEntityDescription(
