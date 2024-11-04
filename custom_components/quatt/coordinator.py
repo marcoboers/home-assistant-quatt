@@ -37,7 +37,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._power_sensor_id: str = (
             self.config_entry.options.get(CONF_POWER_SENSOR, "")
-            if (self.config_entry is not None) and (len(self.config_entry.options.get(CONF_POWER_SENSOR, "")) > 6)
+            if (self.config_entry is not None)
+            and (len(self.config_entry.options.get(CONF_POWER_SENSOR, "")) > 6)
             else None
         )
 
@@ -206,7 +207,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         if powerInput == 0:
             return None
 
-        return powerOutput < -100 and powerInput > 100
+        return powerOutput < -2500 and powerInput > 100
 
     def computedSupervisoryControlMode(self, parent_key: str = None):
         """Map the numeric supervisoryControlMode to a textual status."""
