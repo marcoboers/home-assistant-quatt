@@ -51,7 +51,7 @@ class QuattApiClient:
             url = "http://" + self._ip_address + ":8080" + path
 
             _LOGGER.debug("Fetching data from url: %s", url)
-            async with async_timeout.timeout(10):
+            async with async_timeout.timeout(20):
                 response = await self._session.request(
                     method=method,
                     url=url,
@@ -68,12 +68,15 @@ class QuattApiClient:
                 return await response.json()
 
         except asyncio.TimeoutError as exception:
+            _LOGGER.debug("Timeout error fetching information")
             raise QuattApiClientCommunicationError(
                 "Timeout error fetching information",
             ) from exception
         except (aiohttp.ClientError, socket.gaierror) as exception:
+            _LOGGER.debug("Error fetching information")
             raise QuattApiClientCommunicationError(
                 "Error fetching information",
             ) from exception
         except Exception as exception:  # pylint: disable=broad-except
+            _LOGGER.debug("Something really wrong happened!")
             raise QuattApiClientError("Something really wrong happened!") from exception
