@@ -89,14 +89,16 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
             else:
-                # Check if this cic has already been configured
-                await self.async_set_unique_id(cic_hostname)
-                self._abort_if_unique_id_configured()
+                if cic_hostname is not None:
+                    # Check if this cic has already been configured
+                    await self.async_set_unique_id(cic_hostname)
+                    self._abort_if_unique_id_configured()
 
-                return self.async_create_entry(
-                    title=cic_hostname,
-                    data=user_input,
-                )
+                    return self.async_create_entry(
+                        title=cic_hostname,
+                        data=user_input,
+                    )
+
 
         return self.async_show_form(
             step_id="user",
@@ -119,43 +121,12 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> ConfigFlowResult:
         """Handle DHCP discovery."""
         LOGGER.debug(
-            "DHCP discovery detected Quatt CIC: %s with ip-address: %s",
+            "DHCP discovery detected Quatt CIC (hostname): %s with ip-address: %s",
             discovery_info.hostname,
             discovery_info.ip
         )
 
-        # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
-        # This enables the correct match on DHCP hostname
-        hostname_unique_id = discovery_info.hostname
-        if len(hostname_unique_id) >= 3:
-            hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
-
-        # Check if the device is already configured
-        await self.async_set_unique_id(hostname_unique_id)
-        self.ip_address = discovery_info.ip
-        self.hostname = discovery_info.hostname
-
-        # Check if already have an configuration for this unique_id and domain
-        if (
-            entry := self.hass.config_entries.async_entry_for_domain_unique_id(
-                self.handler, self.unique_id
-            )
-        ):
-            if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
-                # Configuration is an ip-address, update it
-                LOGGER.debug(
-                    "DHCP discovery detected Quatt CIC: %s with ip-address: %s, updating ip for existing entry",
-                    discovery_info.hostname,
-                    discovery_info.ip
-                )
-
-                self._abort_if_unique_id_configured(
-                    updates={CONF_IP_ADDRESS: discovery_info.ip},
-                )
-            else:
-                self._abort_if_unique_id_configured()
-
-        # Get the status page to validate that we are dealing with a Quatt because the DHCP match is only on "cic-*"
+         # Get the status page to validate that we are dealing with a Quatt because the DHCP match is only on "cic-*"
         try:
             await self._test_credentials(ip_address=discovery_info.ip)
         except (
@@ -172,19 +143,56 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_match")
         else:
             LOGGER.debug(
-                "DHCP discovery detected Quatt CIC: %s with ip-address: %s, no existing entry",
+                "DHCP discovery validated detected Quatt CIC: %s with ip-address: %s",
                 discovery_info.hostname,
                 discovery_info.ip
             )
 
+            # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+            # This enables the correct match on DHCP hostname
+            hostname_unique_id = discovery_info.hostname
+            if len(hostname_unique_id) >= 3:
+                hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
+
+            # Loop through existing config entries to check for a match with prefix
+            for entry in self.hass.config_entries.async_entries(self.handler):
+                # Hostnames could be shortened by routers so the check is done on a partial match
+                # Both directions have to be checked because routers can be switched
+                if entry.unique_id.startswith(hostname_unique_id) or hostname_unique_id.startswith(entry.unique_id):
+                    # Use the found entry unique_id
+                    await self.async_set_unique_id(entry.unique_id)
+                    self.ip_address = discovery_info.ip
+                    self.hostname = discovery_info.hostname
+
+                    if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
+                        # Configuration is an ip-address, update it
+                        LOGGER.debug(
+                            "DHCP discovery detected existing Quatt CIC: %s with ip-address: %s, updating ip for existing entry",
+                            discovery_info.hostname,
+                            discovery_info.ip
+                        )
+
+                        self._abort_if_unique_id_configured(
+                            updates={CONF_IP_ADDRESS: discovery_info.ip},
+                        )
+                    else:
+                        self._abort_if_unique_id_configured()
+
+                    # Config found so terminate the loop
+                    break
+
+            # No match found, so this is a new CIC
+            await self.async_set_unique_id(hostname_unique_id)
+            self.ip_address = discovery_info.ip
+            self.hostname = discovery_info.hostname
+
             self.context.update(
                 {
                     "title_placeholders": {
-                        "name": discovery_info.hostname
+                        "name": hostname_unique_id
                     }
                 }
             )
-
             return await self.async_step_confirm()
 
 
