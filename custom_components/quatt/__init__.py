@@ -84,10 +84,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         # Return that the migration failed in case the retrieval fails
         try:
             hostname_unique_id = await _get_cic_hostname(hass=hass, ip_address=config_entry.data[CONF_IP_ADDRESS])
-            # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
-            # This enables the correct match on DHCP hostname
-            if len(hostname_unique_id) >= 3:
-                hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
         except QuattApiClientAuthenticationError as exception:
             LOGGER.warning(exception)
             return False
@@ -98,22 +94,28 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             LOGGER.exception(exception)
             return False
         else:
-            new_data = {**config_entry.data}
-            new_options = {**config_entry.options}
+            # Validate that the hostname is found
+            if (hostname_unique_id is not None) and (len(hostname_unique_id) >= 3):
+                # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+                # This enables the correct match on DHCP hostname
+                hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
 
-            if CONF_POWER_SENSOR in new_data:
-                # Move the CONF_POWER_SENSOR to the options
-                new_options[CONF_POWER_SENSOR] = new_data.pop(CONF_POWER_SENSOR)
+                new_data = {**config_entry.data}
+                new_options = {**config_entry.options}
 
-            # Update the version to 2
-            config_entry.version = 2
+                if CONF_POWER_SENSOR in new_data:
+                    # Move the CONF_POWER_SENSOR to the options
+                    new_options[CONF_POWER_SENSOR] = new_data.pop(CONF_POWER_SENSOR)
 
-            hass.config_entries.async_update_entry(
-                config_entry,
-                data=new_data,
-                options=new_options,
-                unique_id=hostname_unique_id,
-                version=config_entry.version
-            )
+                # Update the config entry to version 2
+                hass.config_entries.async_update_entry(
+                    config_entry,
+                    data=new_data,
+                    options=new_options,
+                    unique_id=hostname_unique_id,
+                    version=2
+                )
+            else:
+                return False
 
     return True
