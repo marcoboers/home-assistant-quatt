@@ -1,10 +1,18 @@
 """QuattEntity class."""
+
 from __future__ import annotations
 
+from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN, NAME
 from .coordinator import QuattDataUpdateCoordinator
+
+
+class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt sensor entities."""
+
+    quatt_duo: bool = False
 
 
 class QuattEntity(CoordinatorEntity):
