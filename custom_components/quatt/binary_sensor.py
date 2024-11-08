@@ -15,13 +15,13 @@ from .entity import QuattEntity, QuattSensorEntityDescription
 BINARY_SENSORS = [
     # Heatpump 1
     QuattSensorEntityDescription(
-        name="HP1 silentMode",
+        name="HP1 silentmode",
         key="hp1.silentModeStatus",
         translation_key="hp_silentModeStatus",
         icon="mdi:sleep",
     ),
     QuattSensorEntityDescription(
-        name="HP1 limitedByCop",
+        name="HP1 limited by COP",
         key="hp1.limitedByCop",
         translation_key="hp_silentModeStatus",
         icon="mdi:arrow-collapse-up",
@@ -34,14 +34,14 @@ BINARY_SENSORS = [
     ),
     # Heatpump 2
     QuattSensorEntityDescription(
-        name="HP2 silentMode",
+        name="HP2 silentmode",
         key="hp2.silentModeStatus",
         translation_key="hp_silentModeStatus",
         icon="mdi:sleep",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 limitedByCop",
+        name="HP2 limited by COP",
         key="hp2.limitedByCop",
         translation_key="hp_silentModeStatus",
         icon="mdi:arrow-collapse-up",
