@@ -259,6 +259,7 @@ SENSORS = [
         key="qc.flowRateFiltered",
         icon="mdi:gauge",
         native_unit_of_measurement="L/h",
+        device_class=SensorDeviceClass.VOLUME_FLOW_RATE,
         suggested_display_precision=0,
         state_class="measurement",
     ),
