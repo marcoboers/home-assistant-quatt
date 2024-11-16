@@ -244,6 +244,15 @@ SENSORS = [
         suggested_display_precision=2,
         state_class="measurement",
     ),
+    QuattSensorEntityDescription(
+        name="Boiler heatPower",
+        key="boiler.computedBoilerHeatPower",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
+        state_class="measurement",
+    ),
     # Flowmeter
     QuattSensorEntityDescription(
         name="FlowMeter temperature",

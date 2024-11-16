@@ -128,9 +128,43 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
         # Prevent negative sign for 0 values (like: -0.0)
-        if value == 0:
-            return math.copysign(0.0, 1)
-        return value
+        return math.copysign(0.0, 1) if value == 0 else value
+
+    def computedBoilerHeatPower(self, parent_key: str | None = None) -> float | None:
+        """Compute the boiler's added heat power."""
+        heatpumpWaterOut = (
+            self.getValue("hp2.temperatureWaterOut")
+            if self.heatpump2Active()
+            else self.getValue("hp1.temperatureWaterOut")
+        )
+        flowRate = self.getValue("qc.flowRateFiltered")
+        flowWaterTemperature = self.getValue("flowMeter.waterSupplyTemperature")
+        state = self.getValue("qc.supervisoryControlMode")
+
+        # Log debug information
+        LOGGER.debug("computedBoilerHeatPower.temperatureWaterOut: %s", heatpumpWaterOut)
+        LOGGER.debug("computedBoilerHeatPower.flowRate: %s", flowRate)
+        LOGGER.debug("computedBoilerHeatPower.waterSupplyTemperature: %s", flowWaterTemperature)
+        LOGGER.debug("computedBoilerHeatPower.supervisoryControlMode: %s", state)
+
+        # Validate inputs
+        if (
+            heatpumpWaterOut is None
+            or flowRate is None
+            or flowWaterTemperature is None
+            or state is None
+        ):
+            return None
+
+        # Compute the heat power based on the supervisory control mode
+        value = (
+            round((flowWaterTemperature - heatpumpWaterOut) * flowRate * 1.137888, 2)
+            if state in [3, 4]
+            else 0.0
+        )
+
+        # Prevent negative sign for 0 values (like: -0.0)
+        return math.copysign(0.0, 1) if value == 0 else value
 
     def computedPowerInput(self, parent_key: str | None = None):
         """Compute total powerInput."""
