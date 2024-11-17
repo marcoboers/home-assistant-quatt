@@ -188,7 +188,6 @@ SENSORS = [
         icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
-        entity_registry_enabled_default=False,
         suggested_display_precision=0,
         state_class="measurement",
         quatt_duo=True,
@@ -199,10 +198,18 @@ SENSORS = [
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
-        entity_registry_enabled_default=False,
         suggested_display_precision=0,
         state_class="measurement",
         quatt_duo=True,
+    ),
+    QuattSensorEntityDescription(
+        name="Total system power",
+        key="computedSystemPower",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
+        state_class="measurement",
     ),
     QuattSensorEntityDescription(
         name="Total waterDelta",
@@ -210,7 +217,6 @@ SENSORS = [
         icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
-        entity_registry_enabled_default=False,
         suggested_display_precision=2,
         state_class="measurement",
         quatt_duo=True,
@@ -220,7 +226,6 @@ SENSORS = [
         key="computedQuattCop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
-        entity_registry_enabled_default=False,
         suggested_display_precision=2,
         state_class="measurement",
         quatt_duo=True,
@@ -301,10 +306,12 @@ SENSORS = [
     ),
     # QC
     QuattSensorEntityDescription(
-        name="QC supervisoryControlMode", key="qc.supervisoryControlMode"
+        name="QC supervisoryControlMode",
+        key="qc.supervisoryControlMode"
     ),
     QuattSensorEntityDescription(
-        name="QC supervisory control mode", key="qc.computedSupervisoryControlMode"
+        name="QC supervisory control mode",
+        key="qc.computedSupervisoryControlMode"
     ),
     # System
     QuattSensorEntityDescription(
