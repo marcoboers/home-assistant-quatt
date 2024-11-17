@@ -70,12 +70,12 @@ BINARY_SENSORS = [
         icon="mdi:fire",
     ),
     QuattSensorEntityDescription(
-        name="Boiler heating",
+        name="Boiler CIC heating",
         key="boiler.otTbCH",
         icon="mdi:heating-coil",
     ),
     QuattSensorEntityDescription(
-        name="Boiler on/off mode",
+        name="Boiler CIC on/off",
         key="boiler.oTtbTurnOnOffBoilerOn",
         icon="mdi:water-boiler",
     ),
