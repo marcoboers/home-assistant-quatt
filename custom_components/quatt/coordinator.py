@@ -12,7 +12,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import QuattApiClient, QuattApiClientAuthenticationError, QuattApiClientError
-from .const import CONF_POWER_SENSOR, DOMAIN, LOGGER
+from .const import CONF_POWER_SENSOR, CONVERSION_FACTORS, DOMAIN, LOGGER
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
@@ -67,6 +67,13 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         LOGGER.debug(self.getValue("boiler.otFbChModeActive"))
         return self.getValue("boiler.otFbChModeActive") is not None
 
+    def getConversionFactor(self, temperature: float):
+        """Get the conversion factor for the nearest temperature."""
+        nearestTemperature = min(
+            CONVERSION_FACTORS.keys(), key=lambda t: abs(t - temperature)
+        )
+        return CONVERSION_FACTORS[nearestTemperature]
+
     def electicalPower(self):
         """Get heatpump power from sensor."""
         if self._power_sensor_id is None:
@@ -109,21 +116,29 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def computedHeatPower(self, parent_key: str | None = None):
         """Compute heatPower."""
-        computedWaterDelta = (
-            self.computedWaterDelta(None)
-            if self.heatpump2Active()
-            else self.computedWaterDelta("hp1")
-        )
+        if self.heatpump2Active():
+            computedWaterDelta = self.computedWaterDelta(None)
+            temperatureWaterOut = self.getValue("hp2.temperatureWaterOut")
+        else:
+            computedWaterDelta = self.computedWaterDelta("hp1")
+            temperatureWaterOut = self.getValue("hp1.temperatureWaterOut")
         flowRate = self.getValue("qc.flowRateFiltered")
 
         LOGGER.debug("computedHeatPower.computedWaterDelta %s", computedWaterDelta)
         LOGGER.debug("computedHeatPower.flowRate %s", flowRate)
+        LOGGER.debug("computedHeatPower.temperatureWaterOut %s", temperatureWaterOut)
 
-        if computedWaterDelta is None or flowRate is None:
+        if (
+            computedWaterDelta is None
+            or flowRate is None
+            or temperatureWaterOut is None
+        ):
             return None
 
         value = round(
-            computedWaterDelta * flowRate * 1.137888,
+            computedWaterDelta
+            * flowRate
+            * self.getConversionFactor(temperatureWaterOut),
             2,
         )
 
@@ -153,16 +168,23 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         flowWaterTemperature = self.getValue("flowMeter.waterSupplyTemperature")
 
         # Log debug information
-        LOGGER.debug("computedBoilerHeatPower.temperatureWaterOut: %s", heatpumpWaterOut)
+        LOGGER.debug(
+            "computedBoilerHeatPower.temperatureWaterOut: %s", heatpumpWaterOut
+        )
         LOGGER.debug("computedBoilerHeatPower.flowRate: %s", flowRate)
-        LOGGER.debug("computedBoilerHeatPower.waterSupplyTemperature: %s", flowWaterTemperature)
+        LOGGER.debug(
+            "computedBoilerHeatPower.waterSupplyTemperature: %s", flowWaterTemperature
+        )
 
         # Validate other inputs
         if heatpumpWaterOut is None or flowRate is None or flowWaterTemperature is None:
             return None
 
-        # Compute the heat power
-        value = round((flowWaterTemperature - heatpumpWaterOut) * flowRate * 1.137888, 2)
+        # Compute the heat power using the conversion factor
+        conversionFactor = self.getConversionFactor(flowWaterTemperature)
+        value = round(
+            (flowWaterTemperature - heatpumpWaterOut) * flowRate * conversionFactor, 2
+        )
 
         # Prevent negative sign for 0 values (like: -0.0)
         return math.copysign(0.0, 1) if value == 0 else value
@@ -185,7 +207,9 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
     def computedPowerInput(self, parent_key: str | None = None):
         """Compute total powerInput."""
         powerInputHp1 = float(self.getValue("hp1.powerInput", 0))
-        powerInputHp2 = float(self.getValue("hp2.powerInput", 0)) if self.heatpump2Active() else 0
+        powerInputHp2 = (
+            float(self.getValue("hp2.powerInput", 0)) if self.heatpump2Active() else 0
+        )
         return powerInputHp1 + powerInputHp2
 
     def computedPower(self, parent_key: str | None = None):
