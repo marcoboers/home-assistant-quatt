@@ -116,6 +116,17 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def computedHeatPower(self, parent_key: str | None = None):
         """Compute heatPower."""
+
+        # Retrieve the supervisory control mode state first
+        state = self.getValue("qc.supervisoryControlMode")
+        LOGGER.debug("computedBoilerHeatPower.supervisoryControlMode: %s", state)
+
+        # If the state is not valid or the heatpump is not active, no need to proceed
+        if state is None:
+            return None
+        if state not in [2, 3]:
+            return 0.0
+
         if self.heatpump2Active():
             computedWaterDelta = self.computedWaterDelta(None)
             temperatureWaterOut = self.getValue("hp2.temperatureWaterOut")

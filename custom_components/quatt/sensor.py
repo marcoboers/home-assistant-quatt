@@ -250,7 +250,7 @@ SENSORS = [
         state_class="measurement",
     ),
     QuattSensorEntityDescription(
-        name="Boiler heatPower",
+        name="Boiler heat power",
         key="boiler.computedBoilerHeatPower",
         icon="mdi:heat-wave",
         native_unit_of_measurement="W",
