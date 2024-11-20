@@ -153,8 +153,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             2,
         )
 
-        # Prevent negative sign for 0 values (like: -0.0)
-        return math.copysign(0.0, 1) if value == 0 else value
+        # Prevent any negative numbers
+        return max(value, 0.00)
 
     def computedBoilerHeatPower(self, parent_key: str | None = None) -> float | None:
         """Compute the boiler's added heat power."""
@@ -197,8 +197,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             (flowWaterTemperature - heatpumpWaterOut) * flowRate * conversionFactor, 2
         )
 
-        # Prevent negative sign for 0 values (like: -0.0)
-        return math.copysign(0.0, 1) if value == 0 else value
+        # Prevent any negative numbers
+        return max(value, 0.00)
 
     def computedSystemPower(self, parent_key: str | None = None):
         """Compute total system power."""
