@@ -27,7 +27,7 @@ Do you have [HACS](https://hacs.xyz/) installed?
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 1. If you do not have a `custom_components` directory (folder) there, you need to create it.
 1. In the `custom_components` directory (folder) create a new folder called `quatt`.
-1. Download _all_ the files from the `custom_components/quatt/` directory (folder) in this repository.
+1. Download in the `Releases` section the `quatt.zip` file for the version of the integration you want to install and extract the files. Alternatively, download _all_ the files from the `custom_components/quatt/` directory (folder) in this repository. Note that the version number will not be updated if you choose the latter.
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
 
