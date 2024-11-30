@@ -3,7 +3,11 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.const import EntityCategory, UnitOfTemperature
 import homeassistant.util.dt as dt_util
 
@@ -209,7 +213,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
-        state_class="measurement",
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
         name="Total waterDelta",
@@ -256,7 +260,7 @@ SENSORS = [
         native_unit_of_measurement="W",
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
-        state_class="measurement",
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     # Flowmeter
     QuattSensorEntityDescription(
