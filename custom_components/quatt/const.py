@@ -7,7 +7,6 @@ LOGGER: Logger = getLogger(__package__)
 
 NAME = "Quatt"
 DOMAIN = "quatt"
-VERSION = "0.1.0"
 ATTRIBUTION = "marcoboers"
 
 CONF_POWER_SENSOR = "power_sensor"
