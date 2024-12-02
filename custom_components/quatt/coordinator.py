@@ -67,11 +67,11 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         LOGGER.debug(self.getValue("boiler.otFbChModeActive"))
         return self.getValue("boiler.otFbChModeActive") is not None
 
-    def electicalPower(self):
+    def electricalPower(self):
         """Get heatpump power from sensor."""
         if self._power_sensor_id is None:
             return None
-        LOGGER.debug("electicalPower %s", self.hass.states.get(self._power_sensor_id))
+        LOGGER.debug("electricalPower %s", self.hass.states.get(self._power_sensor_id))
         if self.hass.states.get(self._power_sensor_id) is None:
             return None
         if self.hass.states.get(self._power_sensor_id).state not in [
@@ -148,21 +148,21 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def computedCop(self, parent_key: str | None = None):
         """Compute COP."""
-        electicalPower = self.electicalPower()
+        electricalPower = self.electricalPower()
         computedHeatPower = self.computedHeatPower(parent_key)
 
-        LOGGER.debug("computedCop.electicalPower %s", electicalPower)
+        LOGGER.debug("computedCop.electricalPower %s", electricalPower)
         LOGGER.debug("computedCop.computedHeatPower %s", computedHeatPower)
 
-        if electicalPower is None or computedHeatPower is None:
+        if electricalPower is None or computedHeatPower is None:
             return None
 
         computedHeatPower = float(computedHeatPower)
-        electicalPower = float(electicalPower)
-        if electicalPower == 0:
+        electricalPower = float(electricalPower)
+        if electricalPower == 0:
             return None
 
-        return round(computedHeatPower / electicalPower, 2)
+        return round(computedHeatPower / electricalPower, 2)
 
     def computedQuattCop(self, parent_key: str | None = None):
         """Compute Quatt COP."""
