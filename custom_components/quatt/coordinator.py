@@ -194,19 +194,26 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         if parent_key is None:
             return None
 
-        powerInput = self.getValue(parent_key + ".powerInput")
-        powerOutput = self.getValue(parent_key + ".power")
+        # Get the needed information to determine the defrost case
+        state = self.getValue("qc.supervisoryControlMode")
+        power_output = self.getValue(f"{parent_key}.power")
+        water_delta = self.computedWaterDelta(parent_key)
 
-        LOGGER.debug("%s.computedDefrost.powerInput %s", parent_key, powerInput)
-        LOGGER.debug("%s.computedDefrost.powerOutput %s", parent_key, powerOutput)
+        LOGGER.debug("%s.computedDefrost.supervisoryControlMode %s", parent_key, state)
+        LOGGER.debug("%s.computedDefrost.powerOutput %s", parent_key, power_output)
+        LOGGER.debug(
+            "%s.computedDefrost.computedWaterDelta %s", parent_key, water_delta
+        )
 
-        if powerInput is None or powerOutput is None:
+        if state is None or power_output is None or water_delta is None:
             return None
 
-        powerOutput = float(powerOutput)
-        powerInput = float(powerInput)
+        state = int(state)
+        power_output = float(power_output)
+        water_delta = float(water_delta)
 
-        return powerOutput < -100 and powerInput > 100
+        # State equals to "Heating - heatpump" only or "heatpump + boiler"
+        return state in [2, 3] and power_output == 0 and water_delta < -1
 
     def computedSupervisoryControlMode(self, parent_key: str | None = None):
         """Map the numeric supervisoryControlMode to a textual status."""
