@@ -13,6 +13,7 @@ class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=Tru
     """A class that describes Quatt sensor entities."""
 
     quatt_duo: bool = False
+    quatt_opentherm: bool = False
 
 
 class QuattEntity(CoordinatorEntity):
