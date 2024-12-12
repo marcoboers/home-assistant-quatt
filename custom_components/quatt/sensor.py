@@ -32,7 +32,7 @@ SENSORS = [
         icon="mdi:auto-mode",
     ),
     QuattSensorEntityDescription(
-        name="HP1 temperatureOutside",
+        name="HP1 temperature outside",
         key="hp1.temperatureOutside",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -41,7 +41,7 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
-        name="HP1 temperatureWaterIn",
+        name="HP1 temperature water in",
         key="hp1.temperatureWaterIn",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -50,7 +50,7 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
-        name="HP1 temperatureWaterOut",
+        name="HP1 temperature water out",
         key="hp1.temperatureWaterOut",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -59,7 +59,7 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
-        name="HP1 waterDelta",
+        name="HP1 water delta",
         key="hp1.computedWaterDelta",
         icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -68,16 +68,7 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
-        name="HP1 heatPower",
-        key="hp1.computedHeatPower",
-        icon="mdi:heat-wave",
-        native_unit_of_measurement="W",
-        device_class=SensorDeviceClass.POWER,
-        suggested_display_precision=0,
-        state_class=SensorStateClass.MEASUREMENT,
-    ),
-    QuattSensorEntityDescription(
-        name="HP1 powerInput",
+        name="HP1 power input",
         key="hp1.powerInput",
         icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
@@ -102,14 +93,6 @@ SENSORS = [
         suggested_display_precision=2,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    QuattSensorEntityDescription(
-        name="HP1 COP",
-        key="hp1.computedCop",
-        icon="mdi:heat-pump",
-        native_unit_of_measurement="CoP",
-        suggested_display_precision=2,
-        state_class=SensorStateClass.MEASUREMENT,
-    ),
     # Heatpump 2
     QuattSensorEntityDescription(
         name="HP2 workingmode",
@@ -118,7 +101,7 @@ SENSORS = [
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 temperatureOutside",
+        name="HP2 temperature outside",
         key="hp2.temperatureOutside",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -128,7 +111,7 @@ SENSORS = [
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 temperatureWaterIn",
+        name="HP2 temperature water in",
         key="hp2.temperatureWaterIn",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -138,7 +121,7 @@ SENSORS = [
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 temperatureWaterOut",
+        name="HP2 temperature water out",
         key="hp2.temperatureWaterOut",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -148,7 +131,7 @@ SENSORS = [
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 waterDelta",
+        name="HP2 water delta",
         key="hp2.computedWaterDelta",
         icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -158,7 +141,7 @@ SENSORS = [
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 powerInput",
+        name="HP2 power input",
         key="hp2.powerInput",
         icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
@@ -188,7 +171,24 @@ SENSORS = [
     ),
     # Combined
     QuattSensorEntityDescription(
-        name="Total powerInput",
+        name="Heat power",
+        key="computedHeatPower",
+        icon="mdi:heat-wave",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
+        state_class="measurement",
+    ),
+    QuattSensorEntityDescription(
+        name="COP",
+        key="computedCop",
+        icon="mdi:heat-pump",
+        native_unit_of_measurement="CoP",
+        suggested_display_precision=2,
+        state_class="measurement",
+    ),
+    QuattSensorEntityDescription(
+        name="Total power input",
         key="computedPowerInput",
         icon="mdi:lightning-bolt",
         native_unit_of_measurement="W",
@@ -210,7 +210,7 @@ SENSORS = [
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="Total waterDelta",
+        name="Total water delta",
         key="computedWaterDelta",
         icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -251,7 +251,7 @@ SENSORS = [
     ),
     # Flowmeter
     QuattSensorEntityDescription(
-        name="FlowMeter temperature",
+        name="Flowmeter temperature",
         key="flowMeter.waterSupplyTemperature",
         icon="mdi:thermometer",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -260,7 +260,7 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
-        name="FlowMeter flowRate",
+        name="Flowmeter flowrate",
         key="qc.flowRateFiltered",
         icon="mdi:gauge",
         native_unit_of_measurement="L/h",
@@ -298,10 +298,12 @@ SENSORS = [
     ),
     # QC
     QuattSensorEntityDescription(
-        name="QC supervisoryControlMode", key="qc.supervisoryControlMode"
+        name="QC supervisory control mode code",
+        key="qc.supervisoryControlMode",
     ),
     QuattSensorEntityDescription(
-        name="QC supervisory control mode", key="qc.computedSupervisoryControlMode"
+        name="QC supervisory control mode",
+        key="qc.computedSupervisoryControlMode",
     ),
     # System
     QuattSensorEntityDescription(
