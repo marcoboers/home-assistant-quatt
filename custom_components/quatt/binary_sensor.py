@@ -15,13 +15,13 @@ from .entity import QuattEntity, QuattSensorEntityDescription
 BINARY_SENSORS = [
     # Heatpump 1
     QuattSensorEntityDescription(
-        name="HP1 silentMode",
+        name="HP1 silentmode",
         key="hp1.silentModeStatus",
         translation_key="hp_silentModeStatus",
         icon="mdi:sleep",
     ),
     QuattSensorEntityDescription(
-        name="HP1 limitedByCop",
+        name="HP1 limited by COP",
         key="hp1.limitedByCop",
         translation_key="hp_silentModeStatus",
         icon="mdi:arrow-collapse-up",
@@ -34,14 +34,14 @@ BINARY_SENSORS = [
     ),
     # Heatpump 2
     QuattSensorEntityDescription(
-        name="HP2 silentMode",
+        name="HP2 silentmode",
         key="hp2.silentModeStatus",
         translation_key="hp_silentModeStatus",
         icon="mdi:sleep",
         quatt_duo=True,
     ),
     QuattSensorEntityDescription(
-        name="HP2 limitedByCop",
+        name="HP2 limited by COP",
         key="hp2.limitedByCop",
         translation_key="hp_silentModeStatus",
         icon="mdi:arrow-collapse-up",
@@ -58,24 +58,27 @@ BINARY_SENSORS = [
         name="Boiler heating",
         key="boiler.otFbChModeActive",
         icon="mdi:heating-coil",
+        quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
         name="Boiler domestic hot water",
         key="boiler.otFbDhwActive",
         icon="mdi:water-boiler",
+        quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
         name="Boiler flame",
         key="boiler.otFbFlameOn",
         icon="mdi:fire",
+        quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
-        name="Boiler heating",
+        name="Boiler CIC heating",
         key="boiler.otTbCH",
         icon="mdi:heating-coil",
     ),
     QuattSensorEntityDescription(
-        name="Boiler on/off mode",
+        name="Boiler CIC on/off",
         key="boiler.oTtbTurnOnOffBoilerOn",
         icon="mdi:water-boiler",
     ),
@@ -136,12 +139,17 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
     @property
     def entity_registry_enabled_default(self):
         """Return whether the sensor should be enabled by default."""
-        # Only check the duo property when set, enable when duo found
-        if self.entity_description.entity_registry_enabled_default and self.entity_description.quatt_duo:
-            return self.coordinator.heatpump2Active()
+        value = self.entity_description.entity_registry_enabled_default
 
-        # For all other sensors
-        return self.entity_description.entity_registry_enabled_default
+        # Only check the duo property when set, enable when duo found
+        if value and self.entity_description.quatt_duo:
+            value = self.coordinator.heatpump2Active()
+
+        # Only check the openthern when set, enable when opentherm found
+        if value and self.entity_description.quatt_opentherm:
+            value = self.coordinator.boilerOpenTherm()
+
+        return value
 
 
     @property
