@@ -36,6 +36,7 @@ from .const import (
 )
 
 
+# pylint: disable=abstract-method
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
@@ -46,7 +47,6 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         self.ip_address: str | None = None
         self.hostname: str | None = None
 
-
     async def _test_credentials(self, ip_address: str) -> str:
         """Validate credentials."""
         client = QuattApiClient(
@@ -55,7 +55,6 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         )
         data = await client.async_get_data()
         return data["system"]["hostName"]
-
 
     def is_valid_ip(self, ip_str) -> bool:
         """Check for valid ip."""
@@ -66,7 +65,6 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             # If a ValueError is raised, the IP address is invalid
             return False
         return True
-
 
     async def async_step_user(
         self,
@@ -99,7 +97,6 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                         data=user_input,
                     )
 
-
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
@@ -117,48 +114,54 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
-
-    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> ConfigFlowResult:
+    async def async_step_dhcp(
+        self, discovery_info: dhcp.DhcpServiceInfo
+    ) -> ConfigFlowResult:
         """Handle DHCP discovery."""
         LOGGER.debug(
             "DHCP discovery detected Quatt CIC (hostname): %s with ip-address: %s",
             discovery_info.hostname,
-            discovery_info.ip
+            discovery_info.ip,
         )
 
-         # Get the status page to validate that we are dealing with a Quatt because the DHCP match is only on "cic-*"
+        # Get the status page to validate that we are dealing with a Quatt because
+        # the DHCP match is only on "cic-*"
         try:
             await self._test_credentials(ip_address=discovery_info.ip)
         except (
             QuattApiClientAuthenticationError,
             QuattApiClientCommunicationError,
-            QuattApiClientError
+            QuattApiClientError,
         ):
             # For all exceptions we abort the flow
             LOGGER.debug(
                 "DHCP discovery no match: %s with ip-address: %s",
                 discovery_info.hostname,
-                discovery_info.ip
+                discovery_info.ip,
             )
             return self.async_abort(reason="no_match")
         else:
             LOGGER.debug(
                 "DHCP discovery validated detected Quatt CIC: %s with ip-address: %s",
                 discovery_info.hostname,
-                discovery_info.ip
+                discovery_info.ip,
             )
 
             # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
             # This enables the correct match on DHCP hostname
             hostname_unique_id = discovery_info.hostname
             if len(hostname_unique_id) >= 3:
-                hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
+                hostname_unique_id = (
+                    hostname_unique_id[:3].upper() + hostname_unique_id[3:]
+                )
 
             # Loop through existing config entries to check for a match with prefix
             for entry in self.hass.config_entries.async_entries(self.handler):
                 # Hostnames could be shortened by routers so the check is done on a partial match
                 # Both directions have to be checked because routers can be switched
-                if entry.unique_id.startswith(hostname_unique_id) or hostname_unique_id.startswith(entry.unique_id):
+                if entry.unique_id.startswith(
+                    hostname_unique_id
+                ) or hostname_unique_id.startswith(entry.unique_id):
                     # Use the found entry unique_id
                     await self.async_set_unique_id(entry.unique_id)
                     self.ip_address = discovery_info.ip
@@ -167,9 +170,10 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
                         # Configuration is an ip-address, update it
                         LOGGER.debug(
-                            "DHCP discovery detected existing Quatt CIC: %s with ip-address: %s, updating ip for existing entry",
+                            "DHCP discovery detected existing Quatt CIC: %s with ip-address: %s, "
+                            "updating ip for existing entry",
                             discovery_info.hostname,
-                            discovery_info.ip
+                            discovery_info.ip,
                         )
 
                         self._abort_if_unique_id_configured(
@@ -186,15 +190,8 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             self.ip_address = discovery_info.ip
             self.hostname = discovery_info.hostname
 
-            self.context.update(
-                {
-                    "title_placeholders": {
-                        "name": hostname_unique_id
-                    }
-                }
-            )
+            self.context.update({"title_placeholders": {"name": hostname_unique_id}})
             return await self.async_step_confirm()
-
 
     async def async_step_confirm(
         self, user_input=None
@@ -203,33 +200,31 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Use the hostname instead of the ip
             return self.async_create_entry(
-                title=self.hostname,
-                data={CONF_IP_ADDRESS: self.ip_address}
+                title=self.hostname, data={CONF_IP_ADDRESS: self.ip_address}
             )
 
         return self.async_show_form(step_id="confirm")
 
-
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry: ConfigEntry) -> QuattOptionsFlowHandler:
         """Return the options flow handler for this config entry."""
-        return QuattOptionsFlowHandler(config_entry)
+        return QuattOptionsFlowHandler()
 
 
 class QuattOptionsFlowHandler(OptionsFlow):
     """Options flow for Quatt."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         _errors = {}
 
         # Retrieve the current value of CONF_POWER_SENSOR from options
-        current_power_sensor = self.config_entry.options.get(CONF_POWER_SENSOR, "") if self.config_entry.options is not None else ""
+        current_power_sensor = (
+            self.config_entry.options.get(CONF_POWER_SENSOR, "")
+            if self.config_entry.options is not None
+            else ""
+        )
 
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
@@ -243,15 +238,22 @@ class QuattOptionsFlowHandler(OptionsFlow):
                         default=self.config_entry.options.get(
                             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL)),
+                    ): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+                    ),
                     vol.Optional(
                         CONF_POWER_SENSOR,
-                        description={"suggested_value": current_power_sensor if self.hass.states.get(current_power_sensor) else ""},
+                        description={
+                            "suggested_value": current_power_sensor
+                            if self.hass.states.get(current_power_sensor)
+                            else ""
+                        },
                     ): selector.EntitySelector(
                         selector.EntityFilterSelectorConfig(
                             device_class=SensorDeviceClass.POWER
                         )
-                    )
+                    ),
                 }
             ),
             errors=_errors,
