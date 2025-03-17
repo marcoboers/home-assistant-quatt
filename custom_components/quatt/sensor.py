@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfPower, UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfPower, UnitOfPressure, UnitOfTemperature
 import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
@@ -257,6 +257,15 @@ SENSORS = [
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
+        name="Boiler water pressure",
+        key="boiler.otFbWaterPressure",
+        icon="mdi:gauge",
+        native_unit_of_measurement=UnitOfPressure.BAR,
+        suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
+        quatt_opentherm=True,
+    ),
+    QuattSensorEntityDescription(
         name="Boiler heat power",
         key="boiler.computedBoilerHeatPower",
         icon="mdi:heat-wave",
@@ -280,7 +289,6 @@ SENSORS = [
         key="qc.flowRateFiltered",
         icon="mdi:gauge",
         native_unit_of_measurement="L/h",
-        device_class=SensorDeviceClass.VOLUME_FLOW_RATE,
         suggested_display_precision=0,
         state_class=SensorStateClass.MEASUREMENT,
     ),
