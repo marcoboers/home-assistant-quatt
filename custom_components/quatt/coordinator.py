@@ -54,17 +54,18 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def heatpump1Active(self):
         """Check if heatpump 1 is active."""
-        LOGGER.debug(self.getValue("hp1"))
         return self.getValue("hp1") is not None
 
     def heatpump2Active(self):
         """Check if heatpump 2 is active."""
-        LOGGER.debug(self.getValue("hp2"))
         return self.getValue("hp2") is not None
+
+    def allElectricActive(self):
+        """Check if it is an all electric installation."""
+        return self.getValue("hc.electricalPower") is not None
 
     def boilerOpenTherm(self):
         """Check if boiler is connected to CIC ofer OpenTherm."""
-        LOGGER.debug(self.getValue("boiler.otFbChModeActive"))
         return self.getValue("boiler.otFbChModeActive") is not None
 
     def getConversionFactor(self, temperature: float):
@@ -202,18 +203,22 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
     def computedSystemPower(self, parent_key: str | None = None):
         """Compute total system power."""
-        boilerPower = self.computedBoilerHeatPower(parent_key)
+        heaterPower = (
+            self.getValue("hc.electricalPower")
+            if self.allElectricActive()
+            else self.computedBoilerHeatPower(parent_key)
+        )
         heatpumpPower = self.computedPower(parent_key)
 
         # Log debug information
-        LOGGER.debug("computedSystemPower.boilerPower: %s", boilerPower)
+        LOGGER.debug("computedSystemPower.boilerPower: %s", heaterPower)
         LOGGER.debug("computedSystemPower.heatpumpPower: %s", heatpumpPower)
 
         # Validate inputs
-        if boilerPower is None or heatpumpPower is None:
+        if heaterPower is None or heatpumpPower is None:
             return None
 
-        return float(boilerPower) + float(heatpumpPower)
+        return float(heaterPower) + float(heatpumpPower)
 
     def computedPowerInput(self, parent_key: str | None = None):
         """Compute total powerInput."""
@@ -343,8 +348,11 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
                 method = getattr(self, key)
                 return method(parent_key)
             elif key not in value:
-                # Ignore any warnings about hp2 - for single quatt installations it is valid that hp2 does not exist.
-                if key != "hp2":
+                # Ignore any warnings about hp2, boiler and hc
+                # hp2: for single heatpump installations it is valid that hp2 does not exist.
+                # boiler: for all electic installations it is valid that boiler does not exist.
+                # hc: for hybrid installations it is valid that hc does not exist.
+                if key not in ("hp2", "boiler", "hc"):
                     LOGGER.warning("Could not find %s of %s", key, value_path)
                     LOGGER.debug("in %s", value)
                 return default

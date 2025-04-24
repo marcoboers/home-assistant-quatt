@@ -12,6 +12,8 @@ from .coordinator import QuattDataUpdateCoordinator
 class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt sensor entities."""
 
+    quatt_hybrid: bool = False
+    quatt_all_electric: bool = False
     quatt_duo: bool = False
     quatt_opentherm: bool = False
 

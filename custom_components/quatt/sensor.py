@@ -9,7 +9,13 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfPower, UnitOfPressure, UnitOfTemperature
+from homeassistant.const import (
+    EntityCategory,
+    UnitOfPower,
+    UnitOfPressure,
+    UnitOfTemperature,
+)
+from homeassistant.core import HomeAssistant
 import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
@@ -235,6 +241,17 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         quatt_duo=True,
     ),
+    # Heat Charger
+    QuattSensorEntityDescription(
+        name="HC electrical power",
+        key="hc.electricalPower",
+        icon="mdi:lightning-bolt",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
+        state_class=SensorStateClass.MEASUREMENT,
+        quatt_all_electric=True,
+    ),
     # Boiler
     QuattSensorEntityDescription(
         name="Boiler temperature water inlet",
@@ -244,6 +261,7 @@ SENSORS = [
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
         state_class=SensorStateClass.MEASUREMENT,
+        quatt_hybrid=True,
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
@@ -254,6 +272,7 @@ SENSORS = [
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=2,
         state_class=SensorStateClass.MEASUREMENT,
+        quatt_hybrid=True,
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
@@ -263,6 +282,7 @@ SENSORS = [
         native_unit_of_measurement=UnitOfPressure.BAR,
         suggested_display_precision=2,
         state_class=SensorStateClass.MEASUREMENT,
+        quatt_hybrid=True,
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
@@ -273,6 +293,7 @@ SENSORS = [
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
         state_class=SensorStateClass.MEASUREMENT,
+        quatt_hybrid=True,
     ),
     # Flowmeter
     QuattSensorEntityDescription(
@@ -340,11 +361,12 @@ SENSORS = [
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     _LOGGER.debug("Heatpump 1 active: %s", coordinator.heatpump1Active())
     _LOGGER.debug("Heatpump 2 active: %s", coordinator.heatpump2Active())
+    _LOGGER.debug("All electric active: %s", coordinator.allElectricActive())
     _LOGGER.debug("boiler OpenTherm: %s", coordinator.boilerOpenTherm())
 
     async_add_devices(
@@ -375,11 +397,19 @@ class QuattSensor(QuattEntity, SensorEntity):
         """Return whether the sensor should be enabled by default."""
         value = self.entity_description.entity_registry_enabled_default
 
-        # Only check the duo property when set, enable when duo found
+        # Enable the hybrid installation specific binary_sensors (boiler)
+        if value and self.entity_description.quatt_hybrid:
+            value = not self.coordinator.allElectricActive()
+
+        # Enable the all electric installation specific binary_sensors (boiler)
+        if value and self.entity_description.quatt_all_electric:
+            value = self.coordinator.allElectricActive()
+
+        # Enable the quatt duo installation specific binary_sensors
         if value and self.entity_description.quatt_duo:
             value = self.coordinator.heatpump2Active()
 
-        # Only check the openthern when set, enable when opentherm found
+        # Enable the opentherm installation specific binary_sensors
         if value and self.entity_description.quatt_opentherm:
             value = self.coordinator.boilerOpenTherm()
 
