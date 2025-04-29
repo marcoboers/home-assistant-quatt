@@ -1,4 +1,5 @@
 """Binary sensor platform for quatt."""
+
 from __future__ import annotations
 
 import logging
@@ -7,6 +8,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .coordinator import QuattDataUpdateCoordinator
@@ -58,29 +60,34 @@ BINARY_SENSORS = [
         name="Boiler heating",
         key="boiler.otFbChModeActive",
         icon="mdi:heating-coil",
+        quatt_hybrid=True,
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
         name="Boiler domestic hot water",
         key="boiler.otFbDhwActive",
         icon="mdi:water-boiler",
+        quatt_hybrid=True,
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
         name="Boiler flame",
         key="boiler.otFbFlameOn",
         icon="mdi:fire",
+        quatt_hybrid=True,
         quatt_opentherm=True,
     ),
     QuattSensorEntityDescription(
         name="Boiler CIC heating",
         key="boiler.otTbCH",
         icon="mdi:heating-coil",
+        quatt_hybrid=True,
     ),
     QuattSensorEntityDescription(
         name="Boiler CIC on/off",
         key="boiler.oTtbTurnOnOffBoilerOn",
         icon="mdi:water-boiler",
+        quatt_hybrid=True,
     ),
     # Thermostat
     QuattSensorEntityDescription(
@@ -109,7 +116,7 @@ BINARY_SENSORS = [
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the binary_sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_devices(
@@ -135,22 +142,28 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
         super().__init__(coordinator, sensor_key)
         self.entity_description = entity_description
 
-
     @property
     def entity_registry_enabled_default(self):
         """Return whether the sensor should be enabled by default."""
         value = self.entity_description.entity_registry_enabled_default
 
-        # Only check the duo property when set, enable when duo found
+        # Enable the hybrid installation specific binary_sensors (boiler)
+        if value and self.entity_description.quatt_hybrid:
+            value = not self.coordinator.allElectricActive()
+
+        # Enable the all electric installation specific binary_sensors (boiler)
+        if value and self.entity_description.quatt_all_electric:
+            value = self.coordinator.allElectricActive()
+
+        # Enable the quatt duo installation specific binary_sensors
         if value and self.entity_description.quatt_duo:
             value = self.coordinator.heatpump2Active()
 
-        # Only check the openthern when set, enable when opentherm found
+        # Enable the opentherm installation specific binary_sensors
         if value and self.entity_description.quatt_opentherm:
             value = self.coordinator.boilerOpenTherm()
 
         return value
-
 
     @property
     def is_on(self) -> bool:
