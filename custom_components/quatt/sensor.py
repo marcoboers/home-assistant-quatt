@@ -14,6 +14,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.util.dt as dt_util
@@ -309,7 +310,7 @@ SENSORS = [
         name="Flowmeter flowrate",
         key="qc.flowRateFiltered",
         icon="mdi:gauge",
-        native_unit_of_measurement="L/h",
+        native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_HOUR,
         suggested_display_precision=0,
         state_class=SensorStateClass.MEASUREMENT,
     ),
