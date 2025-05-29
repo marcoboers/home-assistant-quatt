@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.sensor import (
+    DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
@@ -16,6 +17,8 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
+import homeassistant.helpers.device_registry as dr
+import homeassistant.helpers.entity_registry as er
 import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
@@ -364,19 +367,69 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
+    registry = er.async_get(hass)
+
     _LOGGER.debug("Heatpump 1 active: %s", coordinator.heatpump1Active())
     _LOGGER.debug("Heatpump 2 active: %s", coordinator.heatpump2Active())
     _LOGGER.debug("All electric active: %s", coordinator.allElectricActive())
     _LOGGER.debug("boiler OpenTherm: %s", coordinator.boilerOpenTherm())
 
-    async_add_devices(
+    # Create only those sensors that make sense for this installation type.
+    # Remove sensors that are not applicable based on the configuration.
+    # This can occur when the configuration changes, e.g., from hybrid or duo to all-electric.
+    device_reg = dr.async_get(hass)
+    devices = dr.async_entries_for_config_entry(device_reg, entry.entry_id)
+    device_ids = {dev.id for dev in devices}
+
+    # Cache the active states
+    heatpump2_active = coordinator.heatpump2Active()
+    all_electric_active = coordinator.allElectricActive()
+    boiler_opentherm = coordinator.boilerOpenTherm()
+
+    # Determine which sensors to create based on the detected configuration
+    flag_conditions = [
+        ("quatt_hybrid", not all_electric_active),
+        ("quatt_all_electric", all_electric_active),
+        ("quatt_duo", heatpump2_active),
+        ("quatt_opentherm", boiler_opentherm),
+    ]
+
+    # Determine which sensors to create based on the flags
+    sensor_keys = {
+        sensor_description.key
+        for sensor_description in SENSORS
+        if not any(getattr(sensor_description, flag) for flag, _ in flag_conditions)
+        or all(
+            condition
+            for flag, condition in flag_conditions
+            if getattr(sensor_description, flag)
+        )
+    }
+
+    # Remove not applicable sensors
+    for dev_id in device_ids:
+        for entry_reg in er.async_entries_for_device(
+            registry, dev_id, include_disabled_entities=True
+        ):
+            if (
+                entry_reg.config_entry_id == entry.entry_id
+                and entry_reg.domain == SENSOR_DOMAIN
+                and entry_reg.platform == DOMAIN
+                and not any(entry_reg.unique_id.endswith(key) for key in sensor_keys)
+            ):
+                registry.async_remove(entry_reg.entity_id)
+
+    # Create sensor entities based on the filtered sensor keys
+    sensors = [
         QuattSensor(
             coordinator=coordinator,
-            sensor_key=entity_description.key,
-            entity_description=entity_description,
+            sensor_key=descr.key,
+            entity_description=descr,
         )
-        for entity_description in SENSORS
-    )
+        for descr in SENSORS
+        if descr.key in sensor_keys
+    ]
+    async_add_devices(sensors)
 
 
 class QuattSensor(QuattEntity, SensorEntity):
@@ -395,25 +448,7 @@ class QuattSensor(QuattEntity, SensorEntity):
     @property
     def entity_registry_enabled_default(self):
         """Return whether the sensor should be enabled by default."""
-        value = self.entity_description.entity_registry_enabled_default
-
-        # Enable the hybrid installation specific binary_sensors (boiler)
-        if value and self.entity_description.quatt_hybrid:
-            value = not self.coordinator.allElectricActive()
-
-        # Enable the all electric installation specific binary_sensors (boiler)
-        if value and self.entity_description.quatt_all_electric:
-            value = self.coordinator.allElectricActive()
-
-        # Enable the quatt duo installation specific binary_sensors
-        if value and self.entity_description.quatt_duo:
-            value = self.coordinator.heatpump2Active()
-
-        # Enable the opentherm installation specific binary_sensors
-        if value and self.entity_description.quatt_opentherm:
-            value = self.coordinator.boilerOpenTherm()
-
-        return value
+        return self.entity_description.entity_registry_enabled_default
 
     @property
     def native_value(self) -> str:
