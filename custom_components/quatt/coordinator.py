@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from datetime import timedelta
+import inspect
 import math
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -58,30 +60,30 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         except QuattApiClientError as exception:
             raise UpdateFailed(exception) from exception
 
-    def heatpump_1_active(self):
+    def heatpump_1_active(self) -> bool:
         """Check if heatpump 1 is active."""
         return self.get_value("hp1") is not None
 
-    def heatpump_2_active(self):
+    def heatpump_2_active(self) -> bool:
         """Check if heatpump 2 is active."""
         return self.get_value("hp2") is not None
 
-    def all_electric_active(self):
+    def all_electric_active(self) -> bool:
         """Check if it is an all electric installation."""
         return self.get_value("hc.electricalPower") is not None
 
-    def is_boiler_opentherm(self):
+    def is_boiler_opentherm(self) -> bool:
         """Check if the boiler connected to the CIC offers OpenTherm."""
         return self.get_value("boiler.otFbChModeActive") is not None
 
-    def get_conversion_factor(self, temperature: float):
+    def get_conversion_factor(self, temperature: float) -> float:
         """Get the conversion factor for the nearest temperature."""
-        nearestTemperature = min(
+        nearest_temperature = min(
             CONVERSION_FACTORS.keys(), key=lambda t: abs(t - temperature)
         )
-        return CONVERSION_FACTORS[nearestTemperature]
+        return CONVERSION_FACTORS[nearest_temperature]
 
-    def electricalPower(self):
+    def electricalPower(self) -> float | None:  # pylint: disable=invalid-name
         """Get heatpump power from sensor."""
         if self._power_sensor_id is None:
             return None
@@ -95,8 +97,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             return self.hass.states.get(self._power_sensor_id).state
         return None
 
-    def computedWaterDelta(self, parent_key: str | None = None):
-        """Compute waterDelta."""
+    def computedWaterDelta(self, parent_key: str | None = None) -> float | None:  # pylint: disable=invalid-name
+        """Compute waterdelta."""
         if parent_key is None:
             parent_key = ""
             temperature_water_out = self.get_value("hp2.temperatureWaterOut")
@@ -121,8 +123,8 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
         return round(temperature_water_out - temperature_water_in, 2)
 
-    def computedHeatPower(self, parent_key: str | None = None):
-        """Compute heatPower."""
+    def computedHeatPower(self) -> float | None:  # pylint: disable=invalid-name
+        """Compute heatpower."""
 
         # Retrieve the supervisory control mode state first
         state = self.get_value("qc.supervisoryControlMode")
@@ -166,7 +168,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         # Prevent any negative numbers
         return max(value, 0.00)
 
-    def computedBoilerHeatPower(self, parent_key: str | None = None) -> float | None:
+    def computedBoilerHeatPower(self) -> float | None:  # pylint: disable=invalid-name
         """Compute the boiler's added heat power."""
 
         # Retrieve the supervisory control mode state first
@@ -220,14 +222,14 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         # Prevent any negative numbers
         return max(value, 0.00)
 
-    def computedSystemPower(self, parent_key: str | None = None):
+    def computedSystemPower(self) -> float | None:  # pylint: disable=invalid-name
         """Compute total system power."""
         heater_power = (
             self.get_value("hc.electricalPower")
             if self.all_electric_active()
-            else self.computedBoilerHeatPower(parent_key)
+            else self.computedBoilerHeatPower()
         )
-        heatpump_power = self.computedPower(parent_key)
+        heatpump_power = self.computedPower()
 
         # Log debug information
         LOGGER.debug("computedSystemPower.boilerPower: %s", heater_power)
@@ -239,7 +241,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
         return float(heater_power) + float(heatpump_power)
 
-    def computedPowerInput(self, parent_key: str | None = None):
+    def computedPowerInput(self) -> float | None:  # pylint: disable=invalid-name
         """Compute total powerInput."""
         power_input_hp_1 = float(self.get_value("hp1.powerInput", 0))
         power_input_hp_2 = (
@@ -249,7 +251,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         )
         return power_input_hp_1 + power_input_hp_2
 
-    def computedPower(self, parent_key: str | None = None):
+    def computedPower(self) -> float | None:  # pylint: disable=invalid-name
         """Compute total power."""
         power_hp_1 = float(self.get_value("hp1.power", 0))
         power_hp_2 = (
@@ -257,10 +259,10 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         )
         return power_hp_1 + power_hp_2
 
-    def computedCop(self, parent_key: str | None = None):
+    def computedCop(self) -> float | None:  # pylint: disable=invalid-name
         """Compute COP."""
         electrical_power = self.electricalPower()
-        computed_heat_power = self.computedHeatPower(parent_key)
+        computed_heat_power = self.computedHeatPower()
 
         LOGGER.debug("computedCop.electricalPower %s", electrical_power)
         LOGGER.debug("computedCop.computedHeatPower %s", computed_heat_power)
@@ -275,11 +277,11 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
         return round(computed_heat_power / electrical_power, 2)
 
-    def computedQuattCop(self, parent_key: str | None = None):
+    def computedQuattCop(self, parent_key: str | None = None) -> float | None:  # pylint: disable=invalid-name
         """Compute Quatt COP."""
         if parent_key is None:
-            power_input = self.computedPowerInput(parent_key)
-            power_output = self.computedPower(parent_key)
+            power_input = self.computedPowerInput()
+            power_output = self.computedPower()
         else:
             power_input = self.get_value(parent_key + ".powerInput")
             power_output = self.get_value(parent_key + ".power")
@@ -300,7 +302,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         # Prevent negative sign for 0 values (like: -0.0)
         return math.copysign(0.0, 1) if value == 0 else value
 
-    def computedDefrost(self, parent_key: str | None = None):
+    def computedDefrost(self, parent_key: str | None = None) -> bool:  # pylint: disable=invalid-name
         """Compute Quatt Defrost State."""
         if parent_key is None:
             return None
@@ -333,7 +335,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
             and water_delta < -1
         )
 
-    def computedSupervisoryControlMode(self, parent_key: str | None = None):
+    def computedSupervisoryControlMode(self) -> str | None:  # pylint: disable=invalid-name
         """Map the numeric supervisoryControlMode to a textual status."""
         state = self.get_value("qc.supervisoryControlMode")
         if state is None:
@@ -348,7 +350,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         except ValueError:
             return None
 
-    def get_value(self, value_path: str, default: float | None = None):
+    def get_value(self, value_path: str, default: float | None = None) -> Any:
         """Retrieve a value by dot notation or invoke a computed method."""
         parts = value_path.split(".")
         current_node = self.data
@@ -360,7 +362,12 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
 
             # Computed method invocation
             if part.startswith("computed") and hasattr(self, part):
-                return getattr(self, part)(parent_key)
+                method = getattr(self, part)
+                sig = inspect.signature(method)
+                # Call with parent_key if accepted, else without
+                if "parent_key" in sig.parameters:
+                    return method(parent_key)
+                return method()
 
             # Dict key access
             if isinstance(current_node, dict) and part in current_node:
