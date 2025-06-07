@@ -5,7 +5,8 @@
     "http"
   ],
   "codeowners": [
-    "@marcoboers"
+    "@marcoboers",
+    "@patrickvorgers"
   ],
   "config_flow": true,
   "dhcp": [

@@ -1,5 +1,6 @@
 """Constants for quatt."""
 
+from enum import IntEnum
 from logging import Logger, getLogger
 from typing import Final
 
@@ -10,6 +11,56 @@ DOMAIN = "quatt"
 ATTRIBUTION = "marcoboers"
 
 CONF_POWER_SENSOR = "power_sensor"
+
+# Device IDs
+DEVICE_BOILER_ID = "boiler"
+DEVICE_CIC_ID = "cic"
+DEVICE_FLOWMETER_ID = "flowmeter"
+DEVICE_HEAT_CHARGER_ID = "heat_charger"
+DEVICE_HEATPUMP_1_ID = "heatpump_1"
+DEVICE_HEATPUMP_2_ID = "heatpump_2"
+DEVICE_THERMOSTAT_ID = "thermostat"
+
+DEVICE_LIST = [
+    {"name": "Boiler", "id": DEVICE_BOILER_ID},
+    {"name": "CIC", "id": DEVICE_CIC_ID},
+    {"name": "Flowmeter", "id": DEVICE_FLOWMETER_ID},
+    {"name": "Heat charger", "id": DEVICE_HEAT_CHARGER_ID},
+    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID},
+    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID},
+    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID},
+]
+
+
+# Supervisory Control Modes
+class SupervisoryControlMode(IntEnum):
+    """Enumerates the supervisory control modes for the Quatt system."""
+
+    STANDBY = 0
+    STANDBY_HEATING = 1
+    HEATING_HEATPUMP_ONLY = 2
+    HEATING_HEATPUMP_PLUS_BOILER = 3
+    HEATING_BOILER_ONLY = 4
+    ANTIFREEZE_BOILER_ON = 96
+    ANTIFREEZE_BOILER_PREPUMP = 97
+    ANTIFREEZE_WATER_CIRCULATION = 98
+    FAULT_CIRCULATION_PUMP_ON = 99
+
+    @property
+    def description(self) -> str:
+        """Return a human-readable description of the supervisory control mode."""
+        return {
+            self.STANDBY: "Standby",
+            self.STANDBY_HEATING: "Standby - heating",
+            self.HEATING_HEATPUMP_ONLY: "Heating - heatpump only",
+            self.HEATING_HEATPUMP_PLUS_BOILER: "Heating - heatpump + boiler",
+            self.HEATING_BOILER_ONLY: "Heating - boiler only",
+            self.ANTIFREEZE_BOILER_ON: "Anti-freeze protection - boiler on",
+            self.ANTIFREEZE_BOILER_PREPUMP: "Anti-freeze protection - boiler pre-pump",
+            self.ANTIFREEZE_WATER_CIRCULATION: "Anti-freeze protection - water circulation",
+            self.FAULT_CIRCULATION_PUMP_ON: "Fault - circulation pump on",
+        }[self]
+
 
 # Defaults
 DEFAULT_SCAN_INTERVAL: Final = 10
