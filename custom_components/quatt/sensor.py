@@ -15,6 +15,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.device_registry as dr
@@ -34,7 +35,6 @@ from .const import (
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import QuattEntity, QuattSensorEntityDescription
-
 
 def create_heatpump_sensor_entity_descriptions(
     prefix: str, is_duo: bool = False
@@ -284,7 +284,7 @@ SENSORS = {
             name="Flowrate",
             key="qc.flowRateFiltered",
             icon="mdi:gauge",
-            native_unit_of_measurement="L/h",
+            native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_HOUR,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
         ),

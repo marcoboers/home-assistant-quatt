@@ -2,7 +2,7 @@
     "name": "Quatt",
     "filename": "quatt.zip",
     "hide_default_branch": true,
-    "homeassistant": "2022.2.0",
+    "homeassistant": "2025.5.0",
     "render_readme": true,
     "zip_release": true
 }
