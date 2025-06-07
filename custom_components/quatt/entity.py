@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -18,6 +19,17 @@ class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=Tru
     quatt_opentherm: bool = False
 
 
+class QuattBinarySensorEntityDescription(
+    BinarySensorEntityDescription, frozen_or_thawed=True
+):
+    """A class that describes Quatt binary sensor entities."""
+
+    quatt_hybrid: bool = False
+    quatt_all_electric: bool = False
+    quatt_duo: bool = False
+    quatt_opentherm: bool = False
+
+
 class QuattEntity(CoordinatorEntity):
     """QuattEntity class."""
 
@@ -26,25 +38,23 @@ class QuattEntity(CoordinatorEntity):
 
     def __init__(
         self,
-        coordinator: QuattDataUpdateCoordinator,
+        device_name: str,
+        device_id: str,
         sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
         self._attr_unique_id = coordinator.config_entry.entry_id + sensor_key
-        # self._attr_device_info = DeviceInfo(
-        #     identifiers={(DOMAIN, self.unique_id)},
-        #     name=NAME,
-        #     model=VERSION,
-        #     manufacturer=NAME,
-        # )
+        self._device_name = device_name
+        self._device_id = device_id
 
     @property
     def device_info(self):
         """Return the device information."""
         return {
-            "identifiers": {(DOMAIN, self.coordinator.config_entry.entry_id)},
-            "name": "Heatpump",
+            "identifiers": {(DOMAIN, self._device_id)},
+            "name": self._device_name,
             "manufacturer": NAME,
-            "model": self.coordinator.getValue("system.hostName"),
+            "model": "—",
         }
