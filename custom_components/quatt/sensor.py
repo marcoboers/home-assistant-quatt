@@ -36,6 +36,7 @@ from .const import (
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import QuattEntity, QuattSensorEntityDescription
 
+
 def create_heatpump_sensor_entity_descriptions(
     prefix: str, is_duo: bool = False
 ) -> list[QuattSensorEntityDescription]:
@@ -120,6 +121,7 @@ def create_heatpump_sensor_entity_descriptions(
 
 
 SENSORS = {
+    # The HUB CIC sensor must be created first to ensure the HUB device is present
     DEVICE_CIC_ID: [
         QuattSensorEntityDescription(
             name="Timestamp last update",
@@ -374,6 +376,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     }
 
     # Remove not applicable sensors
+    hub_id = (entry.unique_id or entry.entry_id).strip()
     for dev_id in device_ids:
         for entry_reg in er.async_entries_for_device(
             registry, dev_id, include_disabled_entities=True
@@ -388,20 +391,24 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
         # Remove the device in case it has no remaining entities
         if not any(er.async_entries_for_device(registry, dev_id)):
+            # Do not remove the hub device
+            dev = device_reg.async_get(dev_id)
+            if dev and (DOMAIN, hub_id) in dev.identifiers:
+                continue
             device_reg.async_remove_device(dev_id)
 
     # Create sensor entities based on the filtered sensor keys
     device_name_map = {d["id"]: d["name"] for d in DEVICE_LIST}
     sensors: list[QuattSensor] = []
     for device_id, sensor_descriptions in SENSORS.items():
-        device_name = device_name_map.get(device_id, device_id)
         sensors.extend(
             QuattSensor(
-                device_name=device_name,
+                device_name=device_name_map.get(device_id, device_id),
                 device_id=device_id,
                 sensor_key=sensor_description.key,
                 coordinator=coordinator,
                 entity_description=sensor_description,
+                attach_to_hub=(device_id == DEVICE_CIC_ID),
             )
             for sensor_description in sensor_descriptions
             if sensor_description.key in sensor_keys
@@ -420,9 +427,10 @@ class QuattSensor(QuattEntity, SensorEntity):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattSensorEntityDescription,
+        attach_to_hub: bool,
     ) -> None:
         """Initialize the sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator)
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
         self.entity_description = entity_description
 
     @property

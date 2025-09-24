@@ -55,6 +55,14 @@ def create_heatpump_sensor_entity_descriptions(
 
 
 BINARY_SENSORS = {
+    # The HUB CIC sensor must be created first to ensure the HUB device is present
+    DEVICE_CIC_ID: [
+        QuattBinarySensorEntityDescription(
+            name="QC pump protection",
+            key="qc.stickyPumpProtectionEnabled",
+            icon="mdi:shield-refresh-outline",
+        ),
+    ],
     DEVICE_HEATPUMP_1_ID: create_heatpump_sensor_entity_descriptions(
         prefix="hp1", is_duo=False
     ),
@@ -113,13 +121,6 @@ BINARY_SENSORS = {
             icon="mdi:snowflake-thermometer",
         ),
     ],
-    DEVICE_CIC_ID: [
-        QuattBinarySensorEntityDescription(
-            name="QC pump protection",
-            key="qc.stickyPumpProtectionEnabled",
-            icon="mdi:shield-refresh-outline",
-        ),
-    ],
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -176,6 +177,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     }
 
     # Remove not applicable sensors
+    hub_id = (entry.unique_id or entry.entry_id).strip()
     for dev_id in device_ids:
         for entry_reg in er.async_entries_for_device(
             registry, dev_id, include_disabled_entities=True
@@ -190,20 +192,24 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
         # Remove the device in case it has no remaining entities
         if not any(er.async_entries_for_device(registry, dev_id)):
+            # Do not remove the hub device
+            dev = device_reg.async_get(dev_id)
+            if dev and (DOMAIN, hub_id) in dev.identifiers:
+                continue
             device_reg.async_remove_device(dev_id)
 
     # Create sensor entities based on the filtered sensor keys
     device_name_map = {d["id"]: d["name"] for d in DEVICE_LIST}
     sensors: list[QuattBinarySensor] = []
     for device_id, sensor_descriptions in BINARY_SENSORS.items():
-        device_name = device_name_map.get(device_id, device_id)
         sensors.extend(
             QuattBinarySensor(
-                device_name=device_name,
+                device_name=device_name_map.get(device_id, device_id),
                 device_id=device_id,
                 sensor_key=sensor_description.key,
                 coordinator=coordinator,
                 entity_description=sensor_description,
+                attach_to_hub=(device_id == DEVICE_CIC_ID),
             )
             for sensor_description in sensor_descriptions
             if sensor_description.key in sensor_keys
@@ -222,9 +228,10 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattBinarySensorEntityDescription,
+        attach_to_hub: bool,
     ) -> None:
         """Initialize the binary_sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator)
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
         self.entity_description = entity_description
 
     @property
