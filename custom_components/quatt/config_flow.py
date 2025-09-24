@@ -40,15 +40,15 @@ from .const import (
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
-    VERSION = 3
+    VERSION = 4
 
     def __init__(self) -> None:
         """Initialize a Quatt flow."""
         self.ip_address: str | None = None
-        self.hostname: str | None = None
+        self.cic_name: str | None = None
 
-    async def _test_credentials(self, ip_address: str) -> str:
-        """Validate credentials."""
+    async def _get_cic_name(self, ip_address: str) -> str:
+        """Validate device and return the CIC id/name (system.hostName)."""
         client = QuattApiClient(
             ip_address=ip_address,
             session=async_create_clientsession(self.hass),
@@ -74,7 +74,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         _errors = {}
         if user_input is not None:
             try:
-                cic_hostname = await self._test_credentials(
+                cic_name = await self._get_cic_name(
                     ip_address=user_input[CONF_IP_ADDRESS],
                 )
             except QuattApiClientAuthenticationError as exception:
@@ -87,13 +87,13 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
             else:
-                if cic_hostname is not None:
+                if cic_name is not None:
                     # Check if this cic has already been configured
-                    await self.async_set_unique_id(cic_hostname)
+                    await self.async_set_unique_id(cic_name)
                     self._abort_if_unique_id_configured()
 
                     return self.async_create_entry(
-                        title=cic_hostname,
+                        title=cic_name,
                         data=user_input,
                     )
 
@@ -125,9 +125,10 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         )
 
         # Get the status page to validate that we are dealing with a Quatt because
-        # the DHCP match is only on "cic-*"
+        # the DHCP match is only on "cic-*". We cannot use the cic-name here because
+        # it is set at a later stage in the rebootprocess of the CIC.
         try:
-            await self._test_credentials(ip_address=discovery_info.ip)
+            await self._get_cic_name(ip_address=discovery_info.ip)
         except (
             QuattApiClientAuthenticationError,
             QuattApiClientCommunicationError,
@@ -165,7 +166,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     # Use the found entry unique_id
                     await self.async_set_unique_id(entry.unique_id)
                     self.ip_address = discovery_info.ip
-                    self.hostname = discovery_info.hostname
+                    self.cic_name = discovery_info.hostname
 
                     if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
                         # Configuration is an ip-address, update it
@@ -188,7 +189,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             # No match found, so this is a new CIC
             await self.async_set_unique_id(hostname_unique_id)
             self.ip_address = discovery_info.ip
-            self.hostname = discovery_info.hostname
+            self.cic_name = discovery_info.hostname
 
             self.context.update({"title_placeholders": {"name": hostname_unique_id}})
             return await self.async_step_confirm()
@@ -200,7 +201,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Use the hostname instead of the ip
             return self.async_create_entry(
-                title=self.hostname, data={CONF_IP_ADDRESS: self.ip_address}
+                title=self.cic_name, data={CONF_IP_ADDRESS: self.ip_address}
             )
 
         return self.async_show_form(step_id="confirm")

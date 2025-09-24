@@ -22,7 +22,13 @@ from .api import (
     QuattApiClientCommunicationError,
     QuattApiClientError,
 )
-from .const import CONF_POWER_SENSOR, DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER
+from .const import (
+    CONF_POWER_SENSOR,
+    DEFAULT_SCAN_INTERVAL,
+    DEVICE_CIC_ID,
+    DOMAIN,
+    LOGGER,
+)
 from .coordinator import QuattDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
@@ -35,7 +41,7 @@ PLATFORMS: list[Platform] = [
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator = QuattDataUpdateCoordinator(
+    coordinator = QuattDataUpdateCoordinator(
         hass=hass,
         update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         client=QuattApiClient(
@@ -43,6 +49,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             session=async_get_clientsession(hass),
         ),
     )
+    hass.data[DOMAIN][entry.entry_id] = coordinator
+
     # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
     await coordinator.async_config_entry_first_refresh()
 
@@ -157,6 +165,81 @@ async def _migrate_v2_to_v3(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     return True
 
 
+async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate v3 entry to v4 entry."""
+
+    # Migration to hub/child layout + new unique_id format.
+    # Old entity.unique_id:   entry.entry_id + sensor_key
+    # New entity.unique_id:   f"{hub_id}:{device_identifier}:{sensor_key}"
+    # Hub device:             (DOMAIN, hub_id)
+    # Child device:           (DOMAIN, f"{hub_id}:{device_identifier}") via hub
+
+    # include hub_id in device identifiers and entity unique_ids."
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
+
+    entity_reg = er.async_get(hass)
+    device_reg = dr.async_get(hass)
+
+    hub_id = config_entry.unique_id
+
+    # Get the information about the devices for this config entry
+    device_info: list[tuple[str, str, bool]] = []
+    for device in dr.async_entries_for_config_entry(device_reg, config_entry.entry_id):
+        # Check if this is the hub device or a child device
+        if (DOMAIN, DEVICE_CIC_ID) in device.identifiers or (
+            DOMAIN,
+            hub_id,
+        ) in device.identifiers:
+            device_info.append((device.id, DEVICE_CIC_ID, True))
+        else:
+            device_identifier = next(iter(device.identifiers))[1]
+            device_info.append((device.id, device_identifier, False))
+
+    # Ensure hub comes first so via_device references a valid parent, sort on is_hub
+    device_info.sort(key=lambda device_entry: 0 if device_entry[2] else 1)
+
+    # Update devices and entities
+    for device_id, device_identifier, is_hub in device_info:
+        # Update the device identifiers and via_device_id (if not hub)
+        device_reg.async_update_device(
+            device_id,
+            new_identifiers={
+                (DOMAIN, hub_id if is_hub else f"{hub_id}:{device_identifier}")
+            },
+            via_device_id=None if is_hub else (DOMAIN, hub_id),
+        )
+
+        # Rewrite unique_ids for entities on this device: hub_id:<device_identifier>:<sensor_key>
+        for entity in er.async_entries_for_device(
+            entity_reg, device_id, include_disabled_entities=True
+        ):
+            # Checks are needed to avoid changing entities that are not part of this integration
+            # or that have already been migrated.
+            if (
+                entity.config_entry_id != config_entry.entry_id
+                or entity.platform != DOMAIN
+            ):
+                continue
+            if entity.unique_id.startswith(f"{hub_id}:"):
+                continue
+            if not entity.unique_id.startswith(config_entry.entry_id):
+                continue
+
+            sensor_key = entity.unique_id[len(config_entry.entry_id) :]
+            entity_reg.async_update_entity(
+                entity.entity_id,
+                new_unique_id=f"{hub_id}:{device_identifier}:{sensor_key}",
+            )
+
+    # Update the config entry to version 4
+    hass.config_entries.async_update_entry(
+        config_entry,
+        version=4,
+    )
+
+    return True
+
+
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
 
@@ -166,6 +249,10 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     if config_entry.version == 2:
         if not await _migrate_v2_to_v3(hass, config_entry):
+            return False
+
+    if config_entry.version == 3:
+        if not await _migrate_v3_to_v4(hass, config_entry):
             return False
 
     return True
