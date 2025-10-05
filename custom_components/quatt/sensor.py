@@ -11,10 +11,13 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    CURRENCY_EURO,
     EntityCategory,
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfVolume,
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
@@ -202,6 +205,32 @@ SENSORS = {
         QuattSensorEntityDescription(
             name="QC supervisory control mode",
             key="qc.computedSupervisoryControlMode",
+        ),
+        QuattSensorEntityDescription(
+            name="Electricity price used",
+            key="qc.electricityPriceUsed",
+            icon="mdi:currency-eur",
+            native_unit_of_measurement=f"{CURRENCY_EURO}/{UnitOfEnergy.KILO_WATT_HOUR}",
+            suggested_display_precision=2,
+            state_class=SensorStateClass.MEASUREMENT,
+        ),
+        QuattSensorEntityDescription(
+            name="Electricity tariff type",
+            key="system.computedElectricityTariffType",
+            icon="mdi:swap-horizontal-circle",
+        ),
+        QuattSensorEntityDescription(
+            name="Gas price used",
+            key="qc.gasPriceUsed",
+            icon="mdi:currency-eur",
+            native_unit_of_measurement=f"{CURRENCY_EURO}/{UnitOfVolume.CUBIC_METERS}",
+            suggested_display_precision=2,
+            state_class=SensorStateClass.MEASUREMENT,
+        ),
+        QuattSensorEntityDescription(
+            name="Gas tariff type",
+            key="system.computedGasTariffType",
+            icon="mdi:swap-horizontal-circle",
         ),
         # System
         QuattSensorEntityDescription(

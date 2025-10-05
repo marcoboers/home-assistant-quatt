@@ -62,6 +62,38 @@ class SupervisoryControlMode(IntEnum):
         }[self]
 
 
+class ElectricityTariffType(IntEnum):
+    """Enumerates the electricity tariff types for the Quatt system."""
+
+    SINGLE = 0
+    DOUBLE = 1
+    DYNAMIC = 2
+
+    @property
+    def description(self) -> str:
+        """Return a human-readable description of the electricity tariff type."""
+        return {
+            self.SINGLE: "Single tariff",
+            self.DOUBLE: "Double tariff",
+            self.DYNAMIC: "Dynamic tariff",
+        }[self]
+
+
+class GasTariffType(IntEnum):
+    """Enumerates the gas tariff types for the Quatt system."""
+
+    SINGLE = 0
+    DYNAMIC = 2
+
+    @property
+    def description(self) -> str:
+        """Return a human-readable description of the gas tariff type."""
+        return {
+            self.SINGLE: "Single tariff",
+            self.DYNAMIC: "Dynamic tariff",
+        }[self]
+
+
 # Defaults
 DEFAULT_SCAN_INTERVAL: Final = 10
 MIN_SCAN_INTERVAL: Final = 5
