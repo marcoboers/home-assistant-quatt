@@ -62,6 +62,12 @@ BINARY_SENSORS = {
             key="qc.stickyPumpProtectionEnabled",
             icon="mdi:shield-refresh-outline",
         ),
+        QuattBinarySensorEntityDescription(
+            name="Anti legionella active",
+            key="qcAllE.isAntilegionellaActive",
+            icon="mdi:shield-check",
+            quatt_all_electric=True,
+        ),
     ],
     DEVICE_HEATPUMP_1_ID: create_heatpump_sensor_entity_descriptions(
         prefix="hp1", is_duo=False

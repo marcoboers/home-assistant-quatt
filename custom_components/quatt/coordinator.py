@@ -19,6 +19,7 @@ from .const import (
     CONVERSION_FACTORS,
     DOMAIN,
     LOGGER,
+    AllElectricSupervisoryControlMode,
     ElectricityTariffType,
     GasTariffType,
     SupervisoryControlMode,
@@ -352,11 +353,23 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         except ValueError:
             return None
 
+    def computedAllESupervisoryControlMode(self) -> str | None:  # pylint: disable=invalid-name
+        """Map the numeric All-electric supervisoryControlMode to a textual status."""
+        state = self.get_value("qcAllE.allESupervisoryControlMode")
+        if state is None:
+            return None
+
+        try:
+            return AllElectricSupervisoryControlMode(state).description
+        except ValueError:
+            return None
+
     def computedElectricityTariffType(self) -> str | None:  # pylint: disable=invalid-name
         """Map the numeric electricityTariffType to a textual status."""
         state = self.get_value("system.electricityTariffType")
         if state is None:
             return None
+
         try:
             return ElectricityTariffType(state).description
         except ValueError:
@@ -367,6 +380,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         state = self.get_value("system.gasTariffType")
         if state is None:
             return None
+
         try:
             return GasTariffType(state).description
         except ValueError:
