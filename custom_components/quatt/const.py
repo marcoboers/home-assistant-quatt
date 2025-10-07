@@ -16,6 +16,7 @@ CONF_POWER_SENSOR = "power_sensor"
 DEVICE_BOILER_ID = "boiler"
 DEVICE_CIC_ID = "cic"
 DEVICE_FLOWMETER_ID = "flowmeter"
+DEVICE_HEAT_BATTERY_ID = "heat_battery"
 DEVICE_HEAT_CHARGER_ID = "heat_charger"
 DEVICE_HEATPUMP_1_ID = "heatpump_1"
 DEVICE_HEATPUMP_2_ID = "heatpump_2"
@@ -25,6 +26,7 @@ DEVICE_LIST = [
     {"name": "Boiler", "id": DEVICE_BOILER_ID},
     {"name": "CIC", "id": DEVICE_CIC_ID},
     {"name": "Flowmeter", "id": DEVICE_FLOWMETER_ID},
+    {"name": "Heat battery", "id": DEVICE_HEAT_BATTERY_ID},
     {"name": "Heat charger", "id": DEVICE_HEAT_CHARGER_ID},
     {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID},
     {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID},
@@ -62,6 +64,44 @@ class SupervisoryControlMode(IntEnum):
         }[self]
 
 
+class AllElectricSupervisoryControlMode(IntEnum):
+    """Enumerates the supervisory control modes for the Quatt All-Electric system."""
+
+    IDLE = 0
+    PRE_POST_PUMPING = 1
+    CHARGE_NORMAL = 2
+    CHARGE_BOOST = 3
+    CHARGE_BACKUP = 4
+    CHARGE_NORMAL_BACKUP = 5
+    CHARGE_CH_BACKUP = 6
+    CH_BACKUP = 7
+    DISCHARGE = 8
+    DISCHARGE_CH_BACKUP = 9
+    STICKY_PUMP_PROTECTION = 10
+    PRE_POST_PUMP_TO_CHARGING = 11
+    PRE_POST_PUMP_TO_DISCHARGING = 12
+
+    @property
+    def description(self) -> str:
+        """Return a human-readable description of the supervisory control mode."""
+        return {
+            self.IDLE: "Idle",
+            self.PRE_POST_PUMPING: "Pre/post pumping",
+            self.CHARGE_NORMAL: "Charge - normal",
+            self.CHARGE_BOOST: "Charge - boost",
+            self.CHARGE_BACKUP: "Charge - backup",
+            self.CHARGE_NORMAL_BACKUP: "Charge - normal backup",
+            self.CHARGE_CH_BACKUP: "Charge - CH backup",
+            self.CH_BACKUP: "CH backup",
+            self.DISCHARGE: "Discharge",
+            self.DISCHARGE_CH_BACKUP: "Discharge CH backup",
+            self.STICKY_PUMP_PROTECTION: "Sticky pump protection",
+            self.PRE_POST_PUMP_TO_CHARGING: "Pre/post pump to charging",
+            self.PRE_POST_PUMP_TO_DISCHARGING: "Pre/post pump to discharging",
+        }[self]
+
+
+# Electricity Tariff Types
 class ElectricityTariffType(IntEnum):
     """Enumerates the electricity tariff types for the Quatt system."""
 
@@ -79,6 +119,7 @@ class ElectricityTariffType(IntEnum):
         }[self]
 
 
+# Gas Tariff Types
 class GasTariffType(IntEnum):
     """Enumerates the gas tariff types for the Quatt system."""
 
