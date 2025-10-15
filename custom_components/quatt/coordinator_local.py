@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for quatt."""
+"""DataUpdateCoordinator for quatt local API."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import QuattApiClient, QuattApiClientAuthenticationError, QuattApiClientError
+from .api import QuattLocalApiClient, QuattApiClientAuthenticationError, QuattApiClientError
 from .const import (
     CONF_POWER_SENSOR,
     CONVERSION_FACTORS,
@@ -27,8 +27,8 @@ from .const import (
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class QuattDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching data from the API."""
+class QuattLocalDataUpdateCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching data from the local API."""
 
     config_entry: ConfigEntry
 
@@ -36,7 +36,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator):
         self,
         hass: HomeAssistant,
         update_interval: int,
-        client: QuattApiClient,
+        client: QuattLocalApiClient,
     ) -> None:
         """Initialize."""
         self.client = client

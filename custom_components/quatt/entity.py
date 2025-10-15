@@ -8,7 +8,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN, NAME
-from .coordinator import QuattDataUpdateCoordinator
+from .coordinator_local import QuattLocalDataUpdateCoordinator
 
 
 class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
@@ -42,7 +42,7 @@ class QuattEntity(CoordinatorEntity):
         device_name: str,
         device_id: str,
         sensor_key: str,
-        coordinator: QuattDataUpdateCoordinator,
+        coordinator: QuattLocalDataUpdateCoordinator,
         attach_to_hub: bool,
     ) -> None:
         """Initialize."""

@@ -18,7 +18,7 @@ import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.storage import Store
 
 from .api import (
-    QuattApiClient,
+    QuattLocalApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
@@ -38,7 +38,7 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
-from .coordinator import QuattDataUpdateCoordinator
+from .coordinator_local import QuattLocalDataUpdateCoordinator
 from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
@@ -91,13 +91,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     else:
         # Local connection setup (existing logic)
-        client = QuattApiClient(
+        client = QuattLocalApiClient(
             ip_address=entry.data[CONF_LOCAL_CIC],
             session=async_get_clientsession(hass),
         )
 
         # Create local coordinator
-        coordinator = QuattDataUpdateCoordinator(
+        coordinator = QuattLocalDataUpdateCoordinator(
             hass=hass,
             update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             client=client,
@@ -129,7 +129,7 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def _get_cic_hostname(hass: HomeAssistant, ip_address: str) -> str:
     """Validate credentials."""
-    client = QuattApiClient(
+    client = QuattLocalApiClient(
         ip_address=ip_address,
         session=async_create_clientsession(hass),
     )

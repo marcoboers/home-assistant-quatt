@@ -21,7 +21,7 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import (
-    QuattApiClient,
+    QuattLocalApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
@@ -57,7 +57,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
 
     async def _get_cic_name(self, ip_address: str) -> str:
         """Validate device and return the CIC id/name (system.hostName)."""
-        client = QuattApiClient(
+        client = QuattLocalApiClient(
             ip_address=ip_address,
             session=async_create_clientsession(self.hass),
         )

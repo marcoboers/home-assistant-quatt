@@ -42,15 +42,15 @@ class QuattApiClientCommunicationError(QuattApiClientError):
 class QuattApiClientAuthenticationError(QuattApiClientError):
     """Exception to indicate an authentication error."""
 
-class QuattApiClient:
-    """Quatt API Client."""
+class QuattLocalApiClient:
+    """Quatt Local API Client."""
 
     def __init__(
         self,
         ip_address: str,
         session: aiohttp.ClientSession,
     ) -> None:
-        """Quatt API Client."""
+        """Quatt Local API Client."""
         self._ip_address = ip_address
         self._session = session
 
