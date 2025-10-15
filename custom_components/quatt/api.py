@@ -168,7 +168,7 @@ class QuattRemoteApiClient:
             })
             _LOGGER.debug("Tokens saved to storage")
 
-    async def authenticate(self) -> bool:
+    async def authenticate(self, first_name: str = "HomeAssistant", last_name: str = "User") -> bool:
         """Authenticate with Firebase and Quatt API."""
         try:
             # Check if we have existing tokens
@@ -212,7 +212,7 @@ class QuattRemoteApiClient:
                 return False
 
             # Step 5: Update user profile
-            if not await self._update_user_profile():
+            if not await self._update_user_profile(first_name=first_name, last_name=last_name):
                 return False
 
             # Step 6: Request pairing with CIC
@@ -383,13 +383,13 @@ class QuattRemoteApiClient:
             _LOGGER.error("Get account info error: %s", err)
             return False
 
-    async def _update_user_profile(self) -> bool:
+    async def _update_user_profile(self, first_name: str, last_name: str) -> bool:
         """Update user profile with name."""
         if not self._id_token:
             return False
 
         headers = {"Authorization": f"Bearer {self._id_token}"}
-        payload = {"firstName": "HomeAssistant", "lastName": "User"}
+        payload = {"firstName": first_name, "lastName": last_name}
         url = f"{QUATT_API_BASE_URL}/me"
 
         try:
@@ -399,7 +399,7 @@ class QuattRemoteApiClient:
                 headers=headers,
             ) as response:
                 if response.status in (200, 201):
-                    _LOGGER.debug("User profile updated")
+                    _LOGGER.debug("User profile updated with firstName: %s, lastName: %s", first_name, last_name)
                     return True
                 _LOGGER.error(
                     "User profile update failed: %s", await response.text()

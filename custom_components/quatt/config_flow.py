@@ -41,6 +41,9 @@ from .const import (
     MIN_SCAN_INTERVAL,
 )
 
+CONF_FIRST_NAME = "first_name"
+CONF_LAST_NAME = "last_name"
+
 
 # pylint: disable=abstract-method
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
@@ -217,7 +220,10 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 session = async_create_clientsession(self.hass)
                 api = QuattRemoteApiClient(self.cic_id, session)
 
-                if not await api.authenticate():
+                first_name = user_input[CONF_FIRST_NAME]
+                last_name = user_input[CONF_LAST_NAME]
+
+                if not await api.authenticate(first_name=first_name, last_name=last_name):
                     _errors["base"] = "pairing_timeout"
                 else:
                     # Pairing successful, create entry
@@ -232,9 +238,46 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 LOGGER.exception("Unexpected exception during pairing")
                 _errors["base"] = "unknown"
 
-        # Show pairing instructions
+        # Try to auto-fill names from Home Assistant user
+        default_first_name = ""
+        default_last_name = ""
+
+        try:
+            # Get the current user from the context
+            if self.context.get("user_id"):
+                user = await self.hass.auth.async_get_user(self.context["user_id"])
+                if user and user.name:
+                    # Split on first space
+                    name_parts = user.name.split(" ", 1)
+                    default_first_name = name_parts[0] if len(name_parts) > 0 else ""
+                    default_last_name = name_parts[1] if len(name_parts) > 1 else ""
+        except Exception:  # pylint: disable=broad-except
+            # If we can't get the user name, just use empty defaults
+            pass
+
+        # Show pairing instructions with name fields
         return self.async_show_form(
             step_id="pair",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_FIRST_NAME,
+                        default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.TEXT
+                        ),
+                    ),
+                    vol.Required(
+                        CONF_LAST_NAME,
+                        default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.TEXT
+                        ),
+                    ),
+                }
+            ),
             errors=_errors,
             description_placeholders={
                 "cic": self.cic_id,

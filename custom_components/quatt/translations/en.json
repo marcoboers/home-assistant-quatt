@@ -25,7 +25,11 @@
             },
             "pair": {
                 "title": "Pair with your Quatt device",
-                "description": "Please press the button on your CIC device ({cic}) now.\n\n![Pairing button location](/local/quatt/pair.png)\n\nYou have 60 seconds to complete the pairing.\n\nPress 'Submit' to start the pairing process and wait for confirmation."
+                "description": "Please enter your name and press the button on your CIC device ({cic}).\n\n![Pairing button location](/local/quatt/pair.png)\n\nYou have 60 seconds to complete the pairing.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+                "data": {
+                    "first_name": "First Name",
+                    "last_name": "Last Name"
+                }
             },
             "confirm": {
                 "description": "Do you want to start setup?"

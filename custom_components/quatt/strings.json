@@ -1,8 +1,15 @@
 {
     "config": {
+        "flow_title": "CIC: {name}",
         "step": {
             "user": {
-                "description": "Set up your Quatt heatpump for monitoring.",
+                "description": "Choose connection type for your Quatt heatpump.",
+                "data": {
+                    "connection_type": "Connection type"
+                }
+            },
+            "local": {
+                "description": "Set up local connection to your Quatt heatpump.",
                 "data": {
                     "ip_address": "[%key:common::config_flow::data::ip%]"
                 },
@@ -10,15 +17,32 @@
                     "ip_address": "Without http:// and port."
                 }
             },
+            "remote": {
+                "description": "Set up remote connection to your Quatt heatpump via the mobile API. Enter your CIC ID (e.g., CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Pair with your Quatt device",
+                "description": "Please enter your name and press the button on your CIC device ({cic}).\n\n![Pairing button location](/local/quatt/pair.png)\n\nYou have 60 seconds to complete the pairing.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+                "data": {
+                    "first_name": "First Name",
+                    "last_name": "Last Name"
+                }
+            },
             "confirm": {
                 "description": "[%key:common::config_flow::description::confirm_setup%]"
             }
         },
         "error": {
-            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
+            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+            "invalid_cic": "Invalid CIC format. Must start with 'CIC-'",
+            "pairing_timeout": "Pairing timeout. Please try again and press the button on the CIC device within 60 seconds."
         },
         "abort": {
-            "already_configured": "[%key:common::config_flow::abort::already_configured%]"
+            "already_configured": "[%key:common::config_flow::abort::already_configured%]",
+            "no_match": "No matching Quatt device found."
         }
     },
     "options": {

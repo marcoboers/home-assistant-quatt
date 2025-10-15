@@ -25,7 +25,11 @@
             },
             "pair": {
                 "title": "Koppel met je Quatt apparaat",
-                "description": "Druk nu op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/local/quatt/pair.png)\n\nJe hebt 60 seconden om de koppeling te voltooien.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging."
+                "description": "Voer je naam in en druk op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/local/quatt/pair.png)\n\nJe hebt 60 seconden om de koppeling te voltooien.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "data": {
+                    "first_name": "Voornaam",
+                    "last_name": "Achternaam"
+                }
             },
             "confirm": {
                 "description": "Wilt u de configuratie starten?"
