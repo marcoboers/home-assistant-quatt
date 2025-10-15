@@ -564,14 +564,14 @@ class QuattRemoteApiClient:
                 if response.status == 200:
                     return await response.json()
 
-                # Handle 403 Forbidden - token might be expired
-                if response.status == 403 and retry_on_403:
-                    _LOGGER.warning("Got 403, attempting to refresh token")
+                # Handle 401 Unauthorized or 403 Forbidden - token might be expired
+                if response.status in (401, 403) and retry_on_403:
+                    _LOGGER.warning("Got %s, attempting to refresh token", response.status)
                     if await self.refresh_token():
                         await self._save_tokens()
                         # Retry once with new token (prevent infinite loop with retry_on_403=False)
                         return await self.get_cic_data(retry_on_403=False)
-                    _LOGGER.error("Token refresh failed after 403")
+                    _LOGGER.error("Token refresh failed after %s", response.status)
                     return None
 
                 _LOGGER.error("Get CIC data failed with status %s: %s", response.status, await response.text())
