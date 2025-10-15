@@ -15,7 +15,7 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -25,9 +25,15 @@ from .api import (
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
+    QuattRemoteApiClient,
 )
 from .const import (
+    CONF_REMOTE_CIC,
+    CONF_LOCAL_CIC,
+    CONF_CONNECTION_TYPE,
     CONF_POWER_SENSOR,
+    CONNECTION_TYPE_LOCAL,
+    CONNECTION_TYPE_REMOTE,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     LOGGER,
@@ -40,12 +46,14 @@ from .const import (
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
-    VERSION = 4
+    VERSION = 5
 
     def __init__(self) -> None:
         """Initialize a Quatt flow."""
         self.ip_address: str | None = None
         self.cic_name: str | None = None
+        self.connection_type: str | None = None
+        self.cic_id: str | None = None
 
     async def _get_cic_name(self, ip_address: str) -> str:
         """Validate device and return the CIC id/name (system.hostName)."""
@@ -70,12 +78,53 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         self,
         user_input: dict | None = None,
     ) -> config_entries.FlowResult:
-        """Handle a flow initialized by the user."""
+        """Handle a flow initialized by the user - select connection type."""
+        _errors = {}
+        if user_input is not None:
+            self.connection_type = user_input[CONF_CONNECTION_TYPE]
+
+            if self.connection_type == CONNECTION_TYPE_LOCAL:
+                return await self.async_step_local()
+            else:  # CONNECTION_TYPE_REMOTE
+                return await self.async_step_remote()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_CONNECTION_TYPE,
+                        default=CONNECTION_TYPE_LOCAL,
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(
+                                    value=CONNECTION_TYPE_LOCAL,
+                                    label="Local (IP Address)",
+                                ),
+                                selector.SelectOptionDict(
+                                    value=CONNECTION_TYPE_REMOTE,
+                                    label="Remote (Mobile API)",
+                                ),
+                            ],
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                        ),
+                    ),
+                }
+            ),
+            errors=_errors,
+        )
+
+    async def async_step_local(
+        self,
+        user_input: dict | None = None,
+    ) -> config_entries.FlowResult:
+        """Handle local connection setup with IP address."""
         _errors = {}
         if user_input is not None:
             try:
                 cic_name = await self._get_cic_name(
-                    ip_address=user_input[CONF_IP_ADDRESS],
+                    ip_address=user_input[CONF_LOCAL_CIC],
                 )
             except QuattApiClientAuthenticationError as exception:
                 LOGGER.warning(exception)
@@ -94,16 +143,19 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
 
                     return self.async_create_entry(
                         title=cic_name,
-                        data=user_input,
+                        data={
+                            CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
+                            CONF_LOCAL_CIC: user_input[CONF_LOCAL_CIC],
+                        },
                     )
 
         return self.async_show_form(
-            step_id="user",
+            step_id="local",
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_IP_ADDRESS,
-                        default=(user_input or {}).get(CONF_IP_ADDRESS),
+                        CONF_LOCAL_CIC,
+                        default=(user_input or {}).get(CONF_LOCAL_CIC),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
@@ -112,6 +164,81 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=_errors,
+        )
+
+    async def async_step_remote(
+        self,
+        user_input: dict | None = None,
+    ) -> config_entries.FlowResult:
+        """Handle remote connection setup - enter CIC ID."""
+        _errors = {}
+
+        if user_input is not None:
+            cic_id = user_input[CONF_REMOTE_CIC]
+
+            # Validate CIC format
+            if not cic_id.startswith("CIC-") or len(cic_id) <= 4:
+                _errors["cic"] = "invalid_cic"
+            else:
+                # Check if this CIC has already been configured
+                await self.async_set_unique_id(f"Mobile-{cic_id}")
+                self._abort_if_unique_id_configured()
+
+                # Store CIC for pairing step
+                self.cic_id = cic_id
+                return await self.async_step_pair()
+
+        return self.async_show_form(
+            step_id="remote",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_REMOTE_CIC): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.TEXT
+                        ),
+                    ),
+                }
+            ),
+            errors=_errors,
+            description_placeholders={"cic_example": "CIC-xxxx-xxxx-xxxx"},
+        )
+
+    async def async_step_pair(
+        self,
+        user_input: dict | None = None,
+    ) -> config_entries.FlowResult:
+        """Handle pairing step - user presses button on CIC."""
+        _errors = {}
+
+        if user_input is not None:
+            # User confirmed they are ready to pair
+            try:
+                # Create API client and authenticate
+                session = async_create_clientsession(self.hass)
+                api = QuattRemoteApiClient(self.cic_id, session)
+
+                if not await api.authenticate():
+                    _errors["base"] = "pairing_timeout"
+                else:
+                    # Pairing successful, create entry
+                    return self.async_create_entry(
+                        title=f"Mobile-{self.cic_id}",
+                        data={
+                            CONF_CONNECTION_TYPE: CONNECTION_TYPE_REMOTE,
+                            CONF_REMOTE_CIC: self.cic_id,
+                        },
+                    )
+            except Exception:  # pylint: disable=broad-except
+                LOGGER.exception("Unexpected exception during pairing")
+                _errors["base"] = "unknown"
+
+        # Show pairing instructions
+        return self.async_show_form(
+            step_id="pair",
+            errors=_errors,
+            description_placeholders={
+                "cic": self.cic_id,
+            },
         )
 
     async def async_step_dhcp(
@@ -168,7 +295,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     self.ip_address = discovery_info.ip
                     self.cic_name = discovery_info.hostname
 
-                    if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
+                    if self.is_valid_ip(ip_str=entry.data.get(CONF_LOCAL_CIC, "")):
                         # Configuration is an ip-address, update it
                         LOGGER.debug(
                             "DHCP discovery detected existing Quatt CIC: %s with ip-address: %s, "
@@ -178,7 +305,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                         )
 
                         self._abort_if_unique_id_configured(
-                            updates={CONF_IP_ADDRESS: discovery_info.ip},
+                            updates={CONF_LOCAL_CIC: discovery_info.ip},
                         )
                     else:
                         self._abort_if_unique_id_configured()
@@ -199,9 +326,13 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> data_entry_flow.ConfigFlowResult:
         """Allow the user to confirm adding the device."""
         if user_input is not None:
-            # Use the hostname instead of the ip
+            # Use the hostname instead of the ip (DHCP discovered device - always local)
             return self.async_create_entry(
-                title=self.cic_name, data={CONF_IP_ADDRESS: self.ip_address}
+                title=self.cic_name,
+                data={
+                    CONF_CONNECTION_TYPE: CONNECTION_TYPE_LOCAL,
+                    CONF_LOCAL_CIC: self.ip_address,
+                },
             )
 
         return self.async_show_form(step_id="confirm")

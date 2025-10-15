@@ -11,6 +11,33 @@ DOMAIN = "quatt"
 ATTRIBUTION = "marcoboers"
 
 CONF_POWER_SENSOR = "power_sensor"
+CONF_CONNECTION_TYPE = "connection_type"
+CONF_REMOTE_CIC = "cic"
+CONF_LOCAL_CIC = "ip_address"
+
+# Connection types
+CONNECTION_TYPE_LOCAL = "local"
+CONNECTION_TYPE_REMOTE = "remote"
+
+# Remote API URLs (from kwatt)
+FIREBASE_INSTALLATIONS_URL = "https://firebaseinstallations.googleapis.com/v1/projects/quatt-production/installations"
+FIREBASE_REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/1074628551428/namespaces/firebase:fetch"
+FIREBASE_SIGNUP_URL = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser"
+FIREBASE_ACCOUNT_INFO_URL = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo"
+FIREBASE_TOKEN_URL = "https://securetoken.googleapis.com/v1/token"
+QUATT_API_BASE_URL = "https://mobile-api.quatt.io/api/v1"
+
+# Firebase configuration (from kwatt)
+GOOGLE_API_KEY = "AIzaSyDM4PIXYDS9x53WUj-tDjOVAb6xKgzxX9Y"
+GOOGLE_ANDROID_PACKAGE = "io.quatt.mobile.android"
+GOOGLE_ANDROID_CERT = "1110A8F9B0DE16D417086A4BDBCF956070F0FD97"
+GOOGLE_FIREBASE_CLIENT = "H4sIAAAAAAAAAKtWykhNLCpJSk0sKVayio7VUSpLLSrOzM9TslIyUqoFAFyivEQfAAAA"
+GOOGLE_APP_ID = "1:1074628551428:android:20ddeaf85c3cfec3336651"
+GOOGLE_APP_INSTANCE_ID = "dwNCvvXLQrqvmUJlZajYzG"
+
+# Storage keys for remote connection
+STORAGE_KEY = "quatt_remote_storage"
+STORAGE_VERSION = 1
 
 # Device IDs
 DEVICE_BOILER_ID = "boiler"

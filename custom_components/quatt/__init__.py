@@ -7,7 +7,7 @@ https://github.com/marcoboers/home-assistant-quatt
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL, Platform
+from homeassistant.const import CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
@@ -15,19 +15,28 @@ from homeassistant.helpers.aiohttp_client import (
 )
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
+from homeassistant.helpers.storage import Store
 
 from .api import (
     QuattApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
+    QuattRemoteApiClient,
 )
 from .const import (
+    CONF_REMOTE_CIC,
+    CONF_LOCAL_CIC,
+    CONF_CONNECTION_TYPE,
     CONF_POWER_SENSOR,
+    CONNECTION_TYPE_LOCAL,
+    CONNECTION_TYPE_REMOTE,
     DEFAULT_SCAN_INTERVAL,
     DEVICE_CIC_ID,
     DOMAIN,
     LOGGER,
+    STORAGE_KEY,
+    STORAGE_VERSION,
 )
 from .coordinator import QuattDataUpdateCoordinator
 
@@ -41,13 +50,49 @@ PLATFORMS: list[Platform] = [
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
     hass.data.setdefault(DOMAIN, {})
+
+    # Determine connection type (default to local for backward compatibility)
+    connection_type = entry.data.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
+
+    if connection_type == CONNECTION_TYPE_REMOTE:
+        # Remote connection setup
+        cic = entry.data[CONF_REMOTE_CIC]
+
+        # Create storage for tokens
+        store = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry.entry_id}")
+
+        # Load stored tokens
+        stored_data = await store.async_load()
+
+        # Create remote API client
+        session = async_get_clientsession(hass)
+        client = QuattRemoteApiClient(cic, session, store)
+
+        # Load tokens if they exist
+        if stored_data:
+            client.load_tokens(
+                stored_data.get("id_token"),
+                stored_data.get("refresh_token"),
+                stored_data.get("installation_id")
+            )
+            LOGGER.debug("Loaded stored tokens for CIC %s", cic)
+
+        # Authenticate (will use existing tokens if available, or do full auth)
+        if not await client.authenticate():
+            LOGGER.error("Failed to authenticate with Quatt remote API")
+            return False
+    else:
+        # Local connection setup (existing logic)
+        client = QuattApiClient(
+            ip_address=entry.data[CONF_LOCAL_CIC],
+            session=async_get_clientsession(hass),
+        )
+
+    # Create coordinator with the appropriate client
     coordinator = QuattDataUpdateCoordinator(
         hass=hass,
         update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
-        client=QuattApiClient(
-            ip_address=entry.data[CONF_IP_ADDRESS],
-            session=async_get_clientsession(hass),
-        ),
+        client=client,
     )
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
@@ -94,7 +139,7 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     # Return that the migration failed in case the retrieval fails
     try:
         hostname_unique_id = await _get_cic_hostname(
-            hass=hass, ip_address=config_entry.data[CONF_IP_ADDRESS]
+            hass=hass, ip_address=config_entry.data[CONF_LOCAL_CIC]
         )
     except QuattApiClientAuthenticationError as exception:
         LOGGER.warning(exception)
@@ -240,6 +285,29 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     return True
 
 
+async def _migrate_v4_to_v5(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate v4 entry to v5 entry."""
+
+    # Add connection_type field for backward compatibility
+    # Existing entries are local connections
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
+
+    new_data = {**config_entry.data}
+
+    # Add connection type if not present (existing entries are local)
+    if CONF_CONNECTION_TYPE not in new_data:
+        new_data[CONF_CONNECTION_TYPE] = CONNECTION_TYPE_LOCAL
+
+    # Update the config entry to version 5
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data=new_data,
+        version=5,
+    )
+
+    return True
+
+
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
 
@@ -253,6 +321,10 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     if config_entry.version == 3:
         if not await _migrate_v3_to_v4(hass, config_entry):
+            return False
+
+    if config_entry.version == 4:
+        if not await _migrate_v4_to_v5(hass, config_entry):
             return False
 
     return True

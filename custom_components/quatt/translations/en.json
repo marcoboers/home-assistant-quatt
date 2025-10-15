@@ -3,7 +3,13 @@
         "flow_title": "CIC: {name}",
         "step": {
             "user": {
-                "description": "Set up your Quatt heatpump for monitoring.",
+                "description": "Choose connection type for your Quatt heatpump.",
+                "data": {
+                    "connection_type": "Connection type"
+                }
+            },
+            "local": {
+                "description": "Set up local connection to your Quatt heatpump.",
                 "data": {
                     "ip_address": "IP address / hostname"
                 },
@@ -11,15 +17,28 @@
                     "ip_address": "Without http:// and port."
                 }
             },
+            "remote": {
+                "description": "Set up remote connection to your Quatt heatpump via the mobile API. Enter your CIC ID (e.g., CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Pair with your Quatt device",
+                "description": "Please press the button on your CIC device ({cic}) now.\n\n![Pairing button location](/local/quatt/pair.png)\n\nYou have 60 seconds to complete the pairing.\n\nPress 'Submit' to start the pairing process and wait for confirmation."
+            },
             "confirm": {
                 "description": "Do you want to start setup?"
             }
         },
         "error": {
-            "cannot_connect": "Failed to connect."
+            "cannot_connect": "Failed to connect.",
+            "invalid_cic": "Invalid CIC format. Must start with 'CIC-'",
+            "pairing_timeout": "Pairing timeout. Please try again and press the button on the CIC device within 60 seconds."
         },
         "abort": {
-            "already_configured": "Device is already configured."
+            "already_configured": "Device is already configured.",
+            "no_match": "No matching Quatt device found."
         }
     },
     "options": {
