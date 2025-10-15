@@ -1,4 +1,4 @@
-"""Binary sensor platform for quatt."""
+"""Binary sensor platform for quatt remote API."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import logging
 
 from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorDeviceClass,
     BinarySensorEntity,
 )
 from homeassistant.core import HomeAssistant
@@ -13,167 +14,205 @@ import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 
 from .const import (
-    DEVICE_BOILER_ID,
     DEVICE_CIC_ID,
+    DEVICE_HEAT_BATTERY_ID,
     DEVICE_HEATPUMP_1_ID,
     DEVICE_HEATPUMP_2_ID,
     DEVICE_LIST,
     DEVICE_THERMOSTAT_ID,
     DOMAIN,
 )
-from .coordinator import QuattDataUpdateCoordinator
 from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 from .entity import QuattBinarySensorEntityDescription, QuattEntity
 
 
-def create_heatpump_sensor_entity_descriptions(
-    prefix: str, is_duo: bool = False
+def create_remote_heatpump_binary_sensor_entity_descriptions(
+    index: int, is_duo: bool = False
 ) -> list[QuattBinarySensorEntityDescription]:
-    """Create the heatpump sensor entity descriptions based on the prefix."""
+    """Create the remote heatpump binary sensor entity descriptions based on the index."""
     return [
         QuattBinarySensorEntityDescription(
-            name="Silentmode",
-            key=f"{prefix}.silentModeStatus",
-            translation_key="hp_silentModeStatus",
+            name="Silent mode status",
+            key=f"heatPumps.{index}.silentModeStatus",
             icon="mdi:sleep",
             quatt_duo=is_duo,
         ),
         QuattBinarySensorEntityDescription(
             name="Limited by COP",
-            key=f"{prefix}.limitedByCop",
-            translation_key="hp_silentModeStatus",
+            key=f"heatPumps.{index}.limitedByCop",
             icon="mdi:arrow-collapse-up",
-            quatt_duo=is_duo,
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Defrost",
-            key=f"{prefix}.computedDefrost",
-            translation_key="hp_silentModeStatus",
-            icon="mdi:snowflake",
             quatt_duo=is_duo,
         ),
     ]
 
 
-BINARY_SENSORS = {
+REMOTE_BINARY_SENSORS = {
     # The HUB CIC sensor must be created first to ensure the HUB device is present
     DEVICE_CIC_ID: [
         QuattBinarySensorEntityDescription(
-            name="QC pump protection",
-            key="qc.stickyPumpProtectionEnabled",
-            icon="mdi:shield-refresh-outline",
+            name="Scanning for WiFi",
+            key="isScanningForWifi",
+            icon="mdi:wifi-refresh",
+            device_class=BinarySensorDeviceClass.RUNNING,
         ),
         QuattBinarySensorEntityDescription(
-            name="Anti legionella active",
-            key="qcAllE.isAntilegionellaActive",
-            icon="mdi:shield-check",
-            quatt_all_electric=True,
-        ),
-    ],
-    DEVICE_HEATPUMP_1_ID: create_heatpump_sensor_entity_descriptions(
-        prefix="hp1", is_duo=False
-    ),
-    DEVICE_HEATPUMP_2_ID: create_heatpump_sensor_entity_descriptions(
-        prefix="hp2", is_duo=True
-    ),
-    DEVICE_BOILER_ID: [
-        QuattBinarySensorEntityDescription(
-            name="Heating",
-            key="boiler.otFbChModeActive",
-            icon="mdi:heating-coil",
-            quatt_hybrid=True,
-            quatt_opentherm=True,
+            name="Use pricing to limit heat pump",
+            key="usePricingToLimitHeatPump",
+            icon="mdi:currency-eur",
         ),
         QuattBinarySensorEntityDescription(
-            name="Domestic hot water",
-            key="boiler.otFbDhwActive",
-            icon="mdi:water-boiler",
-            quatt_hybrid=True,
-            quatt_opentherm=True,
+            name="Avoid nighttime charging",
+            key="avoidNighttimeCharging",
+            icon="mdi:weather-night",
         ),
         QuattBinarySensorEntityDescription(
-            name="Flame",
-            key="boiler.otFbFlameOn",
+            name="Thermostat flame on",
+            key="thermostatFlameOn",
             icon="mdi:fire",
-            quatt_hybrid=True,
-            quatt_opentherm=True,
         ),
         QuattBinarySensorEntityDescription(
-            name="CIC heating",
-            key="boiler.otTbCH",
-            icon="mdi:heating-coil",
-            quatt_hybrid=True,
+            name="Show thermostat temperatures",
+            key="showThermostatTemperatures",
+            icon="mdi:thermometer",
         ),
         QuattBinarySensorEntityDescription(
-            name="CIC on/off mode",
-            key="boiler.oTtbTurnOnOffBoilerOn",
+            name="Boiler on",
+            key="boilerOn",
             icon="mdi:water-boiler",
-            quatt_hybrid=True,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="HP1 connected",
+            key="isHp1Connected",
+            icon="mdi:connection",
+            device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="HP2 connected",
+            key="isHp2Connected",
+            icon="mdi:connection",
+            device_class=BinarySensorDeviceClass.CONNECTIVITY,
+            quatt_duo=True,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Thermostat connected",
+            key="isThermostatConnected",
+            icon="mdi:connection",
+            device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Boiler connected",
+            key="isBoilerConnected",
+            icon="mdi:connection",
+            device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Temperature sensor connected",
+            key="isTemperatureSensorConnected",
+            icon="mdi:connection",
+            device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Controller alive",
+            key="isControllerAlive",
+            icon="mdi:check-circle",
+            device_class=BinarySensorDeviceClass.RUNNING,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="WiFi enabled",
+            key="wifiEnabled",
+            icon="mdi:wifi",
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Has sound slider",
+            key="hasSoundSlider",
+            icon="mdi:volume-high",
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Supports forget WiFi",
+            key="supportsForgetWifi",
+            icon="mdi:wifi-remove",
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Central heating on",
+            key="isCentralHeatingOn",
+            icon="mdi:heating-coil",
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Has dynamic pricing",
+            key="hasDynamicPricing",
+            icon="mdi:currency-eur",
         ),
     ],
     DEVICE_THERMOSTAT_ID: [
         QuattBinarySensorEntityDescription(
-            name="Heating",
-            key="thermostat.otFtChEnabled",
-            icon="mdi:home-thermometer",
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Domestic hot water",
-            key="thermostat.otFtDhwEnabled",
-            icon="mdi:water-thermometer",
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Cooling",
-            key="thermostat.otFtCoolingEnabled",
-            icon="mdi:snowflake-thermometer",
+            name="Flame on",
+            key="thermostatFlameOn",
+            icon="mdi:fire",
         ),
     ],
+    DEVICE_HEAT_BATTERY_ID: [
+        QuattBinarySensorEntityDescription(
+            name="Charging",
+            key="allEStatus.isHeatBatteryCharging",
+            icon="mdi:battery-charging",
+            device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+            quatt_all_electric=True,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Domestic hot water on",
+            key="allEStatus.isDomesticHotWaterOn",
+            icon="mdi:water-boiler",
+            quatt_all_electric=True,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Shower minutes degraded",
+            key="allEStatus.showerMinutesDegraded",
+            icon="mdi:alert",
+            device_class=BinarySensorDeviceClass.PROBLEM,
+            quatt_all_electric=True,
+        ),
+    ],
+    DEVICE_HEATPUMP_1_ID: create_remote_heatpump_binary_sensor_entity_descriptions(
+        index=0, is_duo=False
+    ),
+    DEVICE_HEATPUMP_2_ID: create_remote_heatpump_binary_sensor_entity_descriptions(
+        index=1, is_duo=True
+    ),
 }
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
-    """Set up the binary_sensor platform."""
+    """Set up the remote binary_sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-
-    # Route to appropriate binary sensor implementation based on coordinator type
-    if isinstance(coordinator, QuattRemoteDataUpdateCoordinator):
-        from . import binary_sensor_remote
-        return await binary_sensor_remote.async_setup_entry(hass, entry, async_add_devices)
-
     registry = er.async_get(hass)
 
     # Cache the active states
     heatpump_1_active = coordinator.heatpump_1_active()
     heatpump_2_active = coordinator.heatpump_2_active()
     all_electric_active = coordinator.all_electric_active()
-    is_boiler_opentherm = coordinator.is_boiler_opentherm()
 
-    _LOGGER.debug("Heatpump 1 active: %s", heatpump_1_active)
-    _LOGGER.debug("Heatpump 2 active: %s", heatpump_2_active)
-    _LOGGER.debug("All electric active: %s", all_electric_active)
-    _LOGGER.debug("boiler OpenTherm: %s", is_boiler_opentherm)
+    _LOGGER.debug("Remote - Heatpump 1 active: %s", heatpump_1_active)
+    _LOGGER.debug("Remote - Heatpump 2 active: %s", heatpump_2_active)
+    _LOGGER.debug("Remote - All electric active: %s", all_electric_active)
 
     # Create only those sensors that make sense for this installation type.
     # Remove sensors that are not applicable based on the configuration.
-    # This can occur when the configuration changes, e.g., from hybrid or duo to all-electric.
     device_reg = dr.async_get(hass)
     devices = dr.async_entries_for_config_entry(device_reg, entry.entry_id)
     device_ids = {dev.id for dev in devices}
 
     # Determine which sensors to create based on the detected configuration
     flag_conditions = [
-        ("quatt_hybrid", not all_electric_active),
         ("quatt_all_electric", all_electric_active),
         ("quatt_duo", heatpump_2_active),
-        ("quatt_opentherm", is_boiler_opentherm),
     ]
 
     # Flatten out all sensor descriptions
     flat_descriptions = [
         sensor_description
-        for device_sensors in BINARY_SENSORS.values()
+        for device_sensors in REMOTE_BINARY_SENSORS.values()
         for sensor_description in device_sensors
     ]
 
@@ -213,10 +252,10 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
     # Create sensor entities based on the filtered sensor keys
     device_name_map = {d["id"]: d["name"] for d in DEVICE_LIST}
-    sensors: list[QuattBinarySensor] = []
-    for device_id, sensor_descriptions in BINARY_SENSORS.items():
+    sensors: list[QuattRemoteBinarySensor] = []
+    for device_id, sensor_descriptions in REMOTE_BINARY_SENSORS.items():
         sensors.extend(
-            QuattBinarySensor(
+            QuattRemoteBinarySensor(
                 device_name=device_name_map.get(device_id, device_id),
                 device_id=device_id,
                 sensor_key=sensor_description.key,
@@ -231,15 +270,15 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     async_add_devices(sensors)
 
 
-class QuattBinarySensor(QuattEntity, BinarySensorEntity):
-    """quatt binary_sensor class."""
+class QuattRemoteBinarySensor(QuattEntity, BinarySensorEntity):
+    """quatt remote binary_sensor class."""
 
     def __init__(
         self,
         device_name: str,
         device_id: str,
         sensor_key: str,
-        coordinator: QuattDataUpdateCoordinator,
+        coordinator: QuattRemoteDataUpdateCoordinator,
         entity_description: QuattBinarySensorEntityDescription,
         attach_to_hub: bool,
     ) -> None:

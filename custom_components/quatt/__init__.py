@@ -39,6 +39,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .coordinator import QuattDataUpdateCoordinator
+from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -81,6 +82,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if not await client.authenticate():
             LOGGER.error("Failed to authenticate with Quatt remote API")
             return False
+
+        # Create remote coordinator
+        coordinator = QuattRemoteDataUpdateCoordinator(
+            hass=hass,
+            update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+            client=client,
+        )
     else:
         # Local connection setup (existing logic)
         client = QuattApiClient(
@@ -88,12 +96,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             session=async_get_clientsession(hass),
         )
 
-    # Create coordinator with the appropriate client
-    coordinator = QuattDataUpdateCoordinator(
-        hass=hass,
-        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
-        client=client,
-    )
+        # Create local coordinator
+        coordinator = QuattDataUpdateCoordinator(
+            hass=hass,
+            update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+            client=client,
+        )
+
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities

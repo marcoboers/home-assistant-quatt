@@ -38,6 +38,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
+from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 from .entity import QuattEntity, QuattSensorEntityDescription
 
 
@@ -439,6 +440,12 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # Route to appropriate sensor implementation based on coordinator type
+    if isinstance(coordinator, QuattRemoteDataUpdateCoordinator):
+        from . import sensor_remote
+        return await sensor_remote.async_setup_entry(hass, entry, async_add_devices)
+
     registry = er.async_get(hass)
 
     # Cache the active states
