@@ -3,7 +3,13 @@
         "flow_title": "CIC: {name}",
         "step": {
             "user": {
-                "description": "Configurar a tua monitorização da bomba Quatt.",
+                "description": "Escolha o tipo de ligação para a sua bomba de calor Quatt.",
+                "data": {
+                    "connection_type": "Tipo de ligação"
+                }
+            },
+            "local": {
+                "description": "Configure a ligação local à sua bomba de calor Quatt.",
                 "data": {
                     "ip_address": "Endereço IP / nome do host"
                 },
@@ -11,15 +17,28 @@
                     "ip_address": "Sem http:// e porta."
                 }
             },
+            "remote": {
+                "description": "Configure a ligação remota à sua bomba de calor Quatt através da API móvel. Introduza o seu ID CIC (por exemplo, CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "ID CIC"
+                }
+            },
+            "pair": {
+                "title": "Emparelhe com o seu dispositivo Quatt",
+                "description": "Por favor, prima o botão no seu dispositivo CIC ({cic}) agora.\n\n![Localização do botão de emparelhamento](/local/quatt/pair.png)\n\nTem 60 segundos para concluir o emparelhamento.\n\nPrima 'Submeter' para iniciar o processo de emparelhamento e aguarde a confirmação."
+            },
             "confirm": {
                 "description": "Deseja iniciar a configuração?"
             }
         },
         "error": {
-            "cannot_connect": "Falha na ligação."
+            "cannot_connect": "Falha na ligação.",
+            "invalid_cic": "Formato CIC inválido. Deve começar com 'CIC-'",
+            "pairing_timeout": "Tempo de emparelhamento esgotado. Tente novamente e prima o botão no dispositivo CIC dentro de 60 segundos."
         },
         "abort": {
-            "already_configured": "O dispositivo já está configurado."
+            "already_configured": "O dispositivo já está configurado.",
+            "no_match": "Nenhum dispositivo Quatt correspondente encontrado."
         }
     },
     "options": {

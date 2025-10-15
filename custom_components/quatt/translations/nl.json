@@ -3,7 +3,13 @@
         "flow_title": "CIC: {name}",
         "step": {
             "user": {
-                "description": "Configureer Quatt warmtepomp voor monitoring.",
+                "description": "Kies verbindingstype voor je Quatt warmtepomp.",
+                "data": {
+                    "connection_type": "Verbindingstype"
+                }
+            },
+            "local": {
+                "description": "Stel lokale verbinding in met je Quatt warmtepomp.",
                 "data": {
                     "ip_address": "IP-adres / hostnaam"
                 },
@@ -11,15 +17,28 @@
                     "ip_address": "Zonder http:// en poort."
                 }
             },
+            "remote": {
+                "description": "Stel externe verbinding in met je Quatt warmtepomp via de mobiele API. Voer je CIC ID in (bijv. CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Koppel met je Quatt apparaat",
+                "description": "Druk nu op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/local/quatt/pair.png)\n\nJe hebt 60 seconden om de koppeling te voltooien.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging."
+            },
             "confirm": {
                 "description": "Wilt u de configuratie starten?"
             }
         },
         "error": {
-            "cannot_connect": "Fout bij het verbinden."
+            "cannot_connect": "Fout bij het verbinden.",
+            "invalid_cic": "Ongeldig CIC formaat. Moet beginnen met 'CIC-'",
+            "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC apparaat."
         },
         "abort": {
-            "already_configured": "Apparaat is al geconfigureerd."
+            "already_configured": "Apparaat is al geconfigureerd.",
+            "no_match": "Geen overeenkomend Quatt apparaat gevonden."
         }
     },
     "options": {
