@@ -25,7 +25,7 @@
             },
             "pair": {
                 "title": "Emparelhe com o seu dispositivo Quatt",
-                "description": "Por favor, introduza o seu nome e prima o botão no seu dispositivo CIC ({cic}).\n\n![Localização do botão de emparelhamento](/local/quatt/pair.png)\n\nTem 60 segundos para concluir o emparelhamento.\n\nPrima 'Submeter' para iniciar o processo de emparelhamento e aguarde a confirmação.",
+                "description": "Por favor, introduza o seu nome e prima o botão no seu dispositivo CIC ({cic}).\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\n\nTem 60 segundos para concluir o emparelhamento.\n\nPrima 'Submeter' para iniciar o processo de emparelhamento e aguarde a confirmação.",
                 "data": {
                     "first_name": "Primeiro Nome",
                     "last_name": "Apelido"
