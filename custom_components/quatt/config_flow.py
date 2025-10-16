@@ -103,7 +103,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user - start with local setup."""
         # Ensure static resources are registered for use in the form
         await self._register_static_resources()
-        
+
         return await self.async_step_local()
 
     async def async_step_local(
