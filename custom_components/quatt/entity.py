@@ -11,6 +11,10 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.components.select import (
+    SelectEntity,
+    SelectEntityDescription,
+)
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
@@ -35,6 +39,18 @@ class QuattBinarySensorEntityDescription(
     BinarySensorEntityDescription, frozen_or_thawed=True
 ):
     """A class that describes Quatt binary sensor entities."""
+
+    quatt_hybrid: bool = False
+    quatt_all_electric: bool = False
+    quatt_duo: bool = False
+    quatt_opentherm: bool = False
+    quatt_mobile_api: bool = False
+
+
+class QuattSelectEntityDescription(
+    SelectEntityDescription, frozen_or_thawed=True
+):
+    """A class that describes Quatt select entities."""
 
     quatt_hybrid: bool = False
     quatt_all_electric: bool = False
@@ -143,3 +159,41 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if the binary_sensor is on."""
         return self.coordinator.get_value(self.entity_description.key)
+
+
+class QuattSelect(QuattEntity, SelectEntity):
+    """Quatt Select class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        select_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattSelectEntityDescription,
+        attach_to_hub: bool,
+    ) -> None:
+        """Initialize the select class."""
+        super().__init__(device_name, device_id, select_key, coordinator, attach_to_hub)
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the select should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    @property
+    def current_option(self) -> str | None:
+        """Return the current selected option."""
+        return self.coordinator.get_value(self.entity_description.key)
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option."""
+        # TODO: Implement API call to set the sound level
+        # For now, this is read-only until the API method is implemented
+        _LOGGER.warning(
+            "Setting %s to %s is not yet implemented",
+            self.entity_description.key,
+            option,
+        )
+        raise NotImplementedError("Setting sound level is not yet implemented")

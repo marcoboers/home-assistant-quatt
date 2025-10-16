@@ -41,6 +41,7 @@ from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
+    Platform.SELECT,
 ]
 
 

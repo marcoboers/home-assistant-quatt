@@ -522,18 +522,6 @@ SENSORS = {
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
-            name="Day max sound level",
-            key="dayMaxSoundLevel",
-            icon="mdi:volume-high",
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Night max sound level",
-            key="nightMaxSoundLevel",
-            icon="mdi:volume-low",
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
             name="Quatt heating production amount",
             key="quattHeatingProductionAmount",
             icon="mdi:heat-wave",
