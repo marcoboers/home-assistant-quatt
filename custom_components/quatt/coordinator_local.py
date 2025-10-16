@@ -11,7 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import QuattLocalApiClient, QuattApiClientAuthenticationError, QuattApiClientError
 from .const import (
@@ -24,10 +24,11 @@ from .const import (
     GasTariffType,
     SupervisoryControlMode,
 )
+from .coordinator import QuattDataUpdateCoordinator
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class QuattLocalDataUpdateCoordinator(DataUpdateCoordinator):
+class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
     """Class to manage fetching data from the local API."""
 
     config_entry: ConfigEntry

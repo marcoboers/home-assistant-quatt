@@ -27,10 +27,7 @@ from .api import (
 from .const import (
     CONF_REMOTE_CIC,
     CONF_LOCAL_CIC,
-    CONF_CONNECTION_TYPE,
     CONF_POWER_SENSOR,
-    CONNECTION_TYPE_LOCAL,
-    CONNECTION_TYPE_REMOTE,
     DEFAULT_SCAN_INTERVAL,
     DEVICE_CIC_ID,
     DOMAIN,
@@ -52,11 +49,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Determine connection type (default to local for backward compatibility)
-    connection_type = entry.data.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_LOCAL)
+    has_remote = CONF_REMOTE_CIC in entry.data
 
-    if connection_type == CONNECTION_TYPE_REMOTE:
-        # Remote connection setup
+    coordinators = {
+        "local": None,
+        "remote": None,
+    }
+
+    local_client = QuattLocalApiClient(
+        ip_address=entry.data[CONF_LOCAL_CIC],
+        session=async_get_clientsession(hass),
+    )
+
+    local_coordinator = QuattLocalDataUpdateCoordinator(
+        hass=hass,
+        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        client=local_client,
+    )
+
+    await local_coordinator.async_config_entry_first_refresh()
+    coordinators["local"] = local_coordinator
+
+    # Set up remote coordinator if configured
+    if has_remote:
         cic = entry.data[CONF_REMOTE_CIC]
 
         # Create storage for tokens
@@ -67,11 +82,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # Create remote API client
         session = async_get_clientsession(hass)
-        client = QuattRemoteApiClient(cic, session, store)
+        remote_client = QuattRemoteApiClient(cic, session, store)
 
         # Load tokens if they exist
         if stored_data:
-            client.load_tokens(
+            remote_client.load_tokens(
                 stored_data.get("id_token"),
                 stored_data.get("refresh_token"),
                 stored_data.get("installation_id")
@@ -79,34 +94,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             LOGGER.debug("Loaded stored tokens for CIC %s", cic)
 
         # Authenticate (will use existing tokens if available, or do full auth)
-        if not await client.authenticate():
+        if await remote_client.authenticate():
+            # Create remote coordinator only if authentication succeeded
+            remote_coordinator = QuattRemoteDataUpdateCoordinator(
+                hass=hass,
+                update_interval=60,
+                client=remote_client,
+            )
+
+            await remote_coordinator.async_config_entry_first_refresh()
+            coordinators["remote"] = remote_coordinator
+        else:
             LOGGER.error("Failed to authenticate with Quatt remote API")
-            return False
 
-        # Create remote coordinator
-        coordinator = QuattRemoteDataUpdateCoordinator(
-            hass=hass,
-            update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
-            client=client,
-        )
-    else:
-        # Local connection setup (existing logic)
-        client = QuattLocalApiClient(
-            ip_address=entry.data[CONF_LOCAL_CIC],
-            session=async_get_clientsession(hass),
-        )
-
-        # Create local coordinator
-        coordinator = QuattLocalDataUpdateCoordinator(
-            hass=hass,
-            update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
-            client=client,
-        )
-
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
-    # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-    await coordinator.async_config_entry_first_refresh()
+    # Store coordinators
+    hass.data[DOMAIN][entry.entry_id] = coordinators
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # On update of the options reload the entry which reloads the coordinator
@@ -294,29 +296,6 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     return True
 
 
-async def _migrate_v4_to_v5(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Migrate v4 entry to v5 entry."""
-
-    # Add connection_type field for backward compatibility
-    # Existing entries are local connections
-    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
-
-    new_data = {**config_entry.data}
-
-    # Add connection type if not present (existing entries are local)
-    if CONF_CONNECTION_TYPE not in new_data:
-        new_data[CONF_CONNECTION_TYPE] = CONNECTION_TYPE_LOCAL
-
-    # Update the config entry to version 5
-    hass.config_entries.async_update_entry(
-        config_entry,
-        data=new_data,
-        version=5,
-    )
-
-    return True
-
-
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
 
@@ -330,10 +309,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     if config_entry.version == 3:
         if not await _migrate_v3_to_v4(hass, config_entry):
-            return False
-
-    if config_entry.version == 4:
-        if not await _migrate_v4_to_v5(hass, config_entry):
             return False
 
     return True

@@ -2,22 +2,33 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorEntityDescription
-from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.binary_sensor import (
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+)
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+import homeassistant.util.dt as dt_util
 
 from .const import ATTRIBUTION, DOMAIN, NAME
-from .coordinator_local import QuattLocalDataUpdateCoordinator
+from .coordinator import QuattDataUpdateCoordinator
 
 
-class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+class QuattSensorEntityDescription(
+    SensorEntityDescription, frozen_or_thawed=True
+):
     """A class that describes Quatt sensor entities."""
 
     quatt_hybrid: bool = False
     quatt_all_electric: bool = False
     quatt_duo: bool = False
     quatt_opentherm: bool = False
+    quatt_mobile_api: bool = False
 
 
 class QuattBinarySensorEntityDescription(
@@ -29,9 +40,10 @@ class QuattBinarySensorEntityDescription(
     quatt_all_electric: bool = False
     quatt_duo: bool = False
     quatt_opentherm: bool = False
+    quatt_mobile_api: bool = False
 
 
-class QuattEntity(CoordinatorEntity):
+class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
     """QuattEntity class."""
 
     _attr_attribution = ATTRIBUTION
@@ -42,7 +54,7 @@ class QuattEntity(CoordinatorEntity):
         device_name: str,
         device_id: str,
         sensor_key: str,
-        coordinator: QuattLocalDataUpdateCoordinator,
+        coordinator: QuattDataUpdateCoordinator,
         attach_to_hub: bool,
     ) -> None:
         """Initialize."""
@@ -69,3 +81,65 @@ class QuattEntity(CoordinatorEntity):
             manufacturer=NAME,
             model="—",
         )
+
+
+class QuattSensor(QuattEntity, SensorEntity):
+    """Quatt Sensor class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattSensorEntityDescription,
+        attach_to_hub: bool,
+    ) -> None:
+        """Initialize the sensor class."""
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the sensor should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    @property
+    def native_value(self) -> str:
+        """Return the native value of the sensor."""
+        value = self.coordinator.get_value(self.entity_description.key)
+
+        if not value:
+            return value
+
+        if self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
+            value = dt_util.parse_datetime(value)
+
+        return value
+
+
+class QuattBinarySensor(QuattEntity, BinarySensorEntity):
+    """Quatt BinarySensor class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattBinarySensorEntityDescription,
+        attach_to_hub: bool,
+    ) -> None:
+        """Initialize the binary_sensor class."""
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the sensor should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the binary_sensor is on."""
+        return self.coordinator.get_value(self.entity_description.key)

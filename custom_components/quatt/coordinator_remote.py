@@ -8,16 +8,17 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import QuattRemoteApiClient, QuattApiClientAuthenticationError, QuattApiClientError
 from .const import (
     DOMAIN,
     LOGGER,
 )
+from .coordinator import QuattDataUpdateCoordinator
 
 
-class QuattRemoteDataUpdateCoordinator(DataUpdateCoordinator):
+class QuattRemoteDataUpdateCoordinator(QuattDataUpdateCoordinator):
     """Class to manage fetching data from the Remote API."""
 
     config_entry: ConfigEntry
@@ -98,6 +99,6 @@ class QuattRemoteDataUpdateCoordinator(DataUpdateCoordinator):
         """Check if it is an all electric installation."""
         return self.get_value("allEStatus") is not None
 
-    def is_boiler_connected(self) -> bool:
+    def is_boiler_opentherm(self) -> bool:
         """Check if the boiler is connected."""
         return self.get_value("isBoilerConnected") is not None
