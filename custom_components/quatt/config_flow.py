@@ -8,6 +8,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.components import dhcp
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
     ConfigEntry,
@@ -21,10 +22,10 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import (
-    QuattLocalApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
+    QuattLocalApiClient,
     QuattRemoteApiClient,
 )
 from .const import (
@@ -74,11 +75,35 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             return False
         return True
 
+    async def _register_static_resources(self) -> None:
+        """Register the static resource path once if HTTP is available."""
+        # Check that the HTTP component is ready
+        if not hasattr(self.hass, "http"):
+            return
+
+        # Avoid duplicate registration across reloads
+        if self.hass.data.get(f"_{DOMAIN}_static_registered"):
+            return
+
+        await self.hass.http.async_register_static_paths(
+            [
+                StaticPathConfig(
+                    f"/{DOMAIN}_static",
+                    self.hass.config.path(f"custom_components/{DOMAIN}/static"),
+                    cache_headers=False,
+                )
+            ]
+        )
+        self.hass.data[f"_{DOMAIN}_static_registered"] = True
+
     async def async_step_user(
         self,
         user_input: dict | None = None,
     ) -> config_entries.FlowResult:
         """Handle a flow initialized by the user - start with local setup."""
+        # Ensure static resources are registered for use in the form
+        await self._register_static_resources()
+
         return await self.async_step_local()
 
     async def async_step_local(
@@ -214,7 +239,9 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 first_name = user_input[CONF_FIRST_NAME]
                 last_name = user_input[CONF_LAST_NAME]
 
-                if not await api.authenticate(first_name=first_name, last_name=last_name):
+                if not await api.authenticate(
+                    first_name=first_name, last_name=last_name
+                ):
                     _errors["base"] = "pairing_timeout"
                 else:
                     # Pairing successful
@@ -254,7 +281,9 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(
                         CONF_FIRST_NAME,
-                        default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
+                        default=(user_input or {}).get(
+                            CONF_FIRST_NAME, default_first_name
+                        ),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
@@ -262,7 +291,9 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Required(
                         CONF_LAST_NAME,
-                        default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
+                        default=(user_input or {}).get(
+                            CONF_LAST_NAME, default_last_name
+                        ),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
