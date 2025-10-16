@@ -13,12 +13,15 @@ import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 
 from .const import (
-    DEVICE_BOILER_ID,
     DEVICE_CIC_ID,
+    DEVICE_BOILER_ID,
+    DEVICE_FLOWMETER_ID,
+    DEVICE_HEAT_BATTERY_ID,
+    DEVICE_HEAT_CHARGER_ID,
     DEVICE_HEATPUMP_1_ID,
     DEVICE_HEATPUMP_2_ID,
-    DEVICE_LIST,
     DEVICE_THERMOSTAT_ID,
+    DEVICE_LIST,
     DOMAIN,
 )
 from .coordinator_local import QuattLocalDataUpdateCoordinator
@@ -127,6 +130,9 @@ BINARY_SENSORS = {
             icon="mdi:snowflake-thermometer",
         ),
     ],
+    DEVICE_FLOWMETER_ID: [],
+    DEVICE_HEAT_BATTERY_ID: [],
+    DEVICE_HEAT_CHARGER_ID: [],
 }
 
 _LOGGER = logging.getLogger(__name__)

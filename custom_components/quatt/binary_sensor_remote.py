@@ -15,11 +15,14 @@ import homeassistant.helpers.entity_registry as er
 
 from .const import (
     DEVICE_CIC_ID,
+    DEVICE_BOILER_ID,
+    DEVICE_FLOWMETER_ID,
     DEVICE_HEAT_BATTERY_ID,
+    DEVICE_HEAT_CHARGER_ID,
     DEVICE_HEATPUMP_1_ID,
     DEVICE_HEATPUMP_2_ID,
-    DEVICE_LIST,
     DEVICE_THERMOSTAT_ID,
+    DEVICE_LIST,
     DOMAIN,
 )
 from .coordinator_remote import QuattRemoteDataUpdateCoordinator
@@ -64,21 +67,6 @@ REMOTE_BINARY_SENSORS = {
             name="Avoid nighttime charging",
             key="avoidNighttimeCharging",
             icon="mdi:weather-night",
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Thermostat flame on",
-            key="thermostatFlameOn",
-            icon="mdi:fire",
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Show thermostat temperatures",
-            key="showThermostatTemperatures",
-            icon="mdi:thermometer",
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Boiler on",
-            key="boilerOn",
-            icon="mdi:water-boiler",
         ),
         QuattBinarySensorEntityDescription(
             name="HP1 connected",
@@ -143,13 +131,14 @@ REMOTE_BINARY_SENSORS = {
             icon="mdi:currency-eur",
         ),
     ],
-    DEVICE_THERMOSTAT_ID: [
+    DEVICE_BOILER_ID: [
         QuattBinarySensorEntityDescription(
-            name="Flame on",
-            key="thermostatFlameOn",
-            icon="mdi:fire",
+            name="Boiler on",
+            key="boilerOn",
+            icon="mdi:water-boiler",
         ),
     ],
+    DEVICE_FLOWMETER_ID: [],
     DEVICE_HEAT_BATTERY_ID: [
         QuattBinarySensorEntityDescription(
             name="Charging",
@@ -172,12 +161,25 @@ REMOTE_BINARY_SENSORS = {
             quatt_all_electric=True,
         ),
     ],
+    DEVICE_HEAT_CHARGER_ID: [],
     DEVICE_HEATPUMP_1_ID: create_remote_heatpump_binary_sensor_entity_descriptions(
         index=0, is_duo=False
     ),
     DEVICE_HEATPUMP_2_ID: create_remote_heatpump_binary_sensor_entity_descriptions(
         index=1, is_duo=True
     ),
+    DEVICE_THERMOSTAT_ID: [
+        QuattBinarySensorEntityDescription(
+            name="Flame on",
+            key="thermostatFlameOn",
+            icon="mdi:fire",
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Show thermostat temperatures",
+            key="showThermostatTemperatures",
+            icon="mdi:thermometer",
+        ),
+    ],
 }
 
 _LOGGER = logging.getLogger(__name__)
