@@ -11,13 +11,8 @@ DOMAIN = "quatt"
 ATTRIBUTION = "marcoboers"
 
 CONF_POWER_SENSOR = "power_sensor"
-CONF_CONNECTION_TYPE = "connection_type"
 CONF_REMOTE_CIC = "cic"
 CONF_LOCAL_CIC = "ip_address"
-
-# Connection types
-CONNECTION_TYPE_LOCAL = "local"
-CONNECTION_TYPE_REMOTE = "remote"
 
 # Remote API URLs (from kwatt)
 FIREBASE_INSTALLATIONS_URL = "https://firebaseinstallations.googleapis.com/v1/projects/quatt-production/installations"
