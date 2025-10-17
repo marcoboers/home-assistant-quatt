@@ -56,55 +56,67 @@ The Quatt integration relies on DHCP requests made by the Commander In Chief (CI
 1. Click on `Submit` to confirm to automatically add the integration to Home Assistant
 1. Enjoy
 
-## Remote Mobile API (Beta)
+## Remote Mobile API (Optional - Beta)
 
-Starting from recent versions, this integration supports the **Quatt Remote Mobile API** in addition to the local CIC JSON API. This remote API has been reverse-engineered from the official Quatt mobile app and is currently in **beta** with no backwards compatibility guarantees.
+This integration supports the **Quatt Remote Mobile API** as an optional addition to the local CIC JSON API. The remote API provides access to additional sensors and controls beyond what's available through the local API.
 
-### Advantages
+**Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app, which made this remote API support possible!**
 
-- **Enhanced data**: Access to more detailed sensors and data about your Quatt products that are not available via the local CIC JSON
-- **Remote control capabilities**: Enables future features like boosting the heat charger and heat battery when these controls are released in the official app
-- **Additional controls**: Ability to programmatically adjust sound settings and configure electricity and gas prices (implementation pending)
-- **Statistics access**: Retrieve long-term statistics available in the official Quatt app (though limited use case in Home Assistant)
+### Key Features
 
-#### Additional Sensors Available via Remote API
+- **Additional sensors**: Access to sensors not available via the local API (see list below)
+- **Sound level controls**: Programmable day and night maximum sound levels (normal, library, silent)
+- **Smart filtering**: Only sensors not already available through the local API are added, avoiding duplicates
+- **Seamless integration**: Remote API is configured as an optional toggle on the existing CIC device
 
-The remote API provides access to numerous sensors that are not available through the local CIC JSON API, including:
+### Additional Sensors Available via Remote API
+
+The remote API provides access to numerous sensors that complement the local API:
 
 - **Connectivity status**: WiFi SSID, WiFi/LTE/cable connection status
 - **Energy pricing**: Electricity prices (standard, day, night), gas prices, and night time schedule configuration
 - **Sound control**: Silent mode status, day/night max sound levels, and sound schedule configuration
-- **Heat battery metrics** (All-Electric only): Serial number, status, size, charge percentage, and estimated shower minutes
-- **Enhanced heat pump data**: Compressor frequency (actual and demand), minimum/rated/expected power, water pump level, ODU type
+- **Heat battery metrics** (All-Electric only): Serial number, status, size, charge percentage
+- **Enhanced heat pump data**: Compressor frequency (actual and demand), minimum/rated/expected power, water pump level, ODU type, on/off status, Modbus slave ID
 - **Installation details**: Installation date, insights start date, Quatt build version, installation name, location (zip code, country), and order number
-- **Thermostat data**: Control and room temperature set points, current room temperature
+- **Thermostat data**: Outside temperature (via remote API)
+- **Boiler data** (Hybrid only): Additional boiler power and temperature sensors
 
-### Disadvantages and Considerations
+### Important Considerations
 
-- **No backwards compatibility**: The beta implementation does not guarantee backwards compatibility with previous versions
-- **Authorization uncertainty**: Since the API was reverse-engineered, the long-term stability of the authorization mechanism is unknown. We cannot confirm if all authentication parameters are correctly implemented
-- **Potential for changes**: The remote API may change or stop working if Quatt modifies their authentication system
+- **Beta status**: This feature is currently in **beta** with no backwards compatibility guarantees between versions
+- **Optional feature**: The integration works fully with only the local API; remote API is optional
+- **Reverse engineered API**: The remote API was obtained through reverse engineering of the official Quatt mobile app. As such, the long-term stability cannot be guaranteed
+- **Dependent on Quatt**: This feature depends on Quatt's remote API infrastructure. Changes to Quatt's authentication system or API may cause the remote API integration to stop working
+- **No official support**: Since this is based on reverse engineering, there is no official support from Quatt for this functionality
+- **Smart filtering**: The integration intelligently filters remote sensors to avoid duplicating data already available from the local API
 
-**Note**: The integration currently requires the remote API for operation. If you experience authentication issues or the remote API becomes unavailable, this may affect the integration's functionality.
+### Enabling Remote API
 
-### Connecting the Remote API to Home Assistant
+To enable the remote API for your existing Quatt CIC:
 
-To add the remote API to your Home Assistant:
+#### During Initial Setup
 
 1. In Home Assistant, go to `Settings` → `Devices & services` → `Integrations`
-2. Click `+ Add integration` (or if you already have a Quatt integration, click `Configure` and then `Add hub`)
-3. Search for and select `Quatt`
-4. Select **Remote API** as the connection type
-5. Enter your **CIC ID**. You can find this:
-   - In the Quatt mobile app (at the CIC QR code section)
-   - In the local CIC JSON API output
+2. Click `+ Add integration` and search for **Quatt**
+3. Enter your **CIC IP address** (e.g., 192.168.0.100)
+4. When prompted, **enable Remote API** by toggling the option
+5. Enter your **CIC ID** (found in the Quatt mobile app or local API)
 6. Enter your **first name** and **last name**
-7. Click `Submit`
-8. **Within 60 seconds**, press the physical button on your CIC to complete the pairing process
-9. Once paired, the setup will complete and the remote API sensors will become available
-10. Optionally assign rooms/locations to the entities, or skip this step
+7. **Within 60 seconds**, press the physical button on your CIC to complete pairing
+8. The setup will complete with both local and remote API active
 
-The remote API will now be active and all available sensors will be added to your Home Assistant installation.
+#### Adding to Existing Integration
+
+1. Go to `Settings` → `Devices & services` → `Integrations`
+2. Find your Quatt integration and click **Configure**
+3. Enable the **Add Remote API** toggle
+4. Enter your **CIC ID** (found in the Quatt mobile app or local API)
+5. Enter your **first name** and **last name**
+6. **Within 60 seconds**, press the physical button on your CIC to complete pairing
+7. The integration will reload with remote API sensors and controls available
+
+Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
 
 ## Sensors
 
