@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
@@ -21,6 +23,9 @@ import homeassistant.util.dt as dt_util
 
 from .const import ATTRIBUTION, DOMAIN, NAME
 from .coordinator import QuattDataUpdateCoordinator
+from .coordinator_remote import QuattRemoteDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class QuattSensorEntityDescription(
@@ -189,11 +194,38 @@ class QuattSelect(QuattEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        # TODO: Implement API call to set the sound level
-        # For now, this is read-only until the API method is implemented
-        _LOGGER.warning(
-            "Setting %s to %s is not yet implemented",
-            self.entity_description.key,
-            option,
-        )
-        raise NotImplementedError("Setting sound level is not yet implemented")
+        # Only remote coordinator supports updating settings
+        if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
+            _LOGGER.error("Cannot update sound level: only available via remote API")
+            raise NotImplementedError("Setting sound level is only available via remote API")
+
+        # Get current values for both sound levels
+        day_level = self.coordinator.get_value("dayMaxSoundLevel")
+        night_level = self.coordinator.get_value("nightMaxSoundLevel")
+
+        # Update the value that changed
+        if self.entity_description.key == "dayMaxSoundLevel":
+            day_level = option
+        elif self.entity_description.key == "nightMaxSoundLevel":
+            night_level = option
+
+        # Validate that we have both values
+        if not day_level or not night_level:
+            _LOGGER.error("Cannot update sound level: missing current values (day=%s, night=%s)", day_level, night_level)
+            raise ValueError("Cannot update sound level: missing current values")
+
+        # Send both values to the API
+        settings = {
+            "dayMaxSoundLevel": day_level,
+            "nightMaxSoundLevel": night_level,
+        }
+
+        _LOGGER.debug("Updating CIC sound levels: %s", settings)
+        success = await self.coordinator.client.update_cic_settings(settings)
+
+        if not success:
+            _LOGGER.error("Failed to update sound level settings")
+            raise RuntimeError("Failed to update sound level settings")
+
+        # Request a coordinator refresh to update the state
+        await self.coordinator.async_request_refresh()

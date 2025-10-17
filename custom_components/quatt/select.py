@@ -3,15 +3,9 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 
 from homeassistant.components.select import (
     DOMAIN as SELECT_DOMAIN,
-    SelectEntity,
-    SelectEntityDescription,
-)
-from homeassistant.const import (
-    EntityCategory,
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.device_registry as dr

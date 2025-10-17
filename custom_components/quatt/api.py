@@ -587,3 +587,55 @@ class QuattRemoteApiClient:
         if cic_data:
             return cic_data.get("result", {})
         return None
+
+    async def update_cic_settings(self, settings: dict[str, Any]) -> bool:
+        """Update CIC device settings.
+
+        Args:
+            settings: Dictionary of settings to update (e.g., {"dayMaxSoundLevel": "normal", "nightMaxSoundLevel": "library"})
+
+        Returns:
+            True if update was successful, False otherwise
+        """
+        if not self._id_token:
+            _LOGGER.error("Cannot update CIC settings: not authenticated")
+            return False
+
+        headers = {"Authorization": f"Bearer {self._id_token}"}
+        url = f"{QUATT_API_BASE_URL}/me/cic/{self.cic}"
+
+        try:
+            async with self._session.put(
+                url,
+                json=settings,
+                headers=headers,
+            ) as response:
+                if response.status in (200, 201, 204):
+                    _LOGGER.debug("CIC settings updated successfully: %s", settings)
+                    return True
+
+                # Handle 401 Unauthorized or 403 Forbidden - token might be expired
+                if response.status in (401, 403):
+                    _LOGGER.warning("Got %s while updating CIC settings, attempting to refresh token", response.status)
+                    if await self.refresh_token():
+                        await self._save_tokens()
+                        # Retry once with new token
+                        headers = {"Authorization": f"Bearer {self._id_token}"}
+                        async with self._session.put(
+                            url,
+                            json=settings,
+                            headers=headers,
+                        ) as retry_response:
+                            if retry_response.status in (200, 201, 204):
+                                _LOGGER.debug("CIC settings updated successfully after token refresh: %s", settings)
+                                return True
+                            _LOGGER.error("CIC settings update failed after token refresh: %s", await retry_response.text())
+                            return False
+                    _LOGGER.error("Token refresh failed while updating CIC settings")
+                    return False
+
+                _LOGGER.error("CIC settings update failed with status %s: %s", response.status, await response.text())
+                return False
+        except Exception as err:
+            _LOGGER.error("Error updating CIC settings: %s", err)
+            return False
