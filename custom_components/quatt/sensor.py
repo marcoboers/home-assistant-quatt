@@ -124,7 +124,7 @@ def create_heatpump_sensor_entity_descriptions(
             quatt_duo=is_duo,
         ),
 
-        ## Remote
+        ## Remote (non-duplicated sensors only)
         QuattSensorEntityDescription(
             name="On",
             key=f"heatPumps.{index}.on",
@@ -172,17 +172,6 @@ def create_heatpump_sensor_entity_descriptions(
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
-            name="Power",
-            key=f"heatPumps.{index}.power",
-            icon="mdi:heat-wave",
-            native_unit_of_measurement=UnitOfPower.WATT,
-            device_class=SensorDeviceClass.POWER,
-            suggested_display_precision=0,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
             name="Electrical power",
             key=f"heatPumps.{index}.electricalPower",
             icon="mdi:lightning-bolt",
@@ -219,39 +208,6 @@ def create_heatpump_sensor_entity_descriptions(
             name="Status",
             key=f"heatPumps.{index}.status",
             icon="mdi:information",
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Temperature outside",
-            key=f"heatPumps.{index}.temperatureOutside",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=2,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Temperature water in",
-            key=f"heatPumps.{index}.temperatureWaterIn",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=2,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Temperature water out",
-            key=f"heatPumps.{index}.temperatureWaterOut",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=2,
-            state_class=SensorStateClass.MEASUREMENT,
             quatt_duo=is_duo,
             quatt_mobile_api=True,
         ),
@@ -665,7 +621,7 @@ SENSORS = {
             quatt_all_electric=True,
         ),
 
-        ## Remote
+        ## Remote (non-duplicated sensors only)
         QuattSensorEntityDescription(
             name="Serial number",
             key="allEStatus.heatBatterySerialNumber",
@@ -686,16 +642,6 @@ SENSORS = {
             key="allEStatus.heatBatterySize",
             icon="mdi:battery-high",
             entity_category=EntityCategory.DIAGNOSTIC,
-            quatt_all_electric=True,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Shower minutes",
-            key="allEStatus.showerMinutes",
-            icon="mdi:shower",
-            native_unit_of_measurement=UnitOfTime.MINUTES,
-            suggested_display_precision=0,
-            state_class=SensorStateClass.MEASUREMENT,
             quatt_all_electric=True,
             quatt_mobile_api=True,
         ),
@@ -751,33 +697,13 @@ SENSORS = {
             quatt_all_electric=True,
         ),
 
-        ## Remote
+        ## Remote (non-duplicated sensors only)
         QuattSensorEntityDescription(
             name="Serial number",
             key="allEStatus.heatChargerSerialNumber",
             icon="mdi:identifier",
             entity_category=EntityCategory.DIAGNOSTIC,
             quatt_all_electric=True,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Heating water temperature in",
-            key="heatingWaterTemperatureIn",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=2,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Heating water temperature out",
-            key="heatingWaterTemperatureOut",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=2,
-            state_class=SensorStateClass.MEASUREMENT,
             quatt_mobile_api=True,
         ),
     ],
@@ -881,27 +807,6 @@ SENSORS = {
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
         ),
-
-        ## Remote
-        QuattSensorEntityDescription(
-            name="Flow rate",
-            key="flowRate",
-            icon="mdi:gauge",
-            native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_HOUR,
-            suggested_display_precision=0,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Water temperature",
-            key="waterTemperature",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=2,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_mobile_api=True,
-        ),
     ],
     DEVICE_THERMOSTAT_ID: [
         QuattSensorEntityDescription(
@@ -932,37 +837,7 @@ SENSORS = {
             state_class=SensorStateClass.MEASUREMENT,
         ),
 
-        ## Remote
-        QuattSensorEntityDescription(
-            name="Control temperature set point",
-            key="thermostatControlTemperatureSetPoint",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=1,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Room temperature set point",
-            key="thermostatRoomTemperatureSetPoint",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=1,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Room temperature",
-            key="thermostatRoomTemperature",
-            icon="mdi:thermometer",
-            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            device_class=SensorDeviceClass.TEMPERATURE,
-            suggested_display_precision=1,
-            state_class=SensorStateClass.MEASUREMENT,
-            quatt_mobile_api=True,
-        ),
+        ## Remote (non-duplicated sensors only)
         QuattSensorEntityDescription(
             name="Temperature outside",
             key="temperatureOutside",

@@ -56,22 +56,6 @@ def create_heatpump_sensor_entity_descriptions(
             icon="mdi:snowflake",
             quatt_duo=is_duo,
         ),
-
-        ## Remote
-        QuattBinarySensorEntityDescription(
-            name="Silent mode status",
-            key=f"heatPumps.{index}.silentModeStatus",
-            icon="mdi:sleep",
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
-        QuattBinarySensorEntityDescription(
-            name="Limited by COP",
-            key=f"heatPumps.{index}.limitedByCop",
-            icon="mdi:arrow-collapse-up",
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
     ]
 
 
