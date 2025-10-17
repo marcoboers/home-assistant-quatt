@@ -596,6 +596,7 @@ class QuattRemoteApiClient:
 
         Returns:
             True if update was successful, False otherwise
+
         """
         if not self._id_token:
             _LOGGER.error("Cannot update CIC settings: not authenticated")
