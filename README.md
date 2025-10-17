@@ -56,6 +56,68 @@ The Quatt integration relies on DHCP requests made by the Commander In Chief (CI
 1. Click on `Submit` to confirm to automatically add the integration to Home Assistant
 1. Enjoy
 
+## Remote Mobile API (Optional - Beta)
+
+This integration supports the **Quatt Remote Mobile API** as an optional addition to the local CIC JSON API. The remote API provides access to additional sensors and controls beyond what's available through the local API.
+
+**Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app, which made this remote API support possible!**
+
+### Key Features
+
+- **Additional sensors**: Access to sensors not available via the local API (see list below)
+- **Sound level controls**: Programmable day and night maximum sound levels (normal, library, silent)
+- **Smart filtering**: Only sensors not already available through the local API are added, avoiding duplicates
+- **Seamless integration**: Remote API is configured as an optional toggle on the existing CIC device
+
+### Additional Sensors Available via Remote API
+
+The remote API provides access to numerous sensors that complement the local API:
+
+- **Connectivity status**: WiFi SSID, WiFi/LTE/cable connection status
+- **Energy pricing**: Electricity prices (standard, day, night), gas prices, and night time schedule configuration
+- **Sound control**: Silent mode status, day/night max sound levels, and sound schedule configuration
+- **Heat battery metrics** (All-Electric only): Serial number, status, size, charge percentage
+- **Enhanced heat pump data**: Compressor frequency (actual and demand), minimum/rated/expected power, water pump level, ODU type, on/off status, Modbus slave ID
+- **Installation details**: Installation date, insights start date, Quatt build version, installation name, location (zip code, country), and order number
+- **Thermostat data**: Outside temperature (via remote API)
+- **Boiler data** (Hybrid only): Additional boiler power and temperature sensors
+
+### Important Considerations
+
+- **Beta status**: This feature is currently in **beta** with no backwards compatibility guarantees between versions
+- **Optional feature**: The integration works fully with only the local API; remote API is optional
+- **Reverse engineered API**: The remote API was obtained through reverse engineering of the official Quatt mobile app. As such, the long-term stability cannot be guaranteed
+- **Dependent on Quatt**: This feature depends on Quatt's remote API infrastructure. Changes to Quatt's authentication system or API may cause the remote API integration to stop working
+- **No official support**: Since this is based on reverse engineering, there is no official support from Quatt for this functionality
+- **Smart filtering**: The integration intelligently filters remote sensors to avoid duplicating data already available from the local API
+
+### Enabling Remote API
+
+To enable the remote API for your existing Quatt CIC:
+
+#### During Initial Setup
+
+1. In Home Assistant, go to `Settings` → `Devices & services` → `Integrations`
+2. Click `+ Add integration` and search for **Quatt**
+3. Enter your **CIC IP address** (e.g., 192.168.0.100)
+4. When prompted, **enable Remote API** by toggling the option
+5. Enter your **CIC ID** (found in the Quatt mobile app or local API)
+6. Enter your **first name** and **last name**
+7. **Within 60 seconds**, press the physical button on your CIC to complete pairing
+8. The setup will complete with both local and remote API active
+
+#### Adding to Existing Integration
+
+1. Go to `Settings` → `Devices & services` → `Integrations`
+2. Find your Quatt integration and click **Configure**
+3. Enable the **Add Remote API** toggle
+4. Enter your **CIC ID** (found in the Quatt mobile app or local API)
+5. Enter your **first name** and **last name**
+6. **Within 60 seconds**, press the physical button on your CIC to complete pairing
+7. The integration will reload with remote API sensors and controls available
+
+Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
+
 ## Sensors
 
 All sensors from the local API feed are available. In addition, the following computed sensors are provided:

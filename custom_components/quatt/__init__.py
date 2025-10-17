@@ -7,7 +7,7 @@ https://github.com/marcoboers/home-assistant-quatt
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL, Platform
+from homeassistant.const import CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
@@ -15,25 +15,33 @@ from homeassistant.helpers.aiohttp_client import (
 )
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
+from homeassistant.helpers.storage import Store
 
 from .api import (
-    QuattApiClient,
+    QuattLocalApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
+    QuattRemoteApiClient,
 )
 from .const import (
+    CONF_REMOTE_CIC,
+    CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     DEFAULT_SCAN_INTERVAL,
     DEVICE_CIC_ID,
     DOMAIN,
     LOGGER,
+    STORAGE_KEY,
+    STORAGE_VERSION,
 )
-from .coordinator import QuattDataUpdateCoordinator
+from .coordinator_local import QuattLocalDataUpdateCoordinator
+from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
+    Platform.SELECT,
 ]
 
 
@@ -41,18 +49,67 @@ PLATFORMS: list[Platform] = [
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
     hass.data.setdefault(DOMAIN, {})
-    coordinator = QuattDataUpdateCoordinator(
+
+    has_remote = CONF_REMOTE_CIC in entry.data
+
+    coordinators = {
+        "local": None,
+        "remote": None,
+    }
+
+    local_client = QuattLocalApiClient(
+        ip_address=entry.data[CONF_LOCAL_CIC],
+        session=async_get_clientsession(hass),
+    )
+
+    local_coordinator = QuattLocalDataUpdateCoordinator(
         hass=hass,
         update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
-        client=QuattApiClient(
-            ip_address=entry.data[CONF_IP_ADDRESS],
-            session=async_get_clientsession(hass),
-        ),
+        client=local_client,
     )
-    hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-    await coordinator.async_config_entry_first_refresh()
+    await local_coordinator.async_config_entry_first_refresh()
+    coordinators["local"] = local_coordinator
+
+    # Set up remote coordinator if configured
+    if has_remote:
+        cic = entry.data[CONF_REMOTE_CIC]
+
+        # Create storage for tokens
+        store = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry.entry_id}")
+
+        # Load stored tokens
+        stored_data = await store.async_load()
+
+        # Create remote API client
+        session = async_get_clientsession(hass)
+        remote_client = QuattRemoteApiClient(cic, session, store)
+
+        # Load tokens if they exist
+        if stored_data:
+            remote_client.load_tokens(
+                stored_data.get("id_token"),
+                stored_data.get("refresh_token"),
+                stored_data.get("installation_id")
+            )
+            LOGGER.debug("Loaded stored tokens for CIC %s", cic)
+
+        # Authenticate (will use existing tokens if available, or do full auth)
+        if await remote_client.authenticate():
+            # Create remote coordinator only if authentication succeeded
+            remote_coordinator = QuattRemoteDataUpdateCoordinator(
+                hass=hass,
+                update_interval=60,
+                client=remote_client,
+            )
+
+            await remote_coordinator.async_config_entry_first_refresh()
+            coordinators["remote"] = remote_coordinator
+        else:
+            LOGGER.error("Failed to authenticate with Quatt remote API")
+
+    # Store coordinators
+    hass.data[DOMAIN][entry.entry_id] = coordinators
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # On update of the options reload the entry which reloads the coordinator
@@ -75,7 +132,7 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def _get_cic_hostname(hass: HomeAssistant, ip_address: str) -> str:
     """Validate credentials."""
-    client = QuattApiClient(
+    client = QuattLocalApiClient(
         ip_address=ip_address,
         session=async_create_clientsession(hass),
     )
@@ -94,7 +151,7 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     # Return that the migration failed in case the retrieval fails
     try:
         hostname_unique_id = await _get_cic_hostname(
-            hass=hass, ip_address=config_entry.data[CONF_IP_ADDRESS]
+            hass=hass, ip_address=config_entry.data[CONF_LOCAL_CIC]
         )
     except QuattApiClientAuthenticationError as exception:
         LOGGER.warning(exception)
