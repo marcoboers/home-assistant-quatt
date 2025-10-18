@@ -2,14 +2,8 @@
     "config": {
         "flow_title": "CIC: {name}",
         "step": {
-            "user": {
-                "description": "Choose connection type for your Quatt heatpump.",
-                "data": {
-                    "connection_type": "Connection type"
-                }
-            },
             "local": {
-                "description": "Set up local connection to your Quatt heatpump.",
+                "description": "Set up local connection to the Quatt heatpump.",
                 "data": {
                     "ip_address": "[%key:common::config_flow::data::ip%]"
                 },
@@ -17,15 +11,21 @@
                     "ip_address": "Without http:// and port."
                 }
             },
+            "add_remote": {
+                "description": "Add remote connectivity through the Quatt mobile API to retrieve additional heatpump data.",
+                "data": {
+                    "add_remote": "Enable remote connection setup"
+                }
+            },
             "remote": {
-                "description": "Set up remote connection to your Quatt heatpump via the mobile API. Enter your CIC ID (e.g., CIC-xxxx-xxxx-xxxx).",
+                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nEnter the CIC ID (e.g., CIC-xxxx-xxxx-xxxx).",
                 "data": {
                     "cic": "CIC ID"
                 }
             },
             "pair": {
-                "title": "Pair with your Quatt device",
-                "description": "Please enter your name and press the button on your CIC device ({cic}).\n\n![Pairing button location](/quatt_static/pair.png)\n\nYou have 60 seconds to complete the pairing.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+                "title": "Pair with the Quatt device",
+                "description": "Please enter your name and press the button on the CIC device ({cic}).\n\n![Pairing button location](/quatt_static/pair.png)\n\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
                 "data": {
                     "first_name": "First Name",
                     "last_name": "Last Name"
@@ -50,7 +50,7 @@
             "init": {
                 "description": "Quatt options",
                 "data": {
-                    "scan_interval": "Update interval (Seconds)",
+                    "scan_interval": "Local update interval (Seconds)",
                     "power_sensor": "Power sensor (Optional)"
                 },
                 "data_description": {

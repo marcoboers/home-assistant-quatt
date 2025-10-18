@@ -29,9 +29,9 @@ from .api import (
     QuattRemoteApiClient,
 )
 from .const import (
-    CONF_REMOTE_CIC,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
+    CONF_REMOTE_CIC,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     LOGGER,
@@ -165,14 +165,14 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             if user_input.get("add_remote", False):
                 # User wants to add remote API
                 return await self.async_step_remote()
-            else:
-                # User doesn't want remote API, create entry with local only
-                return self.async_create_entry(
-                    title=self.cic_name,
-                    data={
-                        CONF_LOCAL_CIC: self.ip_address,
-                    },
-                )
+
+            # User doesn't want remote API, create entry with local only
+            return self.async_create_entry(
+                title=self.cic_name,
+                data={
+                    CONF_LOCAL_CIC: self.ip_address,
+                },
+            )
 
         return self.async_show_form(
             step_id="add_remote",
