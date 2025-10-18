@@ -1,4 +1,5 @@
 """Quatt API Client."""
+
 from __future__ import annotations
 
 import asyncio
@@ -19,6 +20,7 @@ from .const import (
     GOOGLE_API_KEY,
     GOOGLE_APP_ID,
     GOOGLE_APP_INSTANCE_ID,
+    GOOGLE_CLIENT_VERSION,
     GOOGLE_FIREBASE_CLIENT,
     QUATT_API_BASE_URL,
 )
@@ -41,6 +43,7 @@ class QuattApiClientCommunicationError(QuattApiClientError):
 
 class QuattApiClientAuthenticationError(QuattApiClientError):
     """Exception to indicate an authentication error."""
+
 
 class QuattLocalApiClient:
     """Quatt Local API Client."""
@@ -76,7 +79,9 @@ class QuattLocalApiClient:
 
         for attempt in range(RETRY_ATTEMPTS):
             try:
-                _LOGGER.debug("Fetching data from url: %s (Attempt %d)", url, attempt + 1)
+                _LOGGER.debug(
+                    "Fetching data from url: %s (Attempt %d)", url, attempt + 1
+                )
                 async with asyncio.timeout(20):
                     response = await self._session.request(
                         method=method,
@@ -91,7 +96,9 @@ class QuattLocalApiClient:
 
             except aiohttp.ServerDisconnectedError as exception:
                 # Sometimes the ServerDisconnectedError is raised so retry to get the information
-                _LOGGER.debug("Server disconnected error. Retrying... Attempt %d", attempt + 1)
+                _LOGGER.debug(
+                    "Server disconnected error. Retrying... Attempt %d", attempt + 1
+                )
                 if attempt == RETRY_ATTEMPTS - 1:
                     raise QuattApiClientCommunicationError(
                         "Server disconnected after multiple attempts"
@@ -99,25 +106,35 @@ class QuattLocalApiClient:
                 await asyncio.sleep(0.1)
 
             except TimeoutError as exception:
-                _LOGGER.error("Timeout error fetching information from %s: %s", url, exception)
+                _LOGGER.error(
+                    "Timeout error fetching information from %s: %s", url, exception
+                )
                 raise QuattApiClientCommunicationError(
                     "Timeout error fetching information",
                 ) from exception
 
             except aiohttp.ClientError as exception:
-                _LOGGER.error("Client error fetching information from %s: %s", url, exception)
+                _LOGGER.error(
+                    "Client error fetching information from %s: %s", url, exception
+                )
                 raise QuattApiClientCommunicationError(
                     "Client error fetching information",
                 ) from exception
 
             except socket.gaierror as exception:
-                _LOGGER.error("Socket error fetching information from %s: %s", url, exception)
+                _LOGGER.error(
+                    "Socket error fetching information from %s: %s", url, exception
+                )
                 raise QuattApiClientCommunicationError(
                     "Socket error fetching information",
                 ) from exception
 
             except Exception as exception:  # pylint: disable=broad-except
-                _LOGGER.error("Unexpected error in _api_wrapper. URL: %s, Exception: %s", url, exception)
+                _LOGGER.error(
+                    "Unexpected error in _api_wrapper. URL: %s, Exception: %s",
+                    url,
+                    exception,
+                )
                 raise QuattApiClientError(
                     "Unexpected error in _api_wrapper",
                 ) from exception
@@ -161,14 +178,18 @@ class QuattRemoteApiClient:
     async def _save_tokens(self) -> None:
         """Save tokens to storage."""
         if self._store:
-            await self._store.async_save({
-                "id_token": self._id_token,
-                "refresh_token": self._refresh_token,
-                "installation_id": self._installation_id,
-            })
+            await self._store.async_save(
+                {
+                    "id_token": self._id_token,
+                    "refresh_token": self._refresh_token,
+                    "installation_id": self._installation_id,
+                }
+            )
             _LOGGER.debug("Tokens saved to storage")
 
-    async def authenticate(self, first_name: str = "HomeAssistant", last_name: str = "User") -> bool:
+    async def authenticate(
+        self, first_name: str = "HomeAssistant", last_name: str = "User"
+    ) -> bool:
         """Authenticate with Firebase and Quatt API."""
         try:
             # Check if we have existing tokens
@@ -212,7 +233,9 @@ class QuattRemoteApiClient:
                 return False
 
             # Step 5: Update user profile
-            if not await self._update_user_profile(first_name=first_name, last_name=last_name):
+            if not await self._update_user_profile(
+                first_name=first_name, last_name=last_name
+            ):
                 return False
 
             # Step 6: Request pairing with CIC
@@ -229,11 +252,12 @@ class QuattRemoteApiClient:
 
             # Save tokens after successful authentication
             await self._save_tokens()
-
-            return True
         except Exception as err:
             _LOGGER.error("Authentication failed: %s", err)
             return False
+        else:
+            _LOGGER.info("Successfully authenticated with Quatt API")
+            return True
 
     async def _get_firebase_installation(self) -> bool:
         """Get Firebase Installation ID and auth token."""
@@ -264,9 +288,7 @@ class QuattRemoteApiClient:
                     self._firebase_auth_token = auth_token.get("token")
                     _LOGGER.debug("Firebase installation successful")
                     return True
-                _LOGGER.error(
-                    "Firebase installation failed: %s", await response.text()
-                )
+                _LOGGER.error("Firebase installation failed: %s", await response.text())
                 return False
         except Exception as err:
             _LOGGER.error("Firebase installation error: %s", err)
@@ -319,18 +341,20 @@ class QuattRemoteApiClient:
             _LOGGER.error("Firebase remote config fetch error: %s", err)
             return False
 
-    async def _signup_new_user(self) -> bool:
-        """Sign up new anonymous user with Firebase."""
-        headers = {
+    def _get_headers(self):
+        """Set common headers for Firebase requests."""
+        return {
             "X-Android-Cert": GOOGLE_ANDROID_CERT,
             "X-Android-Package": GOOGLE_ANDROID_PACKAGE,
-            "X-Client-Version": "Android/Fallback/X24000001/FirebaseCore-Android",
+            "X-Client-Version": GOOGLE_CLIENT_VERSION,
             "X-Firebase-GMPID": GOOGLE_APP_ID,
             "X-Firebase-Client": GOOGLE_FIREBASE_CLIENT,
         }
 
+    async def _signup_new_user(self) -> bool:
+        """Sign up new anonymous user with Firebase."""
+        headers = self._get_headers()
         payload = {"clientType": "CLIENT_TYPE_ANDROID"}
-
         url = f"{FIREBASE_SIGNUP_URL}?key={GOOGLE_API_KEY}"
 
         try:
@@ -356,13 +380,7 @@ class QuattRemoteApiClient:
         if not self._id_token:
             return False
 
-        headers = {
-            "X-Android-Cert": GOOGLE_ANDROID_CERT,
-            "X-Android-Package": GOOGLE_ANDROID_PACKAGE,
-            "X-Client-Version": "Android/Fallback/X24000001/FirebaseCore-Android",
-            "X-Firebase-GMPID": GOOGLE_APP_ID,
-            "X-Firebase-Client": GOOGLE_FIREBASE_CLIENT,
-        }
+        headers = self._get_headers()
 
         payload = {"idToken": self._id_token}
 
@@ -399,11 +417,13 @@ class QuattRemoteApiClient:
                 headers=headers,
             ) as response:
                 if response.status in (200, 201):
-                    _LOGGER.debug("User profile updated with firstName: %s, lastName: %s", first_name, last_name)
+                    _LOGGER.debug(
+                        "User profile updated with firstName: %s, lastName: %s",
+                        first_name,
+                        last_name,
+                    )
                     return True
-                _LOGGER.error(
-                    "User profile update failed: %s", await response.text()
-                )
+                _LOGGER.error("User profile update failed: %s", await response.text())
                 return False
         except Exception as err:
             _LOGGER.error("User profile update error: %s", err)
@@ -438,7 +458,7 @@ class QuattRemoteApiClient:
         if not self._id_token:
             return False
 
-        _LOGGER.info("Waiting for user to press button on CIC device...")
+        _LOGGER.info("Waiting for user to press button on CIC device")
 
         headers = {"Authorization": f"Bearer {self._id_token}"}
         url = f"{QUATT_API_BASE_URL}/me"
@@ -460,16 +480,21 @@ class QuattRemoteApiClient:
                             self._pairing_completed = True
                             return True
 
-                        _LOGGER.debug("Pairing not yet completed, waiting...")
+                        _LOGGER.debug("Pairing not yet completed, waiting")
                     else:
-                        _LOGGER.warning("Failed to check pairing status: %s", await response.text())
+                        _LOGGER.warning(
+                            "Failed to check pairing status: %s", await response.text()
+                        )
             except Exception as err:
                 _LOGGER.warning("Error checking pairing status: %s", err)
 
             # Wait before checking again
             await asyncio.sleep(PAIRING_CHECK_INTERVAL)
 
-        _LOGGER.error("Pairing timeout - user did not press button within %s seconds", PAIRING_TIMEOUT)
+        _LOGGER.error(
+            "Pairing timeout - user did not press button within %s seconds",
+            PAIRING_TIMEOUT,
+        )
         return False
 
     async def _get_installation_id(self) -> bool:
@@ -499,13 +524,7 @@ class QuattRemoteApiClient:
         if not self._refresh_token:
             return False
 
-        headers = {
-            "X-Android-Cert": GOOGLE_ANDROID_CERT,
-            "X-Android-Package": GOOGLE_ANDROID_PACKAGE,
-            "X-Client-Version": "Android/Fallback/X24000001/FirebaseCore-Android",
-            "X-Firebase-GMPID": GOOGLE_APP_ID,
-            "X-Firebase-Client": GOOGLE_FIREBASE_CLIENT,
-        }
+        headers = self._get_headers()
 
         payload = {
             "grantType": "refresh_token",
@@ -566,7 +585,9 @@ class QuattRemoteApiClient:
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403) and retry_on_403:
-                    _LOGGER.warning("Got %s, attempting to refresh token", response.status)
+                    _LOGGER.warning(
+                        "Got %s, attempting to refresh token", response.status
+                    )
                     if await self.refresh_token():
                         await self._save_tokens()
                         # Retry once with new token (prevent infinite loop with retry_on_403=False)
@@ -574,7 +595,11 @@ class QuattRemoteApiClient:
                     _LOGGER.error("Token refresh failed after %s", response.status)
                     return None
 
-                _LOGGER.error("Get CIC data failed with status %s: %s", response.status, await response.text())
+                _LOGGER.error(
+                    "Get CIC data failed with status %s: %s",
+                    response.status,
+                    await response.text(),
+                )
                 return None
         except Exception as err:
             _LOGGER.error("Get CIC data error: %s", err)
@@ -617,7 +642,10 @@ class QuattRemoteApiClient:
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403):
-                    _LOGGER.warning("Got %s while updating CIC settings, attempting to refresh token", response.status)
+                    _LOGGER.warning(
+                        "Got %s while updating CIC settings, attempting to refresh token",
+                        response.status,
+                    )
                     if await self.refresh_token():
                         await self._save_tokens()
                         # Retry once with new token
@@ -628,14 +656,24 @@ class QuattRemoteApiClient:
                             headers=headers,
                         ) as retry_response:
                             if retry_response.status in (200, 201, 204):
-                                _LOGGER.debug("CIC settings updated successfully after token refresh: %s", settings)
+                                _LOGGER.debug(
+                                    "CIC settings updated successfully after token refresh: %s",
+                                    settings,
+                                )
                                 return True
-                            _LOGGER.error("CIC settings update failed after token refresh: %s", await retry_response.text())
+                            _LOGGER.error(
+                                "CIC settings update failed after token refresh: %s",
+                                await retry_response.text(),
+                            )
                             return False
                     _LOGGER.error("Token refresh failed while updating CIC settings")
                     return False
 
-                _LOGGER.error("CIC settings update failed with status %s: %s", response.status, await response.text())
+                _LOGGER.error(
+                    "CIC settings update failed with status %s: %s",
+                    response.status,
+                    await response.text(),
+                )
                 return False
         except Exception as err:
             _LOGGER.error("Error updating CIC settings: %s", err)

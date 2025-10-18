@@ -18,16 +18,16 @@ import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.storage import Store
 
 from .api import (
-    QuattLocalApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
+    QuattLocalApiClient,
     QuattRemoteApiClient,
 )
 from .const import (
-    CONF_REMOTE_CIC,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
+    CONF_REMOTE_CIC,
     DEFAULT_SCAN_INTERVAL,
     DEVICE_CIC_ID,
     DOMAIN,
@@ -40,8 +40,8 @@ from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
-    Platform.SENSOR,
     Platform.SELECT,
+    Platform.SENSOR,
 ]
 
 
