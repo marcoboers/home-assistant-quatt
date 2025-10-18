@@ -123,19 +123,18 @@ def create_heatpump_sensor_entity_descriptions(
             state_class="measurement",
             quatt_duo=is_duo,
         ),
+        QuattSensorEntityDescription(
+            name="Modbus slave ID",
+            key=f"{prefix}.modbusSlaveId",
+            icon="mdi:identifier",
+            entity_category=EntityCategory.DIAGNOSTIC,
+            quatt_duo=is_duo,
+        ),
         ## Remote (non-duplicated sensors only)
         QuattSensorEntityDescription(
             name="On",
             key=f"heatPumps.{index}.on",
             icon="mdi:power",
-            quatt_duo=is_duo,
-            quatt_mobile_api=True,
-        ),
-        QuattSensorEntityDescription(
-            name="Modbus slave ID",
-            key=f"heatPumps.{index}.modbusSlaveId",
-            icon="mdi:identifier",
-            entity_category=EntityCategory.DIAGNOSTIC,
             quatt_duo=is_duo,
             quatt_mobile_api=True,
         ),
