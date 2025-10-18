@@ -10,11 +10,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from .api import QuattRemoteApiClient, QuattApiClientAuthenticationError, QuattApiClientError
-from .const import (
-    DOMAIN,
-    LOGGER,
+from .api import (
+    QuattApiClientAuthenticationError,
+    QuattApiClientError,
+    QuattRemoteApiClient,
 )
+from .const import DOMAIN, LOGGER
 from .coordinator import QuattDataUpdateCoordinator
 
 

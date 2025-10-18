@@ -13,7 +13,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from .api import QuattLocalApiClient, QuattApiClientAuthenticationError, QuattApiClientError
+from .api import (
+    QuattApiClientAuthenticationError,
+    QuattApiClientError,
+    QuattLocalApiClient,
+)
 from .const import (
     CONF_POWER_SENSOR,
     CONVERSION_FACTORS,

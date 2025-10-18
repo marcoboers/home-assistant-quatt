@@ -13,15 +13,15 @@ import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 
 from .const import (
-    DEVICE_CIC_ID,
     DEVICE_BOILER_ID,
+    DEVICE_CIC_ID,
     DEVICE_FLOWMETER_ID,
     DEVICE_HEAT_BATTERY_ID,
     DEVICE_HEAT_CHARGER_ID,
     DEVICE_HEATPUMP_1_ID,
     DEVICE_HEATPUMP_2_ID,
-    DEVICE_THERMOSTAT_ID,
     DEVICE_LIST,
+    DEVICE_THERMOSTAT_ID,
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
@@ -32,7 +32,7 @@ def create_heatpump_sensor_entity_descriptions(
     index: int, is_duo: bool = False
 ) -> list[QuattBinarySensorEntityDescription]:
     """Create the heatpump sensor entity descriptions based on the index."""
-    prefix = 'hp1' if index == 0 else 'hp2'
+    prefix = "hp1" if index == 0 else "hp2"
 
     return [
         QuattBinarySensorEntityDescription(
@@ -73,7 +73,6 @@ BINARY_SENSORS = {
             icon="mdi:shield-check",
             quatt_all_electric=True,
         ),
-
         ## Remote
         QuattBinarySensorEntityDescription(
             name="Scanning for WiFi",
@@ -208,7 +207,6 @@ BINARY_SENSORS = {
             icon="mdi:water-boiler",
             quatt_hybrid=True,
         ),
-
         ## Remote
         QuattBinarySensorEntityDescription(
             name="Boiler on",
@@ -233,7 +231,6 @@ BINARY_SENSORS = {
             key="thermostat.otFtCoolingEnabled",
             icon="mdi:snowflake-thermometer",
         ),
-
         ## Remote
         QuattBinarySensorEntityDescription(
             name="Flame on",
@@ -292,12 +289,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     sensors += await async_setup_binary_sensor(hass, local_coordinator, entry)
 
     if remote_coordinator:
-        sensors += await async_setup_binary_sensor(hass, remote_coordinator, entry, True)
+        sensors += await async_setup_binary_sensor(
+            hass, remote_coordinator, entry, True
+        )
 
     async_add_devices(sensors)
 
 
-async def async_setup_binary_sensor(hass: HomeAssistant, coordinator: QuattDataUpdateCoordinator, entry, remote: bool = False):
+async def async_setup_binary_sensor(
+    hass: HomeAssistant,
+    coordinator: QuattDataUpdateCoordinator,
+    entry,
+    remote: bool = False,
+):
     """Set up the binary_sensor platform."""
     registry = er.async_get(hass)
 

@@ -8,14 +8,11 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
-)
-from homeassistant.components.select import (
-    SelectEntity,
-    SelectEntityDescription,
 )
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -28,9 +25,7 @@ from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-class QuattSensorEntityDescription(
-    SensorEntityDescription, frozen_or_thawed=True
-):
+class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt sensor entities."""
 
     quatt_hybrid: bool = False
@@ -52,9 +47,7 @@ class QuattBinarySensorEntityDescription(
     quatt_mobile_api: bool = False
 
 
-class QuattSelectEntityDescription(
-    SelectEntityDescription, frozen_or_thawed=True
-):
+class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt select entities."""
 
     quatt_hybrid: bool = False
@@ -197,7 +190,9 @@ class QuattSelect(QuattEntity, SelectEntity):
         # Only remote coordinator supports updating settings
         if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
             _LOGGER.error("Cannot update sound level: only available via remote API")
-            raise NotImplementedError("Setting sound level is only available via remote API")
+            raise NotImplementedError(
+                "Setting sound level is only available via remote API"
+            )
 
         # Get current values for both sound levels
         day_level = self.coordinator.get_value("dayMaxSoundLevel")
@@ -211,7 +206,11 @@ class QuattSelect(QuattEntity, SelectEntity):
 
         # Validate that we have both values
         if not day_level or not night_level:
-            _LOGGER.error("Cannot update sound level: missing current values (day=%s, night=%s)", day_level, night_level)
+            _LOGGER.error(
+                "Cannot update sound level: missing current values (day=%s, night=%s)",
+                day_level,
+                night_level,
+            )
             raise ValueError("Cannot update sound level: missing current values")
 
         # Send both values to the API
