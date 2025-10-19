@@ -41,6 +41,7 @@
             "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos."
         },
         "abort": {
+            "already_in_progress": "Já existe um processo de configuração em curso para este dispositivo Quatt.",
             "already_configured": "O dispositivo já está configurado.",
             "no_match": "Nenhum dispositivo Quatt correspondente encontrado."
         }

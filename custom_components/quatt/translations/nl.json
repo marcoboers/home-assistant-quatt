@@ -41,6 +41,7 @@
             "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat."
         },
         "abort": {
+            "already_in_progress": "Er is al een configuratieproces voor dit Quatt-apparaat actief.",
             "already_configured": "Apparaat is al geconfigureerd.",
             "no_match": "Geen overeenkomend Quatt apparaat gevonden."
         }
