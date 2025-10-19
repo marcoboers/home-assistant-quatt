@@ -53,12 +53,14 @@
                 "data": {
                     "scan_interval": "Local update interval (seconds)",
                     "remote_scan_interval": "Remote mobile API update interval (minutes)",
-                    "power_sensor": "Power sensor (optional)"
+                    "power_sensor": "Power sensor (optional)",
+                    "add_remote": "Enable remote connection setup"
                 },
                 "data_description": {
                     "scan_interval": "Number of seconds between requesting information from the Quatt.",
                     "remote_scan_interval": "Number of minutes between requesting information from the mobile Quatt API.",
-                    "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt."
+                    "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt.",
+                    "add_remote": "Add remote connectivity through the Quatt mobile API to retrieve additional heatpump data."
                 }
             }
         }

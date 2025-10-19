@@ -53,12 +53,14 @@
                 "data": {
                     "scan_interval": "Intervalo de atualização local (segundos)",
                     "remote_scan_interval": "Intervalo de atualização da API móvel remota (minutos)",
-                    "power_sensor": "Sensor de potência (opcional)"
+                    "power_sensor": "Sensor de potência (opcional)",
+                    "add_remote": "Ativar configuração de ligação remota"
                 },
                 "data_description": {
                     "scan_interval": "Número de segundos entre pedidos de dados à Quatt.",
                     "remote_scan_interval": "Número de minutos entre pedidos de dados através da API móvel da Quatt.",
-                    "power_sensor": "Sensor de energia externo que mede o consumo atual da Quatt."
+                    "power_sensor": "Sensor de energia externo que mede o consumo atual da Quatt.",
+                    "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
                 }
             }
         }
