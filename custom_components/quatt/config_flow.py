@@ -25,9 +25,9 @@ from .api import (
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
-    QuattLocalApiClient,
-    QuattRemoteApiClient,
 )
+from .api_local import QuattLocalApiClient
+from .api_remote import QuattRemoteApiClient
 from .const import (
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
@@ -178,7 +178,9 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             step_id="add_remote",
             data_schema=vol.Schema(
                 {
-                    vol.Required("add_remote", default=False): selector.BooleanSelector(),
+                    vol.Required(
+                        "add_remote", default=False
+                    ): selector.BooleanSelector(),
                 }
             ),
             description_placeholders={
@@ -211,7 +213,9 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             step_id="remote",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_REMOTE_CIC, default=default_cic): selector.TextSelector(
+                    vol.Required(
+                        CONF_REMOTE_CIC, default=default_cic
+                    ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
                         ),
@@ -465,7 +469,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
 
         # Add option to add remote API if not already configured
         if not has_remote:
-            schema_dict[vol.Optional("add_remote", default=False)] = selector.BooleanSelector()
+            schema_dict[vol.Optional("add_remote", default=False)] = (
+                selector.BooleanSelector()
+            )
 
         return self.async_show_form(
             step_id="init",
@@ -498,7 +504,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
             step_id="add_remote",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_REMOTE_CIC, default=default_cic): selector.TextSelector(
+                    vol.Required(
+                        CONF_REMOTE_CIC, default=default_cic
+                    ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
                         ),
@@ -526,7 +534,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
                 first_name = user_input[CONF_FIRST_NAME]
                 last_name = user_input[CONF_LAST_NAME]
 
-                if not await api.authenticate(first_name=first_name, last_name=last_name):
+                if not await api.authenticate(
+                    first_name=first_name, last_name=last_name
+                ):
                     _errors["base"] = "pairing_timeout"
                 else:
                     # Pairing successful, update config entry
@@ -535,7 +545,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
                         self.config_entry, data=new_data
                     )
                     # Reload the integration to apply changes
-                    await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                    await self.hass.config_entries.async_reload(
+                        self.config_entry.entry_id
+                    )
                     return self.async_create_entry(title="", data={})
             except Exception:  # pylint: disable=broad-except
                 LOGGER.exception("Unexpected exception during pairing")
@@ -563,7 +575,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
                 {
                     vol.Required(
                         CONF_FIRST_NAME,
-                        default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
+                        default=(user_input or {}).get(
+                            CONF_FIRST_NAME, default_first_name
+                        ),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
@@ -571,7 +585,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
                     ),
                     vol.Required(
                         CONF_LAST_NAME,
-                        default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
+                        default=(user_input or {}).get(
+                            CONF_LAST_NAME, default_last_name
+                        ),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT

@@ -1,27 +1,16 @@
-"""DataUpdateCoordinator for quatt local API."""
+"""Local DataUpdateCoordinator for Quatt integration."""
 
 from __future__ import annotations
 
-from datetime import timedelta
 import inspect
 import math
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from .api import (
-    QuattApiClientAuthenticationError,
-    QuattApiClientError,
-    QuattLocalApiClient,
-)
 from .const import (
-    CONF_POWER_SENSOR,
     CONVERSION_FACTORS,
-    DOMAIN,
     LOGGER,
     AllElectricSupervisoryControlMode,
     ElectricityTariffType,
@@ -36,37 +25,6 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
     """Class to manage fetching data from the local API."""
 
     config_entry: ConfigEntry
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        update_interval: int,
-        client: QuattLocalApiClient,
-    ) -> None:
-        """Initialize."""
-        self.client = client
-        super().__init__(
-            hass=hass,
-            logger=LOGGER,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=update_interval),
-        )
-
-        self._power_sensor_id: str = (
-            self.config_entry.options.get(CONF_POWER_SENSOR, "")
-            if (self.config_entry is not None)
-            and (len(self.config_entry.options.get(CONF_POWER_SENSOR, "")) > 6)
-            else None
-        )
-
-    async def _async_update_data(self):
-        """Update data via library."""
-        try:
-            return await self.client.async_get_data()
-        except QuattApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except QuattApiClientError as exception:
-            raise UpdateFailed(exception) from exception
 
     def heatpump_1_active(self) -> bool:
         """Check if heatpump 1 is active."""

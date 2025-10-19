@@ -21,9 +21,9 @@ from .api import (
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
-    QuattLocalApiClient,
-    QuattRemoteApiClient,
 )
+from .api_local import QuattLocalApiClient
+from .api_remote import QuattRemoteApiClient
 from .const import (
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
@@ -90,7 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             remote_client.load_tokens(
                 stored_data.get("id_token"),
                 stored_data.get("refresh_token"),
-                stored_data.get("installation_id")
+                stored_data.get("installation_id"),
             )
             LOGGER.debug("Loaded stored tokens for CIC %s", cic)
 
