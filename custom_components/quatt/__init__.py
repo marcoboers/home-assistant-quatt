@@ -6,6 +6,8 @@ https://github.com/marcoboers/home-assistant-quatt
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
@@ -28,10 +30,12 @@ from .const import (
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     CONF_REMOTE_CIC,
-    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_LOCAL_SCAN_INTERVAL,
+    DEFAULT_REMOTE_SCAN_INTERVAL,
     DEVICE_CIC_ID,
     DOMAIN,
     LOGGER,
+    REMOTE_CONF_SCAN_INTERVAL,
     STORAGE_KEY,
     STORAGE_VERSION,
 )
@@ -64,7 +68,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     local_coordinator = QuattLocalDataUpdateCoordinator(
         hass=hass,
-        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        update_interval=entry.options.get(
+            CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
+        ),
         client=local_client,
     )
 
@@ -99,7 +105,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # Create remote coordinator only if authentication succeeded
             remote_coordinator = QuattRemoteDataUpdateCoordinator(
                 hass=hass,
-                update_interval=60,
+                update_interval=timedelta(
+                    minutes=entry.options.get(
+                        REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                    )
+                ),
                 client=remote_client,
             )
 

@@ -32,11 +32,15 @@ from .const import (
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     CONF_REMOTE_CIC,
-    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_LOCAL_SCAN_INTERVAL,
+    DEFAULT_REMOTE_SCAN_INTERVAL,
     DOMAIN,
+    LOCAL_MAX_SCAN_INTERVAL,
+    LOCAL_MIN_SCAN_INTERVAL,
     LOGGER,
-    MAX_SCAN_INTERVAL,
-    MIN_SCAN_INTERVAL,
+    REMOTE_CONF_SCAN_INTERVAL,
+    REMOTE_MAX_SCAN_INTERVAL,
+    REMOTE_MIN_SCAN_INTERVAL,
 )
 
 CONF_FIRST_NAME = "first_name"
@@ -447,11 +451,23 @@ class QuattOptionsFlowHandler(OptionsFlow):
             vol.Required(
                 CONF_SCAN_INTERVAL,
                 default=self.config_entry.options.get(
-                    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                    CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
                 ),
             ): vol.All(
                 vol.Coerce(int),
-                vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+                vol.Range(min=LOCAL_MIN_SCAN_INTERVAL, max=LOCAL_MAX_SCAN_INTERVAL),
+            ),
+            vol.Required(
+                REMOTE_CONF_SCAN_INTERVAL,
+                default=self.config_entry.options.get(
+                    REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=REMOTE_MIN_SCAN_INTERVAL,
+                    max=REMOTE_MAX_SCAN_INTERVAL,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
             ),
             vol.Optional(
                 CONF_POWER_SENSOR,

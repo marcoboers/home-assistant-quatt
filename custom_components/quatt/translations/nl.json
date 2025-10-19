@@ -51,11 +51,13 @@
             "init": {
                 "description": "Quatt opties",
                 "data": {
-                    "scan_interval": "Lokaal update-interval (Seconden)",
-                    "power_sensor": "Vermogenssensor (Optioneel)"
+                    "scan_interval": "Lokaal update-interval (seconden)",
+                    "remote_scan_interval": "Externe mobiele API update-interval (minuten)",
+                    "power_sensor": "Vermogenssensor (optioneel)"
                 },
                 "data_description": {
                     "scan_interval": "Aantal seconden tussen het opvragen van informatie van de Quatt.",
+                    "remote_scan_interval": "Aantal minuten tussen het opvragen van gegevens via de mobiele Quatt API.",
                     "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet."
                 }
             }

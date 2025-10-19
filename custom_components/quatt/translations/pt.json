@@ -52,10 +52,12 @@
                 "description": "Opções Quatt",
                 "data": {
                     "scan_interval": "Intervalo de atualização local (segundos)",
+                    "remote_scan_interval": "Intervalo de atualização da API móvel remota (minutos)",
                     "power_sensor": "Sensor de potência (opcional)"
                 },
                 "data_description": {
                     "scan_interval": "Número de segundos entre pedidos de dados à Quatt.",
+                    "remote_scan_interval": "Número de minutos entre pedidos de dados através da API móvel da Quatt.",
                     "power_sensor": "Sensor de energia externo que mede o consumo atual da Quatt."
                 }
             }

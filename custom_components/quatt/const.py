@@ -164,10 +164,16 @@ class GasTariffType(IntEnum):
         }[self]
 
 
-# Defaults
-DEFAULT_SCAN_INTERVAL: Final = 10
-MIN_SCAN_INTERVAL: Final = 5
-MAX_SCAN_INTERVAL: Final = 600
+# Defaults for the local API (seconds)
+DEFAULT_LOCAL_SCAN_INTERVAL: Final = 10
+LOCAL_MIN_SCAN_INTERVAL: Final = 5
+LOCAL_MAX_SCAN_INTERVAL: Final = 600
+# Defaults for the remote API (minutes)
+DEFAULT_REMOTE_SCAN_INTERVAL: Final = 1
+REMOTE_MIN_SCAN_INTERVAL: Final = 1
+REMOTE_MAX_SCAN_INTERVAL: Final = 10
+REMOTE_CONF_SCAN_INTERVAL: Final = "remote_scan_interval"
+
 
 # Temperature-dependent conversion factors for water in a central heating system at 2 bar pressure.
 # The table below provides specific heat capacity (c_p), density (rho), and conversion factors (k)
