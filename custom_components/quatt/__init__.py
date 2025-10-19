@@ -109,7 +109,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     minutes=entry.options.get(
                         REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
                     )
-                ),
+                ).total_seconds(),
                 client=remote_client,
             )
 

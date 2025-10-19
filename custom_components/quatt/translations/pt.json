@@ -62,6 +62,23 @@
                     "power_sensor": "Sensor de energia externo que mede o consumo atual da Quatt.",
                     "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
                 }
+            },
+            "remote": {
+                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir o CIC ID (por exemplo, CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Emparelhar com o dispositivo Quatt",
+                "description": "Introduzir um nome e pressionar o botão no dispositivo CIC ({cic}).\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\n\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+                "data": {
+                    "first_name": "Primeiro nome",
+                    "last_name": "Apelido"
+                }
+            },
+            "confirm": {
+                "description": "Deseja iniciar a configuração?"
             }
         }
     }

@@ -62,6 +62,23 @@
                     "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt.",
                     "add_remote": "Add remote connectivity through the Quatt mobile API to retrieve additional heatpump data."
                 }
+            },
+            "remote": {
+                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nEnter the CIC ID (e.g., CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Pair with the Quatt device",
+                "description": "Please enter your name and press the button on the CIC device ({cic}).\n\n![Pairing button location](/quatt_static/pair.png)\n\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+                "data": {
+                    "first_name": "First name",
+                    "last_name": "Last name"
+                }
+            },
+            "confirm": {
+                "description": "[%key:common::config_flow::description::confirm_setup%]"
             }
         }
     }

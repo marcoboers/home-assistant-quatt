@@ -62,6 +62,23 @@
                     "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet.",
                     "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
                 }
+            },
+            "remote": {
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer de CIC ID in (bijv. CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Voer je naam in en druk op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/quatt_static/pair.png)\n\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "data": {
+                    "first_name": "Voornaam",
+                    "last_name": "Achternaam"
+                }
+            },
+            "confirm": {
+                "description": "Configuratie starten?"
             }
         }
     }
