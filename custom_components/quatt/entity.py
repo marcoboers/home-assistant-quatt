@@ -185,6 +185,10 @@ class QuattSelect(QuattEntity, SelectEntity):
         """Return the current selected option."""
         return self.coordinator.get_value(self.entity_description.key)
 
+    def select_option(self, option: str) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_select_option instead")
+
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         # Only remote coordinator supports updating settings
