@@ -8,6 +8,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as BINARY_SENSOR_DOMAIN,
     BinarySensorDeviceClass,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 
 from .const import (
@@ -88,6 +89,8 @@ BINARY_SENSORS = {
             key="isScanningForWifi",
             icon="mdi:wifi-refresh",
             device_class=BinarySensorDeviceClass.RUNNING,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -113,6 +116,7 @@ BINARY_SENSORS = {
             key="isHp1Connected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
+            entity_category=EntityCategory.DIAGNOSTIC,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -122,6 +126,7 @@ BINARY_SENSORS = {
             key="isHp2Connected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
+            entity_category=EntityCategory.DIAGNOSTIC,
             features=QuattFeatureFlags(
                 quatt_duo=True,
                 quatt_mobile_api=True,
@@ -131,6 +136,7 @@ BINARY_SENSORS = {
             name="Thermostat connected",
             key="isThermostatConnected",
             icon="mdi:connection",
+            entity_category=EntityCategory.DIAGNOSTIC,
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
@@ -140,6 +146,7 @@ BINARY_SENSORS = {
             name="Boiler connected",
             key="isBoilerConnected",
             icon="mdi:connection",
+            entity_category=EntityCategory.DIAGNOSTIC,
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
@@ -149,6 +156,7 @@ BINARY_SENSORS = {
             name="Temperature sensor connected",
             key="isTemperatureSensorConnected",
             icon="mdi:connection",
+            entity_category=EntityCategory.DIAGNOSTIC,
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
@@ -159,6 +167,7 @@ BINARY_SENSORS = {
             key="isControllerAlive",
             icon="mdi:check-circle",
             device_class=BinarySensorDeviceClass.RUNNING,
+            entity_category=EntityCategory.DIAGNOSTIC,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -167,6 +176,8 @@ BINARY_SENSORS = {
             name="WiFi enabled",
             key="wifiEnabled",
             icon="mdi:wifi",
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -183,6 +194,8 @@ BINARY_SENSORS = {
             name="Supports forget WiFi",
             key="supportsForgetWifi",
             icon="mdi:wifi-remove",
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),

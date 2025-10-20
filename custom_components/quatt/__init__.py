@@ -140,7 +140,7 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def _get_cic_hostname(hass: HomeAssistant, ip_address: str) -> str:
+async def _async_get_cic_name(hass: HomeAssistant, ip_address: str) -> str:
     """Validate credentials."""
     client = QuattLocalApiClient(
         ip_address=ip_address,
@@ -160,7 +160,7 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     # The old version does not have a unique_id so we get the CIC hostname and set it
     # Return that the migration failed in case the retrieval fails
     try:
-        hostname_unique_id = await _get_cic_hostname(
+        hostname_unique_id = await _async_get_cic_name(
             hass=hass, ip_address=config_entry.data[CONF_LOCAL_CIC]
         )
     except QuattApiClientAuthenticationError as exception:
