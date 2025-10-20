@@ -47,12 +47,37 @@ CONF_FIRST_NAME = "first_name"
 CONF_LAST_NAME = "last_name"
 
 
+async def _async_register_static_resources(hass: HomeAssistant) -> None:
+    """Register the static resource path once if HTTP is available."""
+    # Check that the HTTP component is ready
+    if not hasattr(hass, "http"):
+        return
+
+    # Avoid duplicate registration across reloads
+    if hass.data.get(f"_{DOMAIN}_static_registered"):
+        return
+
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                f"/{DOMAIN}_static",
+                hass.config.path(f"custom_components/{DOMAIN}/static"),
+                cache_headers=False,
+            )
+        ]
+    )
+    hass.data[f"_{DOMAIN}_static_registered"] = True
+
+
 async def _async_step_pair_common(
     flow,
     config_update: bool,
     user_input: dict | None = None,
 ) -> config_entries.FlowResult:
     """Handle pairing step in config and options flow."""
+    # Ensure static resources are registered for use in the form
+    await _async_register_static_resources(flow.hass)
+
     _errors = {}
     if user_input is not None:
         # User confirmed they are ready to pair
@@ -156,35 +181,11 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             return False
         return True
 
-    async def _register_static_resources(self) -> None:
-        """Register the static resource path once if HTTP is available."""
-        # Check that the HTTP component is ready
-        if not hasattr(self.hass, "http"):
-            return
-
-        # Avoid duplicate registration across reloads
-        if self.hass.data.get(f"_{DOMAIN}_static_registered"):
-            return
-
-        await self.hass.http.async_register_static_paths(
-            [
-                StaticPathConfig(
-                    f"/{DOMAIN}_static",
-                    self.hass.config.path(f"custom_components/{DOMAIN}/static"),
-                    cache_headers=False,
-                )
-            ]
-        )
-        self.hass.data[f"_{DOMAIN}_static_registered"] = True
-
     async def async_step_user(
         self,
         user_input: dict | None = None,
     ) -> config_entries.FlowResult:
         """Handle a flow initialized by the user - start with local setup."""
-        # Ensure static resources are registered for use in the form
-        await self._register_static_resources()
-
         return await self.async_step_local()
 
     async def async_step_local(
