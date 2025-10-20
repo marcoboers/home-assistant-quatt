@@ -137,17 +137,16 @@ async def async_step_pair_common(
     default_first_name = ""
     default_last_name = ""
 
-    try:
-        # Get the current user from the context
-        if flow.context.get("user_id"):
-            user = await flow.hass.auth.async_get_user(flow.context["user_id"])
-            if user and user.name:
-                # Split on first space
-                name_parts = user.name.split(" ", 1)
-                default_first_name = name_parts[0] if len(name_parts) > 0 else ""
-                default_last_name = name_parts[1] if len(name_parts) > 1 else ""
-    except Exception:  # pylint: disable=broad-except
-        pass
+    # Optional: try to prefill with HA user name (if available - rarely used)
+    # No try-except needed because async_get_user returns None if user not found
+    user_id = flow.context.get("user_id")
+    if user_id:
+        user = await flow.hass.auth.async_get_user(user_id)
+        if user and user.name:
+            # Split on first space
+            name_parts = user.name.split(" ", 1)
+            default_first_name = name_parts[0] if len(name_parts) > 0 else ""
+            default_last_name = name_parts[1] if len(name_parts) > 1 else ""
 
     return flow.async_show_form(
         step_id="pair",
