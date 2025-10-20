@@ -22,7 +22,11 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattBinarySensor, QuattBinarySensorEntityDescription
+from .entity import (
+    QuattBinarySensor,
+    QuattBinarySensorEntityDescription,
+    QuattFeatureFlags,
+)
 from .entity_setup import async_setup_entities
 
 
@@ -38,21 +42,27 @@ def create_heatpump_sensor_entity_descriptions(
             key=f"{prefix}.silentModeStatus",
             translation_key="hp_silentModeStatus",
             icon="mdi:sleep",
-            quatt_duo=is_duo,
+            features=QuattFeatureFlags(
+                quatt_duo=is_duo,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Limited by COP",
             key=f"{prefix}.limitedByCop",
             translation_key="hp_silentModeStatus",
             icon="mdi:arrow-collapse-up",
-            quatt_duo=is_duo,
+            features=QuattFeatureFlags(
+                quatt_duo=is_duo,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Defrost",
             key=f"{prefix}.computedDefrost",
             translation_key="hp_silentModeStatus",
             icon="mdi:snowflake",
-            quatt_duo=is_duo,
+            features=QuattFeatureFlags(
+                quatt_duo=is_duo,
+            ),
         ),
     ]
 
@@ -69,100 +79,129 @@ BINARY_SENSORS = {
             name="Anti legionella active",
             key="qcAllE.isAntilegionellaActive",
             icon="mdi:shield-check",
-            quatt_all_electric=True,
+            features=QuattFeatureFlags(
+                quatt_all_electric=True,
+            ),
         ),
-        ## Remote
         QuattBinarySensorEntityDescription(
             name="Scanning for WiFi",
             key="isScanningForWifi",
             icon="mdi:wifi-refresh",
             device_class=BinarySensorDeviceClass.RUNNING,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Use pricing to limit heat pump",
             key="usePricingToLimitHeatPump",
             icon="mdi:currency-eur",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Avoid nighttime charging",
             key="avoidNighttimeCharging",
             icon="mdi:weather-night",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="HP1 connected",
             key="isHp1Connected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="HP2 connected",
             key="isHp2Connected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
-            quatt_duo=True,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_duo=True,
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Thermostat connected",
             key="isThermostatConnected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Boiler connected",
             key="isBoilerConnected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Temperature sensor connected",
             key="isTemperatureSensorConnected",
             icon="mdi:connection",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Controller alive",
             key="isControllerAlive",
             icon="mdi:check-circle",
             device_class=BinarySensorDeviceClass.RUNNING,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="WiFi enabled",
             key="wifiEnabled",
             icon="mdi:wifi",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Has sound slider",
             key="hasSoundSlider",
             icon="mdi:volume-high",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Supports forget WiFi",
             key="supportsForgetWifi",
             icon="mdi:wifi-remove",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Central heating on",
             key="isCentralHeatingOn",
             icon="mdi:heating-coil",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Has dynamic pricing",
             key="hasDynamicPricing",
             icon="mdi:currency-eur",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
     ],
     DEVICE_HEATPUMP_1_ID: create_heatpump_sensor_entity_descriptions(
@@ -176,41 +215,52 @@ BINARY_SENSORS = {
             name="Heating",
             key="boiler.otFbChModeActive",
             icon="mdi:heating-coil",
-            quatt_hybrid=True,
-            quatt_opentherm=True,
+            features=QuattFeatureFlags(
+                quatt_hybrid=True,
+                quatt_opentherm=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Domestic hot water",
             key="boiler.otFbDhwActive",
             icon="mdi:water-boiler",
-            quatt_hybrid=True,
-            quatt_opentherm=True,
+            features=QuattFeatureFlags(
+                quatt_hybrid=True,
+                quatt_opentherm=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Flame",
             key="boiler.otFbFlameOn",
             icon="mdi:fire",
-            quatt_hybrid=True,
-            quatt_opentherm=True,
+            features=QuattFeatureFlags(
+                quatt_hybrid=True,
+                quatt_opentherm=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="CIC heating",
             key="boiler.otTbCH",
             icon="mdi:heating-coil",
-            quatt_hybrid=True,
+            features=QuattFeatureFlags(
+                quatt_hybrid=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="CIC on/off mode",
             key="boiler.oTtbTurnOnOffBoilerOn",
             icon="mdi:water-boiler",
-            quatt_hybrid=True,
+            features=QuattFeatureFlags(
+                quatt_hybrid=True,
+            ),
         ),
-        ## Remote
         QuattBinarySensorEntityDescription(
             name="Boiler on",
             key="boilerOn",
             icon="mdi:water-boiler",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
     ],
     DEVICE_THERMOSTAT_ID: [
@@ -229,45 +279,53 @@ BINARY_SENSORS = {
             key="thermostat.otFtCoolingEnabled",
             icon="mdi:snowflake-thermometer",
         ),
-        ## Remote
         QuattBinarySensorEntityDescription(
             name="Flame on",
             key="thermostatFlameOn",
             icon="mdi:fire",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Show thermostat temperatures",
             key="showThermostatTemperatures",
             icon="mdi:thermometer",
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
     ],
     DEVICE_FLOWMETER_ID: [],
     DEVICE_HEAT_BATTERY_ID: [
-        ## Remote
         QuattBinarySensorEntityDescription(
             name="Charging",
             key="allEStatus.isHeatBatteryCharging",
             icon="mdi:battery-charging",
             device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
-            quatt_all_electric=True,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_all_electric=True,
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Domestic hot water on",
             key="allEStatus.isDomesticHotWaterOn",
             icon="mdi:water-boiler",
-            quatt_all_electric=True,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_all_electric=True,
+                quatt_mobile_api=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Shower minutes degraded",
             key="allEStatus.showerMinutesDegraded",
             icon="mdi:alert",
             device_class=BinarySensorDeviceClass.PROBLEM,
-            quatt_all_electric=True,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_all_electric=True,
+                quatt_mobile_api=True,
+            ),
         ),
     ],
     DEVICE_HEAT_CHARGER_ID: [],

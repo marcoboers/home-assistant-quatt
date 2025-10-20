@@ -19,7 +19,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattSelect, QuattSelectEntityDescription
+from .entity import QuattFeatureFlags, QuattSelect, QuattSelectEntityDescription
 from .entity_setup import async_setup_entities
 
 # Sound level options
@@ -33,14 +33,18 @@ SELECTS = {
             name="Day max sound level",
             icon="mdi:volume-high",
             options=SOUND_LEVEL_OPTIONS,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
         QuattSelectEntityDescription(
             key="nightMaxSoundLevel",
             name="Night max sound level",
             icon="mdi:volume-low",
             options=SOUND_LEVEL_OPTIONS,
-            quatt_mobile_api=True,
+            features=QuattFeatureFlags(
+                quatt_mobile_api=True,
+            ),
         ),
     ],
     DEVICE_HEAT_BATTERY_ID: [],

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -25,14 +26,21 @@ from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
-    """A class that describes Quatt sensor entities."""
+@dataclass(frozen=True)
+class QuattFeatureFlags:
+    """Quatt feature flags used for the entities."""
 
     quatt_hybrid: bool = False
     quatt_all_electric: bool = False
     quatt_duo: bool = False
     quatt_opentherm: bool = False
     quatt_mobile_api: bool = False
+
+
+class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt sensor entities."""
+
+    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
 class QuattBinarySensorEntityDescription(
@@ -40,21 +48,13 @@ class QuattBinarySensorEntityDescription(
 ):
     """A class that describes Quatt binary sensor entities."""
 
-    quatt_hybrid: bool = False
-    quatt_all_electric: bool = False
-    quatt_duo: bool = False
-    quatt_opentherm: bool = False
-    quatt_mobile_api: bool = False
+    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
 class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt select entities."""
 
-    quatt_hybrid: bool = False
-    quatt_all_electric: bool = False
-    quatt_duo: bool = False
-    quatt_opentherm: bool = False
-    quatt_mobile_api: bool = False
+    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
 class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):

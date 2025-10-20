@@ -62,12 +62,14 @@ async def async_setup_entities(
     # Determine which sensors to create based on the flags
     sensor_keys: dict[str, bool] = {}
     for desc in flat_descriptions:
+        features = desc.features
+
         # Check if it matches normal feature conditions
-        if not any(getattr(desc, flag) for flag, _ in flag_conditions) or all(
-            condition for flag, condition in flag_conditions if getattr(desc, flag)
+        if not any(getattr(features, flag) for flag, _ in flag_conditions) or all(
+            condition for flag, condition in flag_conditions if getattr(features, flag)
         ):
             # Include the sensor and the mobile API status
-            sensor_keys[desc.key] = desc.quatt_mobile_api
+            sensor_keys[desc.key] = features.quatt_mobile_api
 
     # Remove not applicable sensors
     hub_id = (entry.unique_id or entry.entry_id).strip()
