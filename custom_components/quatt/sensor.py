@@ -902,6 +902,7 @@ SENSORS = {
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
             features=QuattFeatureFlags(
+                quatt_hybrid=True,
                 quatt_mobile_api=True,
             ),
         ),
@@ -914,6 +915,7 @@ SENSORS = {
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
             features=QuattFeatureFlags(
+                quatt_hybrid=True,
                 quatt_mobile_api=True,
             ),
         ),
@@ -926,6 +928,7 @@ SENSORS = {
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
             features=QuattFeatureFlags(
+                quatt_hybrid=True,
                 quatt_mobile_api=True,
             ),
         ),

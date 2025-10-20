@@ -149,6 +149,7 @@ BINARY_SENSORS = {
             entity_category=EntityCategory.DIAGNOSTIC,
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
             features=QuattFeatureFlags(
+                quatt_hybrid=True,
                 quatt_mobile_api=True,
             ),
         ),
@@ -168,6 +169,7 @@ BINARY_SENSORS = {
             icon="mdi:check-circle",
             device_class=BinarySensorDeviceClass.RUNNING,
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -272,6 +274,7 @@ BINARY_SENSORS = {
             key="boilerOn",
             icon="mdi:water-boiler",
             features=QuattFeatureFlags(
+                quatt_hybrid=True,
                 quatt_mobile_api=True,
             ),
         ),
@@ -286,6 +289,9 @@ BINARY_SENSORS = {
             name="Domestic hot water",
             key="thermostat.otFtDhwEnabled",
             icon="mdi:water-thermometer",
+            features=QuattFeatureFlags(
+                quatt_hybrid=True,
+            ),
         ),
         QuattBinarySensorEntityDescription(
             name="Cooling",
