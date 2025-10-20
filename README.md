@@ -101,20 +101,18 @@ To enable the remote API for your existing Quatt CIC:
 2. Click `+ Add integration` and search for **Quatt**
 3. Enter your **CIC IP address** (e.g., 192.168.0.100)
 4. When prompted, **enable Remote API** by toggling the option
-5. Enter your **CIC ID** (found in the Quatt mobile app or local API)
-6. Enter your **first name** and **last name**
-7. **Within 60 seconds**, press the physical button on your CIC to complete pairing
-8. The setup will complete with both local and remote API active
+5. Enter your **first name** and **last name**
+6. **Within 60 seconds**, press the physical button on your CIC to complete pairing
+7. The setup will complete with both local and remote API active
 
 #### Adding to Existing Integration
 
 1. Go to `Settings` → `Devices & services` → `Integrations`
 2. Find your Quatt integration and click **Configure**
 3. Enable the **Add Remote API** toggle
-4. Enter your **CIC ID** (found in the Quatt mobile app or local API)
-5. Enter your **first name** and **last name**
-6. **Within 60 seconds**, press the physical button on your CIC to complete pairing
-7. The integration will reload with remote API sensors and controls available
+4. Enter your **first name** and **last name**
+5. **Within 60 seconds**, press the physical button on your CIC to complete pairing
+6. The integration will reload with remote API sensors and controls available
 
 Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
 
