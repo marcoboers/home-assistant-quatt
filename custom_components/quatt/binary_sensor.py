@@ -329,7 +329,6 @@ async def async_setup_binary_sensor(
         ("quatt_all_electric", all_electric_active),
         ("quatt_duo", heatpump_2_active),
         ("quatt_opentherm", is_boiler_opentherm),
-        ("quatt_mobile_api", remote),
     ]
 
     # Flatten out all sensor descriptions
@@ -340,16 +339,14 @@ async def async_setup_binary_sensor(
     ]
 
     # Determine which sensors to create based on the flags
-    sensor_keys = {
-        sensor_description.key
-        for sensor_description in flat_descriptions
-        if not any(getattr(sensor_description, flag) for flag, _ in flag_conditions)
-        or all(
-            condition
-            for flag, condition in flag_conditions
-            if getattr(sensor_description, flag)
-        )
-    }
+    sensor_keys: dict[str, bool] = {}
+    for desc in flat_descriptions:
+        # Check if it matches normal feature conditions
+        if not any(getattr(desc, flag) for flag, _ in flag_conditions) or all(
+            condition for flag, condition in flag_conditions if getattr(desc, flag)
+        ):
+            # Include the sensor and the mobile API status
+            sensor_keys[desc.key] = desc.quatt_mobile_api
 
     # Remove not applicable sensors
     hub_id = (entry.unique_id or entry.entry_id).strip()
@@ -377,17 +374,24 @@ async def async_setup_binary_sensor(
     device_name_map = {d["id"]: d["name"] for d in DEVICE_LIST}
     sensors: list[QuattBinarySensor] = []
     for device_id, sensor_descriptions in BINARY_SENSORS.items():
-        sensors.extend(
-            QuattBinarySensor(
-                device_name=device_name_map.get(device_id, device_id),
-                device_id=device_id,
-                sensor_key=sensor_description.key,
-                coordinator=coordinator,
-                entity_description=sensor_description,
-                attach_to_hub=(device_id == DEVICE_CIC_ID),
+        for sensor_description in sensor_descriptions:
+            # Skip sensors that are not selected based on the installation type
+            if sensor_description.key not in sensor_keys:
+                continue
+
+            # Skip sensors that do not match the remote indicator
+            if sensor_keys[sensor_description.key] != remote:
+                continue
+
+            sensors.append(
+                QuattBinarySensor(
+                    device_name=device_name_map.get(device_id, device_id),
+                    device_id=device_id,
+                    sensor_key=sensor_description.key,
+                    coordinator=coordinator,
+                    entity_description=sensor_description,
+                    attach_to_hub=(device_id == DEVICE_CIC_ID),
+                )
             )
-            for sensor_description in sensor_descriptions
-            if sensor_description.key in sensor_keys
-        )
 
     return sensors

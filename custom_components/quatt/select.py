@@ -83,7 +83,7 @@ async def async_setup_select(
     entry,
     remote: bool = False,
 ):
-    """Set up the select platform."""
+    """Set up the binary_sensor platform."""
     registry = er.async_get(hass)
 
     # Cache the active states
@@ -97,42 +97,39 @@ async def async_setup_select(
     _LOGGER.debug("All electric active: %s", all_electric_active)
     _LOGGER.debug("boiler OpenTherm: %s", is_boiler_opentherm)
 
-    # Create only those selects that make sense for this installation type.
-    # Remove selects that are not applicable based on the configuration.
+    # Create only those sensors that make sense for this installation type.
+    # Remove sensors that are not applicable based on the configuration.
     # This can occur when the configuration changes, e.g., from hybrid or duo to all-electric.
     device_reg = dr.async_get(hass)
     devices = dr.async_entries_for_config_entry(device_reg, entry.entry_id)
     device_ids = {dev.id for dev in devices}
 
-    # Determine which selects to create based on the detected configuration
+    # Determine which sensors to create based on the detected configuration
     flag_conditions = [
         ("quatt_hybrid", not all_electric_active),
         ("quatt_all_electric", all_electric_active),
         ("quatt_duo", heatpump_2_active),
         ("quatt_opentherm", is_boiler_opentherm),
-        ("quatt_mobile_api", remote),
     ]
 
-    # Flatten out all select descriptions
+    # Flatten out all sensor descriptions
     flat_descriptions = [
-        select_description
-        for device_selects in SELECTS.values()
-        for select_description in device_selects
+        sensor_description
+        for device_sensors in SELECTS.values()
+        for sensor_description in device_sensors
     ]
 
-    # Determine which selects to create based on the flags
-    select_keys = {
-        select_description.key
-        for select_description in flat_descriptions
-        if not any(getattr(select_description, flag) for flag, _ in flag_conditions)
-        or all(
-            condition
-            for flag, condition in flag_conditions
-            if getattr(select_description, flag)
-        )
-    }
+    # Determine which sensors to create based on the flags
+    sensor_keys: dict[str, bool] = {}
+    for desc in flat_descriptions:
+        # Check if it matches normal feature conditions
+        if not any(getattr(desc, flag) for flag, _ in flag_conditions) or all(
+            condition for flag, condition in flag_conditions if getattr(desc, flag)
+        ):
+            # Include the sensor and the mobile API status
+            sensor_keys[desc.key] = desc.quatt_mobile_api
 
-    # Remove not applicable selects
+    # Remove not applicable sensors
     hub_id = (entry.unique_id or entry.entry_id).strip()
     for dev_id in device_ids:
         for entry_reg in er.async_entries_for_device(
@@ -142,7 +139,7 @@ async def async_setup_select(
                 entry_reg.config_entry_id == entry.entry_id
                 and entry_reg.domain == SELECT_DOMAIN
                 and entry_reg.platform == DOMAIN
-                and not any(entry_reg.unique_id.endswith(key) for key in select_keys)
+                and not any(entry_reg.unique_id.endswith(key) for key in sensor_keys)
             ):
                 registry.async_remove(entry_reg.entity_id)
 
@@ -154,21 +151,28 @@ async def async_setup_select(
                 continue
             device_reg.async_remove_device(dev_id)
 
-    # Create select entities based on the filtered select keys
+    # Create sensor entities based on the filtered sensor keys
     device_name_map = {d["id"]: d["name"] for d in DEVICE_LIST}
-    selects: list[QuattSelect] = []
-    for device_id, select_descriptions in SELECTS.items():
-        selects.extend(
-            QuattSelect(
-                device_name=device_name_map.get(device_id, device_id),
-                device_id=device_id,
-                select_key=select_description.key,
-                coordinator=coordinator,
-                entity_description=select_description,
-                attach_to_hub=(device_id == DEVICE_CIC_ID),
-            )
-            for select_description in select_descriptions
-            if select_description.key in select_keys
-        )
+    sensors: list[QuattSelect] = []
+    for device_id, sensor_descriptions in SELECTS.items():
+        for sensor_description in sensor_descriptions:
+            # Skip sensors that are not selected based on the installation type
+            if sensor_description.key not in sensor_keys:
+                continue
 
-    return selects
+            # Skip sensors that do not match the remote indicator
+            if sensor_keys[sensor_description.key] != remote:
+                continue
+
+            sensors.append(
+                QuattSelect(
+                    device_name=device_name_map.get(device_id, device_id),
+                    device_id=device_id,
+                    sensor_key=sensor_description.key,
+                    coordinator=coordinator,
+                    entity_description=sensor_description,
+                    attach_to_hub=(device_id == DEVICE_CIC_ID),
+                )
+            )
+
+    return sensors
