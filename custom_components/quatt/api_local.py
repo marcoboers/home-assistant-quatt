@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import socket
 
@@ -91,6 +92,14 @@ class QuattLocalApiClient(QuattApiClient):
                 )
                 raise QuattApiClientCommunicationError(
                     "Socket error fetching information",
+                ) from exception
+
+            except json.JSONDecodeError as exception:
+                _LOGGER.error(
+                    "JSON decode error from %s: %s", url, exception
+                )
+                raise QuattApiClientError(
+                    "JSON decode error",
                 ) from exception
 
             except Exception as exception:  # pylint: disable=broad-except
