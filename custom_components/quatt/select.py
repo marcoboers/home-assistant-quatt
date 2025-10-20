@@ -23,7 +23,7 @@ from .entity import QuattFeatureFlags, QuattSelect, QuattSelectEntityDescription
 from .entity_setup import async_setup_entities
 
 # Sound level options
-SOUND_LEVEL_OPTIONS = ["normal", "library", "silent"]
+SOUND_LEVEL_OPTIONS = ["normal", "library", "silent", "building87"]
 
 SELECTS = {
     # The HUB CIC sensor must be created first to ensure the HUB device is present
