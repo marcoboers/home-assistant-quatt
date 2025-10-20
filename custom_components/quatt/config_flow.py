@@ -25,22 +25,152 @@ from .api import (
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
-    QuattLocalApiClient,
-    QuattRemoteApiClient,
 )
+from .api_local import QuattLocalApiClient
+from .api_remote import QuattRemoteApiClient
 from .const import (
-    CONF_REMOTE_CIC,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
-    DEFAULT_SCAN_INTERVAL,
+    CONF_REMOTE_CIC,
+    DEFAULT_LOCAL_SCAN_INTERVAL,
+    DEFAULT_REMOTE_SCAN_INTERVAL,
     DOMAIN,
+    LOCAL_MAX_SCAN_INTERVAL,
+    LOCAL_MIN_SCAN_INTERVAL,
     LOGGER,
-    MAX_SCAN_INTERVAL,
-    MIN_SCAN_INTERVAL,
+    REMOTE_CONF_SCAN_INTERVAL,
+    REMOTE_MAX_SCAN_INTERVAL,
+    REMOTE_MIN_SCAN_INTERVAL,
 )
 
 CONF_FIRST_NAME = "first_name"
 CONF_LAST_NAME = "last_name"
+
+
+async def async_step_remote_common(
+    flow,
+    user_input: dict | None = None,
+) -> config_entries.FlowResult:
+    """Handle remote connection setup (enter CIC ID) in config and options flow."""
+    _errors = {}
+
+    if user_input is not None:
+        cic_id = user_input[CONF_REMOTE_CIC]
+
+        # Validate CIC format
+        if not cic_id.startswith("CIC-") or len(cic_id) <= 4:
+            _errors["cic"] = "invalid_cic"
+        else:
+            # Store CIC for pairing step
+            flow.cic_id = cic_id
+            return await flow.async_step_pair()
+
+    # Pre-fill with cic_name if available
+    # In the config flow the cic_name is set from the local setup step
+    # In the options flow the cic_name is not available, so use unique_id
+    default_cic = ""
+    if getattr(flow, "cic_name", None):
+        default_cic = flow.cic_name
+    elif getattr(flow, "config_entry", None) and flow.config_entry.unique_id:
+        default_cic = flow.config_entry.unique_id
+
+    return flow.async_show_form(
+        step_id="remote",
+        data_schema=vol.Schema(
+            {
+                vol.Required(
+                    CONF_REMOTE_CIC, default=default_cic
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+            }
+        ),
+        errors=_errors,
+        description_placeholders={"cic_example": "CIC-xxxx-xxxx-xxxx"},
+    )
+
+
+async def async_step_pair_common(
+    flow,
+    config_update: bool,
+    user_input: dict | None = None,
+) -> config_entries.FlowResult:
+    """Handle pairing step in config and options flow."""
+    _errors = {}
+
+    if user_input is not None:
+        # User confirmed they are ready to pair
+        try:
+            # Create API client and authenticate
+            session = async_create_clientsession(flow.hass)
+            api = QuattRemoteApiClient(flow.cic_id, session)
+
+            first_name = user_input[CONF_FIRST_NAME]
+            last_name = user_input[CONF_LAST_NAME]
+
+            if not await api.authenticate(first_name=first_name, last_name=last_name):
+                _errors["base"] = "pairing_timeout"
+            else:
+                if not config_update:
+                    # Pairing successful, create entry with both local and remote
+                    return flow.async_create_entry(
+                        title=flow.cic_name,
+                        data={
+                            CONF_LOCAL_CIC: flow.ip_address,
+                            CONF_REMOTE_CIC: flow.cic_id,
+                        },
+                    )
+
+                # Pairing successful, update config entry
+                new_data = {**flow.config_entry.data, CONF_REMOTE_CIC: flow.cic_id}
+                flow.hass.config_entries.async_update_entry(
+                    flow.config_entry, data=new_data
+                )
+                # Reload the integration to apply changes
+                await flow.hass.config_entries.async_reload(flow.config_entry.entry_id)
+                return flow.async_create_entry(title="", data={})
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception("Unexpected exception during pairing")
+            _errors["base"] = "unknown"
+
+    # Try to auto-fill names from Home Assistant user
+    default_first_name = ""
+    default_last_name = ""
+
+    # Optional: try to prefill with HA user name (if available - rarely used)
+    # No try-except needed because async_get_user returns None if user not found
+    user_id = flow.context.get("user_id")
+    if user_id:
+        user = await flow.hass.auth.async_get_user(user_id)
+        if user and user.name:
+            # Split on first space
+            name_parts = user.name.split(" ", 1)
+            default_first_name = name_parts[0] if len(name_parts) > 0 else ""
+            default_last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    return flow.async_show_form(
+        step_id="pair",
+        data_schema=vol.Schema(
+            {
+                vol.Required(
+                    CONF_FIRST_NAME,
+                    default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+                vol.Required(
+                    CONF_LAST_NAME,
+                    default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+            }
+        ),
+        errors=_errors,
+        description_placeholders={
+            "cic": flow.cic_id,
+        },
+    )
 
 
 # pylint: disable=abstract-method
@@ -165,20 +295,22 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             if user_input.get("add_remote", False):
                 # User wants to add remote API
                 return await self.async_step_remote()
-            else:
-                # User doesn't want remote API, create entry with local only
-                return self.async_create_entry(
-                    title=self.cic_name,
-                    data={
-                        CONF_LOCAL_CIC: self.ip_address,
-                    },
-                )
+
+            # User doesn't want remote API, create entry with local only
+            return self.async_create_entry(
+                title=self.cic_name,
+                data={
+                    CONF_LOCAL_CIC: self.ip_address,
+                },
+            )
 
         return self.async_show_form(
             step_id="add_remote",
             data_schema=vol.Schema(
                 {
-                    vol.Required("add_remote", default=False): selector.BooleanSelector(),
+                    vol.Required(
+                        "add_remote", default=False
+                    ): selector.BooleanSelector(),
                 }
             ),
             description_placeholders={
@@ -190,121 +322,13 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         self,
         user_input: dict | None = None,
     ) -> config_entries.FlowResult:
-        """Handle remote connection setup - enter CIC ID."""
-        _errors = {}
+        """Handle pairing step in the config flow."""
+        return await async_step_remote_common(self, user_input=user_input)
 
-        if user_input is not None:
-            cic_id = user_input[CONF_REMOTE_CIC]
-
-            # Validate CIC format
-            if not cic_id.startswith("CIC-") or len(cic_id) <= 4:
-                _errors["cic"] = "invalid_cic"
-            else:
-                # Store CIC for pairing step
-                self.cic_id = cic_id
-                return await self.async_step_pair()
-
-        # Pre-fill with cic_name if available (from local setup)
-        default_cic = self.cic_name if self.cic_name else ""
-
-        return self.async_show_form(
-            step_id="remote",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_REMOTE_CIC, default=default_cic): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type=selector.TextSelectorType.TEXT
-                        ),
-                    ),
-                }
-            ),
-            errors=_errors,
-            description_placeholders={"cic_example": "CIC-xxxx-xxxx-xxxx"},
-        )
-
-    async def async_step_pair(
-        self,
-        user_input: dict | None = None,
-    ) -> config_entries.FlowResult:
-        """Handle pairing step - user presses button on CIC."""
-        _errors = {}
-
-        if user_input is not None:
-            # User confirmed they are ready to pair
-            try:
-                # Create API client and authenticate
-                session = async_create_clientsession(self.hass)
-                api = QuattRemoteApiClient(self.cic_id, session)
-
-                first_name = user_input[CONF_FIRST_NAME]
-                last_name = user_input[CONF_LAST_NAME]
-
-                if not await api.authenticate(
-                    first_name=first_name, last_name=last_name
-                ):
-                    _errors["base"] = "pairing_timeout"
-                else:
-                    # Pairing successful
-                    # Create entry with both local and remote
-                    return self.async_create_entry(
-                        title=self.cic_name,
-                        data={
-                            CONF_LOCAL_CIC: self.ip_address,
-                            CONF_REMOTE_CIC: self.cic_id,
-                        },
-                    )
-            except Exception:  # pylint: disable=broad-except
-                LOGGER.exception("Unexpected exception during pairing")
-                _errors["base"] = "unknown"
-
-        # Try to auto-fill names from Home Assistant user
-        default_first_name = ""
-        default_last_name = ""
-
-        try:
-            # Get the current user from the context
-            if self.context.get("user_id"):
-                user = await self.hass.auth.async_get_user(self.context["user_id"])
-                if user and user.name:
-                    # Split on first space
-                    name_parts = user.name.split(" ", 1)
-                    default_first_name = name_parts[0] if len(name_parts) > 0 else ""
-                    default_last_name = name_parts[1] if len(name_parts) > 1 else ""
-        except Exception:  # pylint: disable=broad-except
-            # If we can't get the user name, just use empty defaults
-            pass
-
-        # Show pairing instructions with name fields
-        return self.async_show_form(
-            step_id="pair",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_FIRST_NAME,
-                        default=(user_input or {}).get(
-                            CONF_FIRST_NAME, default_first_name
-                        ),
-                    ): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type=selector.TextSelectorType.TEXT
-                        ),
-                    ),
-                    vol.Required(
-                        CONF_LAST_NAME,
-                        default=(user_input or {}).get(
-                            CONF_LAST_NAME, default_last_name
-                        ),
-                    ): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type=selector.TextSelectorType.TEXT
-                        ),
-                    ),
-                }
-            ),
-            errors=_errors,
-            description_placeholders={
-                "cic": self.cic_id,
-            },
+    async def async_step_pair(self, user_input=None) -> config_entries.FlowResult:
+        """Handle pairing step in the config flow."""
+        return await async_step_pair_common(
+            self, config_update=False, user_input=user_input
         )
 
     async def async_step_dhcp(
@@ -434,7 +458,7 @@ class QuattOptionsFlowHandler(OptionsFlow):
             # Check if user wants to add remote API
             if not has_remote and user_input.get("add_remote", False):
                 # User wants to add remote API
-                return await self.async_step_add_remote()
+                return await self.async_step_remote()
 
             return self.async_create_entry(title="", data=user_input)
 
@@ -443,11 +467,23 @@ class QuattOptionsFlowHandler(OptionsFlow):
             vol.Required(
                 CONF_SCAN_INTERVAL,
                 default=self.config_entry.options.get(
-                    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                    CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
                 ),
             ): vol.All(
                 vol.Coerce(int),
-                vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+                vol.Range(min=LOCAL_MIN_SCAN_INTERVAL, max=LOCAL_MAX_SCAN_INTERVAL),
+            ),
+            vol.Required(
+                REMOTE_CONF_SCAN_INTERVAL,
+                default=self.config_entry.options.get(
+                    REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=REMOTE_MIN_SCAN_INTERVAL,
+                    max=REMOTE_MAX_SCAN_INTERVAL,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
             ),
             vol.Optional(
                 CONF_POWER_SENSOR,
@@ -465,7 +501,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
 
         # Add option to add remote API if not already configured
         if not has_remote:
-            schema_dict[vol.Optional("add_remote", default=False)] = selector.BooleanSelector()
+            schema_dict[vol.Optional("add_remote", default=False)] = (
+                selector.BooleanSelector()
+            )
 
         return self.async_show_form(
             step_id="init",
@@ -473,114 +511,15 @@ class QuattOptionsFlowHandler(OptionsFlow):
             errors=_errors,
         )
 
-    async def async_step_add_remote(
+    async def async_step_remote(
         self,
         user_input: dict | None = None,
     ) -> config_entries.FlowResult:
-        """Handle adding remote API via options."""
-        _errors = {}
+        """Handle adding remote API via options flow."""
+        return await async_step_remote_common(self, user_input=user_input)
 
-        if user_input is not None:
-            cic_id = user_input[CONF_REMOTE_CIC]
-
-            # Validate CIC format
-            if not cic_id.startswith("CIC-") or len(cic_id) <= 4:
-                _errors["cic"] = "invalid_cic"
-            else:
-                # Store CIC for pairing step
-                self.cic_id = cic_id
-                return await self.async_step_pair_options()
-
-        # Pre-fill with existing CIC name if available
-        default_cic = self.config_entry.unique_id or ""
-
-        return self.async_show_form(
-            step_id="add_remote",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_REMOTE_CIC, default=default_cic): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type=selector.TextSelectorType.TEXT
-                        ),
-                    ),
-                }
-            ),
-            errors=_errors,
-            description_placeholders={"cic_example": "CIC-xxxx-xxxx-xxxx"},
-        )
-
-    async def async_step_pair_options(
-        self,
-        user_input: dict | None = None,
-    ) -> config_entries.FlowResult:
-        """Handle pairing step in options flow."""
-        _errors = {}
-
-        if user_input is not None:
-            # User confirmed they are ready to pair
-            try:
-                # Create API client and authenticate
-                session = async_create_clientsession(self.hass)
-                api = QuattRemoteApiClient(self.cic_id, session)
-
-                first_name = user_input[CONF_FIRST_NAME]
-                last_name = user_input[CONF_LAST_NAME]
-
-                if not await api.authenticate(first_name=first_name, last_name=last_name):
-                    _errors["base"] = "pairing_timeout"
-                else:
-                    # Pairing successful, update config entry
-                    new_data = {**self.config_entry.data, CONF_REMOTE_CIC: self.cic_id}
-                    self.hass.config_entries.async_update_entry(
-                        self.config_entry, data=new_data
-                    )
-                    # Reload the integration to apply changes
-                    await self.hass.config_entries.async_reload(self.config_entry.entry_id)
-                    return self.async_create_entry(title="", data={})
-            except Exception:  # pylint: disable=broad-except
-                LOGGER.exception("Unexpected exception during pairing")
-                _errors["base"] = "unknown"
-
-        # Try to auto-fill names from Home Assistant user
-        default_first_name = ""
-        default_last_name = ""
-
-        try:
-            # Get the current user from the context
-            if self.context.get("user_id"):
-                user = await self.hass.auth.async_get_user(self.context["user_id"])
-                if user and user.name:
-                    # Split on first space
-                    name_parts = user.name.split(" ", 1)
-                    default_first_name = name_parts[0] if len(name_parts) > 0 else ""
-                    default_last_name = name_parts[1] if len(name_parts) > 1 else ""
-        except Exception:  # pylint: disable=broad-except
-            pass
-
-        return self.async_show_form(
-            step_id="pair_options",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_FIRST_NAME,
-                        default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
-                    ): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type=selector.TextSelectorType.TEXT
-                        ),
-                    ),
-                    vol.Required(
-                        CONF_LAST_NAME,
-                        default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
-                    ): selector.TextSelector(
-                        selector.TextSelectorConfig(
-                            type=selector.TextSelectorType.TEXT
-                        ),
-                    ),
-                }
-            ),
-            errors=_errors,
-            description_placeholders={
-                "cic": self.cic_id,
-            },
+    async def async_step_pair(self, user_input=None) -> config_entries.FlowResult:
+        """Handle pairing step in the options flow."""
+        return await async_step_pair_common(
+            self, config_update=True, user_input=user_input
         )

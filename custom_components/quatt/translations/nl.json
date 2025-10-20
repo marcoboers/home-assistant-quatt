@@ -2,45 +2,46 @@
     "config": {
         "flow_title": "CIC: {name}",
         "step": {
-            "user": {
-                "description": "Kies verbindingstype voor je Quatt warmtepomp.",
-                "data": {
-                    "connection_type": "Verbindingstype"
-                }
-            },
             "local": {
-                "description": "Stel lokale verbinding in met je Quatt warmtepomp.",
+                "description": "Stel lokale verbinding in met de Quatt warmtepomp.",
                 "data": {
                     "ip_address": "IP-adres / hostnaam"
                 },
                 "data_description": {
-                    "ip_address": "Zonder http:// en poort."
+                    "ip_address": "Zonder http:// en poortnummer."
+                }
+            },
+            "add_remote": {
+                "description": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen.",
+                "data": {
+                    "add_remote": "Externe verbinding inschakelen"
                 }
             },
             "remote": {
-                "description": "Stel externe verbinding in met je Quatt warmtepomp via de mobiele API. Voer je CIC ID in (bijv. CIC-xxxx-xxxx-xxxx).",
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer de CIC ID in (bijv. CIC-xxxx-xxxx-xxxx).",
                 "data": {
                     "cic": "CIC ID"
                 }
             },
             "pair": {
-                "title": "Koppel met je Quatt apparaat",
-                "description": "Voer je naam in en druk op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/quatt_static/pair.png)\n\nJe hebt 60 seconden om de koppeling te voltooien.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Voer je naam in en druk op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/quatt_static/pair.png)\n\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
                 "data": {
                     "first_name": "Voornaam",
                     "last_name": "Achternaam"
                 }
             },
             "confirm": {
-                "description": "Wilt u de configuratie starten?"
+                "description": "Configuratie starten?"
             }
         },
         "error": {
             "cannot_connect": "Fout bij het verbinden.",
             "invalid_cic": "Ongeldig CIC formaat. Moet beginnen met 'CIC-'",
-            "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC apparaat."
+            "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat."
         },
         "abort": {
+            "already_in_progress": "Er is al een configuratieproces voor dit Quatt-apparaat actief.",
             "already_configured": "Apparaat is al geconfigureerd.",
             "no_match": "Geen overeenkomend Quatt apparaat gevonden."
         }
@@ -50,13 +51,34 @@
             "init": {
                 "description": "Quatt opties",
                 "data": {
-                    "scan_interval": "Update-interval (seconden)",
-                    "power_sensor": "Vermogenssensor (Optioneel)"
+                    "scan_interval": "Lokaal update-interval (seconden)",
+                    "remote_scan_interval": "Externe mobiele API update-interval (minuten)",
+                    "power_sensor": "Vermogenssensor (optioneel)",
+                    "add_remote": "Externe verbinding inschakelen"
                 },
                 "data_description": {
                     "scan_interval": "Aantal seconden tussen het opvragen van informatie van de Quatt.",
-                    "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet."
+                    "remote_scan_interval": "Aantal minuten tussen het opvragen van gegevens via de mobiele Quatt API.",
+                    "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet.",
+                    "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
                 }
+            },
+            "remote": {
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer de CIC ID in (bijv. CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC ID"
+                }
+            },
+            "pair": {
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Voer je naam in en druk op de knop op je CIC apparaat ({cic}).\n\n![Locatie koppelknop](/quatt_static/pair.png)\n\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "data": {
+                    "first_name": "Voornaam",
+                    "last_name": "Achternaam"
+                }
+            },
+            "confirm": {
+                "description": "Configuratie starten?"
             }
         }
     }

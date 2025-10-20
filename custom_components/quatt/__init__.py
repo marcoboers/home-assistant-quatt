@@ -6,6 +6,8 @@ https://github.com/marcoboers/home-assistant-quatt
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
@@ -18,20 +20,22 @@ import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.storage import Store
 
 from .api import (
-    QuattLocalApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
-    QuattRemoteApiClient,
 )
+from .api_local import QuattLocalApiClient
+from .api_remote import QuattRemoteApiClient
 from .const import (
-    CONF_REMOTE_CIC,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
-    DEFAULT_SCAN_INTERVAL,
+    CONF_REMOTE_CIC,
+    DEFAULT_LOCAL_SCAN_INTERVAL,
+    DEFAULT_REMOTE_SCAN_INTERVAL,
     DEVICE_CIC_ID,
     DOMAIN,
     LOGGER,
+    REMOTE_CONF_SCAN_INTERVAL,
     STORAGE_KEY,
     STORAGE_VERSION,
 )
@@ -40,8 +44,8 @@ from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
-    Platform.SENSOR,
     Platform.SELECT,
+    Platform.SENSOR,
 ]
 
 
@@ -64,7 +68,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     local_coordinator = QuattLocalDataUpdateCoordinator(
         hass=hass,
-        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        update_interval=entry.options.get(
+            CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
+        ),
         client=local_client,
     )
 
@@ -90,7 +96,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             remote_client.load_tokens(
                 stored_data.get("id_token"),
                 stored_data.get("refresh_token"),
-                stored_data.get("installation_id")
+                stored_data.get("installation_id"),
             )
             LOGGER.debug("Loaded stored tokens for CIC %s", cic)
 
@@ -99,7 +105,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # Create remote coordinator only if authentication succeeded
             remote_coordinator = QuattRemoteDataUpdateCoordinator(
                 hass=hass,
-                update_interval=60,
+                update_interval=timedelta(
+                    minutes=entry.options.get(
+                        REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                    )
+                ).total_seconds(),
                 client=remote_client,
             )
 

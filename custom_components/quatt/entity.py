@@ -2,20 +2,18 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
-)
-from homeassistant.components.select import (
-    SelectEntity,
-    SelectEntityDescription,
 )
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -28,16 +26,21 @@ from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-class QuattSensorEntityDescription(
-    SensorEntityDescription, frozen_or_thawed=True
-):
-    """A class that describes Quatt sensor entities."""
+@dataclass(frozen=True)
+class QuattFeatureFlags:
+    """Quatt feature flags used for the entities."""
 
     quatt_hybrid: bool = False
     quatt_all_electric: bool = False
     quatt_duo: bool = False
     quatt_opentherm: bool = False
     quatt_mobile_api: bool = False
+
+
+class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt sensor entities."""
+
+    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
 class QuattBinarySensorEntityDescription(
@@ -45,23 +48,13 @@ class QuattBinarySensorEntityDescription(
 ):
     """A class that describes Quatt binary sensor entities."""
 
-    quatt_hybrid: bool = False
-    quatt_all_electric: bool = False
-    quatt_duo: bool = False
-    quatt_opentherm: bool = False
-    quatt_mobile_api: bool = False
+    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
-class QuattSelectEntityDescription(
-    SelectEntityDescription, frozen_or_thawed=True
-):
+class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt select entities."""
 
-    quatt_hybrid: bool = False
-    quatt_all_electric: bool = False
-    quatt_duo: bool = False
-    quatt_opentherm: bool = False
-    quatt_mobile_api: bool = False
+    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
 class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
@@ -173,13 +166,13 @@ class QuattSelect(QuattEntity, SelectEntity):
         self,
         device_name: str,
         device_id: str,
-        select_key: str,
+        sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattSelectEntityDescription,
         attach_to_hub: bool,
     ) -> None:
         """Initialize the select class."""
-        super().__init__(device_name, device_id, select_key, coordinator, attach_to_hub)
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
         self.entity_description = entity_description
 
     @property
@@ -192,12 +185,18 @@ class QuattSelect(QuattEntity, SelectEntity):
         """Return the current selected option."""
         return self.coordinator.get_value(self.entity_description.key)
 
+    def select_option(self, option: str) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_select_option instead")
+
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         # Only remote coordinator supports updating settings
         if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
             _LOGGER.error("Cannot update sound level: only available via remote API")
-            raise NotImplementedError("Setting sound level is only available via remote API")
+            raise NotImplementedError(
+                "Setting sound level is only available via remote API"
+            )
 
         # Get current values for both sound levels
         day_level = self.coordinator.get_value("dayMaxSoundLevel")
@@ -211,7 +210,11 @@ class QuattSelect(QuattEntity, SelectEntity):
 
         # Validate that we have both values
         if not day_level or not night_level:
-            _LOGGER.error("Cannot update sound level: missing current values (day=%s, night=%s)", day_level, night_level)
+            _LOGGER.error(
+                "Cannot update sound level: missing current values (day=%s, night=%s)",
+                day_level,
+                night_level,
+            )
             raise ValueError("Cannot update sound level: missing current values")
 
         # Send both values to the API
