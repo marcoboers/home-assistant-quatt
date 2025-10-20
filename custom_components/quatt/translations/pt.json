@@ -5,10 +5,12 @@
             "local": {
                 "description": "Configurar ligação local à bomba de calor Quatt.",
                 "data": {
-                    "ip_address": "[%key:common::config_flow::data::ip%]"
+                    "ip_address": "[%key:common::config_flow::data::ip%]",
+                    "add_remote": "Ativar configuração de ligação remota"
                 },
                 "data_description": {
-                    "ip_address": "Sem http:// e sem porta."
+                    "ip_address": "Sem http:// e sem porta.",
+                    "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
                 }
             },
             "add_remote": {
@@ -17,15 +19,9 @@
                     "add_remote": "Ativar configuração de ligação remota"
                 }
             },
-            "remote": {
-                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir o CIC ID (por exemplo, CIC-xxxx-xxxx-xxxx).",
-                "data": {
-                    "cic": "CIC ID"
-                }
-            },
             "pair": {
                 "title": "Emparelhar com o dispositivo Quatt",
-                "description": "Introduzir um nome e pressionar o botão no dispositivo CIC ({cic}).\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\n\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir um nome e pressionar o botão no dispositivo CIC.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
                 "data": {
                     "first_name": "Primeiro nome",
                     "last_name": "Apelido"
@@ -36,9 +32,10 @@
             }
         },
         "error": {
-            "cannot_connect": "Falha na ligação.",
-            "invalid_cic": "Formato CIC inválido. Deve começar por 'CIC-'.",
-            "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos."
+            "auth": "Falha na autenticação. Verifique as suas credenciais.",
+            "cannot_connect": "Falha ao conectar ao sistema Quatt. Verifique o endereço IP ou a rede.",
+            "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos.",
+            "unknown": "Ocorreu um erro inesperado. Tente novamente."
         },
         "abort": {
             "already_in_progress": "Já existe um processo de configuração em curso para este dispositivo Quatt.",
@@ -63,15 +60,9 @@
                     "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
                 }
             },
-            "remote": {
-                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir o CIC ID (por exemplo, CIC-xxxx-xxxx-xxxx).",
-                "data": {
-                    "cic": "CIC ID"
-                }
-            },
             "pair": {
                 "title": "Emparelhar com o dispositivo Quatt",
-                "description": "Introduzir um nome e pressionar o botão no dispositivo CIC ({cic}).\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\n\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir um nome e pressionar o botão no dispositivo CIC.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
                 "data": {
                     "first_name": "Primeiro nome",
                     "last_name": "Apelido"
@@ -80,6 +71,12 @@
             "confirm": {
                 "description": "Deseja iniciar a configuração?"
             }
+        },
+        "error": {
+            "auth": "Falha na autenticação. Verifique as suas credenciais.",
+            "cannot_connect": "Falha ao conectar ao sistema Quatt. Verifique o endereço IP ou a rede.",
+            "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos.",
+            "unknown": "Ocorreu um erro inesperado. Tente novamente."
         }
     }
 }
