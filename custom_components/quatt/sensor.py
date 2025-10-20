@@ -526,7 +526,6 @@ SENSORS = {
             icon="mdi:clock-start",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            entity_category=EntityCategory.CONFIG,
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
@@ -535,7 +534,6 @@ SENSORS = {
             icon="mdi:clock-end",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            entity_category=EntityCategory.CONFIG,
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
@@ -544,7 +542,6 @@ SENSORS = {
             icon="mdi:clock-start",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            entity_category=EntityCategory.CONFIG,
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
@@ -553,7 +550,6 @@ SENSORS = {
             icon="mdi:clock-end",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            entity_category=EntityCategory.CONFIG,
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
@@ -562,7 +558,6 @@ SENSORS = {
             icon="mdi:clock-start",
             native_unit_of_measurement=UnitOfTime.MINUTES,
             suggested_display_precision=0,
-            entity_category=EntityCategory.CONFIG,
             quatt_mobile_api=True,
         ),
         QuattSensorEntityDescription(
@@ -571,7 +566,6 @@ SENSORS = {
             icon="mdi:clock-end",
             native_unit_of_measurement=UnitOfTime.MINUTES,
             suggested_display_precision=0,
-            entity_category=EntityCategory.CONFIG,
             quatt_mobile_api=True,
         ),
     ],
