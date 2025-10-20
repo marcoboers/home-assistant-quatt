@@ -8,6 +8,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.components import dhcp
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
     ConfigEntry,
@@ -15,46 +16,135 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.const import CONF_IP_ADDRESS, CONF_SCAN_INTERVAL
-from homeassistant.core import callback
+from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import (
-    QuattApiClient,
     QuattApiClientAuthenticationError,
     QuattApiClientCommunicationError,
     QuattApiClientError,
 )
+from .api_local import QuattLocalApiClient
+from .api_remote import QuattRemoteApiClient
 from .const import (
+    CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
-    DEFAULT_SCAN_INTERVAL,
+    CONF_REMOTE_CIC,
+    DEFAULT_LOCAL_SCAN_INTERVAL,
+    DEFAULT_REMOTE_SCAN_INTERVAL,
     DOMAIN,
+    LOCAL_MAX_SCAN_INTERVAL,
+    LOCAL_MIN_SCAN_INTERVAL,
     LOGGER,
-    MAX_SCAN_INTERVAL,
-    MIN_SCAN_INTERVAL,
+    REMOTE_CONF_SCAN_INTERVAL,
+    REMOTE_MAX_SCAN_INTERVAL,
+    REMOTE_MIN_SCAN_INTERVAL,
 )
+
+CONF_FIRST_NAME = "first_name"
+CONF_LAST_NAME = "last_name"
+
+
+async def _async_step_pair_common(
+    flow,
+    config_update: bool,
+    user_input: dict | None = None,
+) -> config_entries.FlowResult:
+    """Handle pairing step in config and options flow."""
+    _errors = {}
+    if user_input is not None:
+        # User confirmed they are ready to pair
+        session = async_create_clientsession(flow.hass)
+        api = QuattRemoteApiClient(flow.cic_name, session)
+
+        first_name = user_input[CONF_FIRST_NAME]
+        last_name = user_input[CONF_LAST_NAME]
+
+        if not await api.authenticate(first_name=first_name, last_name=last_name):
+            _errors["base"] = "pairing_timeout"
+        else:
+            if not config_update:
+                # Pairing successful, create entry with both local and remote
+                return flow.async_create_entry(
+                    title=flow.cic_name,
+                    data={
+                        CONF_LOCAL_CIC: flow.ip_address,
+                        CONF_REMOTE_CIC: flow.cic_name,
+                    },
+                )
+
+            # Pairing successful, update config entry
+            new_data = {**flow.config_entry.data, CONF_REMOTE_CIC: flow.cic_name}
+            flow.hass.config_entries.async_update_entry(
+                flow.config_entry, data=new_data
+            )
+            # Reload the integration to apply changes
+            await flow.hass.config_entries.async_reload(flow.config_entry.entry_id)
+            return flow.async_create_entry(title="", data={})
+
+    # Try to auto-fill names from Home Assistant user
+    default_first_name = ""
+    default_last_name = ""
+
+    # Optional: try to prefill with HA user name (if available - rarely used)
+    # No try-except needed because async_get_user returns None if user not found
+    user_id = flow.context.get("user_id")
+    if user_id:
+        user = await flow.hass.auth.async_get_user(user_id)
+        if user and user.name:
+            # Split on first space
+            name_parts = user.name.split(" ", 1)
+            default_first_name = name_parts[0] if len(name_parts) > 0 else ""
+            default_last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    return flow.async_show_form(
+        step_id="pair",
+        data_schema=vol.Schema(
+            {
+                vol.Required(
+                    CONF_FIRST_NAME,
+                    default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+                vol.Required(
+                    CONF_LAST_NAME,
+                    default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+            }
+        ),
+        errors=_errors,
+        description_placeholders={
+            "cic": flow.cic_name,
+        },
+    )
+
+
+async def _async_get_cic_name(hass: HomeAssistant, ip_address: str) -> str:
+    """Validate devic:e and return the CIC id/ name (system.hostName)."""
+    client = QuattLocalApiClient(
+        ip_address=ip_address,
+        session=async_create_clientsession(hass),
+    )
+    data = await client.async_get_data()
+    return data["system"]["hostName"]
 
 
 # pylint: disable=abstract-method
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
-    VERSION = 4
+    VERSION = 5
 
     def __init__(self) -> None:
         """Initialize a Quatt flow."""
         self.ip_address: str | None = None
         self.cic_name: str | None = None
-
-    async def _get_cic_name(self, ip_address: str) -> str:
-        """Validate device and return the CIC id/name (system.hostName)."""
-        client = QuattApiClient(
-            ip_address=ip_address,
-            session=async_create_clientsession(self.hass),
-        )
-        data = await client.async_get_data()
-        return data["system"]["hostName"]
+        self.connection_type: str | None = None
 
     def is_valid_ip(self, ip_str) -> bool:
         """Check for valid ip."""
@@ -66,23 +156,55 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             return False
         return True
 
+    async def _register_static_resources(self) -> None:
+        """Register the static resource path once if HTTP is available."""
+        # Check that the HTTP component is ready
+        if not hasattr(self.hass, "http"):
+            return
+
+        # Avoid duplicate registration across reloads
+        if self.hass.data.get(f"_{DOMAIN}_static_registered"):
+            return
+
+        await self.hass.http.async_register_static_paths(
+            [
+                StaticPathConfig(
+                    f"/{DOMAIN}_static",
+                    self.hass.config.path(f"custom_components/{DOMAIN}/static"),
+                    cache_headers=False,
+                )
+            ]
+        )
+        self.hass.data[f"_{DOMAIN}_static_registered"] = True
+
     async def async_step_user(
         self,
         user_input: dict | None = None,
     ) -> config_entries.FlowResult:
-        """Handle a flow initialized by the user."""
+        """Handle a flow initialized by the user - start with local setup."""
+        # Ensure static resources are registered for use in the form
+        await self._register_static_resources()
+
+        return await self.async_step_local()
+
+    async def async_step_local(
+        self,
+        user_input: dict | None = None,
+    ) -> config_entries.FlowResult:
+        """Handle local connection setup with IP address."""
         _errors = {}
         if user_input is not None:
             try:
-                cic_name = await self._get_cic_name(
-                    ip_address=user_input[CONF_IP_ADDRESS],
+                cic_name = await _async_get_cic_name(
+                    hass=self.hass,
+                    ip_address=user_input[CONF_LOCAL_CIC],
                 )
             except QuattApiClientAuthenticationError as exception:
                 LOGGER.warning(exception)
                 _errors["base"] = "auth"
             except QuattApiClientCommunicationError as exception:
                 LOGGER.error(exception)
-                _errors["base"] = "connection"
+                _errors["base"] = "cannot_connect"
             except QuattApiClientError as exception:
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
@@ -92,26 +214,47 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     await self.async_set_unique_id(cic_name)
                     self._abort_if_unique_id_configured()
 
+                    # Store cic_name and ip for next step
+                    self.cic_name = cic_name
+                    self.ip_address = user_input[CONF_LOCAL_CIC]
+
+                    if user_input.get("add_remote", False):
+                        # User wants to add remote API
+                        return await self.async_step_pair()
+
+                    # User doesn't want remote API, create entry with local only
                     return self.async_create_entry(
-                        title=cic_name,
-                        data=user_input,
+                        title=self.cic_name,
+                        data={
+                            CONF_LOCAL_CIC: self.ip_address,
+                        },
                     )
 
         return self.async_show_form(
-            step_id="user",
+            step_id="local",
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_IP_ADDRESS,
-                        default=(user_input or {}).get(CONF_IP_ADDRESS),
+                        CONF_LOCAL_CIC,
+                        default=(user_input or {}).get(CONF_LOCAL_CIC),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.TEXT
                         ),
                     ),
+                    vol.Optional(
+                        "add_remote",
+                        default=False,
+                    ): selector.BooleanSelector(),
                 }
             ),
             errors=_errors,
+        )
+
+    async def async_step_pair(self, user_input=None) -> config_entries.FlowResult:
+        """Handle pairing step in the config flow."""
+        return await _async_step_pair_common(
+            self, config_update=False, user_input=user_input
         )
 
     async def async_step_dhcp(
@@ -128,7 +271,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         # the DHCP match is only on "cic-*". We cannot use the cic-name here because
         # it is set at a later stage in the rebootprocess of the CIC.
         try:
-            await self._get_cic_name(ip_address=discovery_info.ip)
+            await _async_get_cic_name(hass=self.hass, ip_address=discovery_info.ip)
         except (
             QuattApiClientAuthenticationError,
             QuattApiClientCommunicationError,
@@ -168,7 +311,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     self.ip_address = discovery_info.ip
                     self.cic_name = discovery_info.hostname
 
-                    if self.is_valid_ip(ip_str=entry.data.get(CONF_IP_ADDRESS, "")):
+                    if self.is_valid_ip(ip_str=entry.data.get(CONF_LOCAL_CIC, "")):
                         # Configuration is an ip-address, update it
                         LOGGER.debug(
                             "DHCP discovery detected existing Quatt CIC: %s with ip-address: %s, "
@@ -178,7 +321,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                         )
 
                         self._abort_if_unique_id_configured(
-                            updates={CONF_IP_ADDRESS: discovery_info.ip},
+                            updates={CONF_LOCAL_CIC: discovery_info.ip},
                         )
                     else:
                         self._abort_if_unique_id_configured()
@@ -199,9 +342,12 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> data_entry_flow.ConfigFlowResult:
         """Allow the user to confirm adding the device."""
         if user_input is not None:
-            # Use the hostname instead of the ip
+            # Use the hostname instead of the ip (DHCP discovered device - always local)
             return self.async_create_entry(
-                title=self.cic_name, data={CONF_IP_ADDRESS: self.ip_address}
+                title=self.cic_name,
+                data={
+                    CONF_LOCAL_CIC: self.ip_address,
+                },
             )
 
         return self.async_show_form(step_id="confirm")
@@ -216,6 +362,10 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
 class QuattOptionsFlowHandler(OptionsFlow):
     """Options flow for Quatt."""
 
+    def __init__(self) -> None:
+        """Initialize options flow."""
+        self.cic_name: str | None = None
+
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         _errors = {}
@@ -227,35 +377,86 @@ class QuattOptionsFlowHandler(OptionsFlow):
             else ""
         )
 
+        # Check if remote API is already configured
+        has_remote = CONF_REMOTE_CIC in self.config_entry.data
+
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            # Check if user wants to add remote API
+            if not has_remote and user_input.get("add_remote", False):
+                # First retrieve the cic_name from the local API. The config_entry cannot be
+                # used because it can contain the incorrect cic_name because of DHCP discovery
+                try:
+                    self.cic_name = await _async_get_cic_name(
+                        hass=self.hass,
+                        ip_address=self.config_entry.data[CONF_LOCAL_CIC],
+                    )
+                except QuattApiClientAuthenticationError as exception:
+                    LOGGER.warning(exception)
+                    _errors["base"] = "auth"
+                except QuattApiClientCommunicationError as exception:
+                    LOGGER.error(exception)
+                    _errors["base"] = "cannot_connect"
+                except QuattApiClientError as exception:
+                    LOGGER.exception(exception)
+                    _errors["base"] = "unknown"
+                else:
+                    if self.cic_name is not None:
+                        # User wants to add remote API
+                        return await self.async_step_pair()
+            else:
+                return self.async_create_entry(title="", data=user_input)
+
+        # Build schema based on whether remote is already configured
+        schema_dict = {
+            vol.Required(
+                CONF_SCAN_INTERVAL,
+                default=self.config_entry.options.get(
+                    CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
+                ),
+            ): vol.All(
+                vol.Coerce(int),
+                vol.Range(min=LOCAL_MIN_SCAN_INTERVAL, max=LOCAL_MAX_SCAN_INTERVAL),
+            ),
+            vol.Required(
+                REMOTE_CONF_SCAN_INTERVAL,
+                default=self.config_entry.options.get(
+                    REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=REMOTE_MIN_SCAN_INTERVAL,
+                    max=REMOTE_MAX_SCAN_INTERVAL,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            ),
+            vol.Optional(
+                CONF_POWER_SENSOR,
+                description={
+                    "suggested_value": current_power_sensor
+                    if self.hass.states.get(current_power_sensor)
+                    else ""
+                },
+            ): selector.EntitySelector(
+                selector.EntityFilterSelectorConfig(
+                    device_class=SensorDeviceClass.POWER
+                )
+            ),
+        }
+
+        # Add option to add remote API if not already configured
+        if not has_remote:
+            schema_dict[vol.Optional("add_remote", default=False)] = (
+                selector.BooleanSelector()
+            )
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_SCAN_INTERVAL,
-                        default=self.config_entry.options.get(
-                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-                        ),
-                    ): vol.All(
-                        vol.Coerce(int),
-                        vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
-                    ),
-                    vol.Optional(
-                        CONF_POWER_SENSOR,
-                        description={
-                            "suggested_value": current_power_sensor
-                            if self.hass.states.get(current_power_sensor)
-                            else ""
-                        },
-                    ): selector.EntitySelector(
-                        selector.EntityFilterSelectorConfig(
-                            device_class=SensorDeviceClass.POWER
-                        )
-                    ),
-                }
-            ),
+            data_schema=vol.Schema(schema_dict),
             errors=_errors,
+        )
+
+    async def async_step_pair(self, user_input=None) -> config_entries.FlowResult:
+        """Handle pairing step in the options flow."""
+        return await _async_step_pair_common(
+            self, config_update=True, user_input=user_input
         )

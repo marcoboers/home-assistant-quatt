@@ -2,24 +2,39 @@
     "config": {
         "flow_title": "CIC: {name}",
         "step": {
-            "user": {
-                "description": "Configureer Quatt warmtepomp voor monitoring.",
+            "local": {
+                "description": "Stel lokale verbinding in met de Quatt warmtepomp.",
                 "data": {
-                    "ip_address": "IP-adres / hostnaam"
+                    "ip_address": "IP-adres / hostnaam",
+                    "add_remote": "Externe verbinding inschakelen"
                 },
                 "data_description": {
-                    "ip_address": "Zonder http:// en poort."
+                    "ip_address": "Zonder http:// en poortnummer.",
+                    "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
+                }
+            },
+            "pair": {
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk op de knop op je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "data": {
+                    "first_name": "Voornaam",
+                    "last_name": "Achternaam"
                 }
             },
             "confirm": {
-                "description": "Wilt u de configuratie starten?"
+                "description": "Configuratie starten?"
             }
         },
         "error": {
-            "cannot_connect": "Fout bij het verbinden."
+            "auth": "Authenticatie mislukt. Controleer de inloggegevens.",
+            "cannot_connect": "Verbinding met het Quatt-systeem mislukt. Controleer het IP-adres of het netwerk.",
+            "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat.",
+            "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         },
         "abort": {
-            "already_configured": "Apparaat is al geconfigureerd."
+            "already_in_progress": "Er is al een configuratieproces voor dit Quatt-apparaat actief.",
+            "already_configured": "Apparaat is al geconfigureerd.",
+            "no_match": "Geen overeenkomend Quatt apparaat gevonden."
         }
     },
     "options": {
@@ -27,14 +42,35 @@
             "init": {
                 "description": "Quatt opties",
                 "data": {
-                    "scan_interval": "Update-interval (seconden)",
-                    "power_sensor": "Vermogenssensor (Optioneel)"
+                    "scan_interval": "Lokaal update-interval (seconden)",
+                    "remote_scan_interval": "Externe mobiele API update-interval (minuten)",
+                    "power_sensor": "Vermogenssensor (optioneel)",
+                    "add_remote": "Externe verbinding inschakelen"
                 },
                 "data_description": {
                     "scan_interval": "Aantal seconden tussen het opvragen van informatie van de Quatt.",
-                    "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet."
+                    "remote_scan_interval": "Aantal minuten tussen het opvragen van gegevens via de mobiele Quatt API.",
+                    "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet.",
+                    "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
                 }
+            },
+            "pair": {
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk op de knop op je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "data": {
+                    "first_name": "Voornaam",
+                    "last_name": "Achternaam"
+                }
+            },
+            "confirm": {
+                "description": "Configuratie starten?"
             }
+        },
+        "error": {
+            "auth": "Authenticatie mislukt. Controleer de inloggegevens.",
+            "cannot_connect": "Verbinding met het Quatt-systeem mislukt. Controleer het IP-adres of het netwerk.",
+            "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat.",
+            "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         }
     }
 }
