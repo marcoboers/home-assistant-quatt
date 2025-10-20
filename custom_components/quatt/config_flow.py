@@ -17,7 +17,7 @@ from homeassistant.config_entries import (
     OptionsFlow,
 )
 from homeassistant.const import CONF_SCAN_INTERVAL
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
@@ -56,38 +56,33 @@ async def _async_step_pair_common(
     _errors = {}
     if user_input is not None:
         # User confirmed they are ready to pair
-        try:
-            # Create API client and authenticate
-            session = async_create_clientsession(flow.hass)
-            api = QuattRemoteApiClient(flow.cic_name, session)
+        session = async_create_clientsession(flow.hass)
+        api = QuattRemoteApiClient(flow.cic_name, session)
 
-            first_name = user_input[CONF_FIRST_NAME]
-            last_name = user_input[CONF_LAST_NAME]
+        first_name = user_input[CONF_FIRST_NAME]
+        last_name = user_input[CONF_LAST_NAME]
 
-            if not await api.authenticate(first_name=first_name, last_name=last_name):
-                _errors["base"] = "pairing_timeout"
-            else:
-                if not config_update:
-                    # Pairing successful, create entry with both local and remote
-                    return flow.async_create_entry(
-                        title=flow.cic_name,
-                        data={
-                            CONF_LOCAL_CIC: flow.ip_address,
-                            CONF_REMOTE_CIC: flow.cic_name,
-                        },
-                    )
-
-                # Pairing successful, update config entry
-                new_data = {**flow.config_entry.data, CONF_REMOTE_CIC: flow.cic_name}
-                flow.hass.config_entries.async_update_entry(
-                    flow.config_entry, data=new_data
+        if not await api.authenticate(first_name=first_name, last_name=last_name):
+            _errors["base"] = "pairing_timeout"
+        else:
+            if not config_update:
+                # Pairing successful, create entry with both local and remote
+                return flow.async_create_entry(
+                    title=flow.cic_name,
+                    data={
+                        CONF_LOCAL_CIC: flow.ip_address,
+                        CONF_REMOTE_CIC: flow.cic_name,
+                    },
                 )
-                # Reload the integration to apply changes
-                await flow.hass.config_entries.async_reload(flow.config_entry.entry_id)
-                return flow.async_create_entry(title="", data={})
-        except Exception:  # pylint: disable=broad-except
-            LOGGER.exception("Unexpected exception during pairing")
-            _errors["base"] = "unknown"
+
+            # Pairing successful, update config entry
+            new_data = {**flow.config_entry.data, CONF_REMOTE_CIC: flow.cic_name}
+            flow.hass.config_entries.async_update_entry(
+                flow.config_entry, data=new_data
+            )
+            # Reload the integration to apply changes
+            await flow.hass.config_entries.async_reload(flow.config_entry.entry_id)
+            return flow.async_create_entry(title="", data={})
 
     # Try to auto-fill names from Home Assistant user
     default_first_name = ""
@@ -129,8 +124,8 @@ async def _async_step_pair_common(
     )
 
 
-async def _async_get_cic_name(hass, ip_address: str) -> str:
-    """Validate device and return the CIC id/name (system.hostName)."""
+async def _async_get_cic_name(hass: HomeAssistant, ip_address: str) -> str:
+    """Validate devic:e and return the CIC id/ name (system.hostName)."""
     client = QuattLocalApiClient(
         ip_address=ip_address,
         session=async_create_clientsession(hass),
@@ -276,7 +271,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         # the DHCP match is only on "cic-*". We cannot use the cic-name here because
         # it is set at a later stage in the rebootprocess of the CIC.
         try:
-            await self._get_cic_name(ip_address=discovery_info.ip)
+            await _async_get_cic_name(hass=self.hass, ip_address=discovery_info.ip)
         except (
             QuattApiClientAuthenticationError,
             QuattApiClientCommunicationError,
