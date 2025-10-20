@@ -1,0 +1,280 @@
+views:
+  - title: Quatt
+    path: quatt
+    icon: mdi:heat-pump
+    type: panel
+    cards:
+      - type: custom:floorplan-card
+        full_height: true
+        config:
+          image: /local/quatt/quatt.svg
+          stylesheet: /local/quatt/quatt.css
+          rules:
+            - element: quatt.housechimney
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ !entities['sensor.heatpump_hc_electrical_power']
+                      ? 'quatt-show' : ''}
+            - element: quatt.househybridv2duo
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.househybridv2
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.househybridv1duo
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.househybridv1
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.houseallev2duo
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
+                      && entities['sensor.heatpump_hc_electrical_power'] 
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.houseallev2
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
+                      && entities['sensor.heatpump_hc_electrical_power'] 
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.houseallev1duo
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
+                      && entities['sensor.heatpump_hc_electrical_power'] 
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.houseallev1
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
+                      && entities['sensor.heatpump_hc_electrical_power'] 
+                      && (
+                        entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.mono
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
+                      ? 'quatt-show' : ''}
+            - element: quatt.duo
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
+                      ? 'quatt-show' : ''}
+            - element: quatt.hybrid
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ !entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
+            - element: quatt.alle1
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
+            - element: quatt.alle2
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
+            - element: quatt.hp1
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hp1_workingmode']
+                      && entities['sensor.heatpump_hp1_workingmode'].state >= 1
+                      ? 'quatt-show' : ''}
+            - element: quatt.hp2
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hp2_workingmode']
+                      && entities['sensor.heatpump_hp2_workingmode'].state >= 1
+                      ? 'quatt-show' : ''}
+            - element: quatt.waterPipe
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heat_battery_domestic_hot_water_on']
+                      && entities['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.shower
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heat_battery_domestic_hot_water_on']
+                      && entities['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.boilerSteam
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heat_battery_charging']
+                      && entities['binary_sensor.heat_battery_charging'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.outsidePipe
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hp1_workingmode'].state >= 1
+                      || (
+                        entities['sensor.heatpump_hp2_workingmode'] 
+                        && entities['sensor.heatpump_hp2_workingmode'].state >= 1
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.bottomPipe
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hp1_workingmode'].state >= 1
+                      || (
+                        entities['sensor.heatpump_hp2_workingmode'] 
+                        && entities['sensor.heatpump_hp2_workingmode'].state >= 1)
+                      ? 'quatt-show' : ''}
+            - element: quatt.alle.bottomPipe
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power'] 
+                      && (
+                        entities['sensor.heatpump_hp1_workingmode'].state >= 1
+                        || (
+                          entities['sensor.heatpump_hp2_workingmode'] 
+                          && entities['sensor.heatpump_hp2_workingmode'].state >= 1
+                        )
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.alle.radiatorPipe1
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power']
+                      && (
+                        entities['sensor.heatpump_hp1_workingmode'].state >= 1
+                        || (
+                          entities['sensor.heatpump_hp2_workingmode']
+                          && entities['sensor.heatpump_hp2_workingmode'].state >= 1
+                        )
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.alle.radiatorPipe2
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power']
+                      && (
+                        entities['sensor.heatpump_hp1_workingmode'].state >= 1
+                        || (
+                          entities['sensor.heatpump_hp2_workingmode']
+                          && entities['sensor.heatpump_hp2_workingmode'].state >= 1
+                        )
+                      )
+                      ? 'quatt-show' : ''}
+            - element: quatt.chimneyPipe
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.boiler_heating']
+                      && entities['binary_sensor.boiler_heating'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.waterTankIndicator
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
+                - service: floorplan.execute
+                  service_data:
+                    my_custom_exec_calling_browser_mod: |
+                      > 
+                      try{                  
+                          // Clamp percentage between 0 and 100
+                          percentage = Math.max(0, Math.min(100, entities['sensor.heat_battery_percentage'].state));
+                          
+                          const blue = '#0066FF';
+                          const red = '#FF4444';
+                          const transitionWidth = 25; // 10% transition zone
+                          
+                          // Calculate the gradient stop positions
+                          // The transition happens at the percentage point
+                          const centerPoint = percentage;
+                          const startTransition = Math.max(0, centerPoint - transitionWidth / 2);
+                          const endTransition = Math.min(100, centerPoint + transitionWidth / 2);
+                          
+                          // From bottom (0%) to start of transition: blue
+                          elements['gradientStop1'].setAttribute('offset', '0%');
+                          elements['gradientStop1'].setAttribute('style', `stop-color:${red};stop-opacity:0.5`);
+                          
+                          // Start of transition: blue
+                          elements['gradientStop2'].setAttribute('offset', `${startTransition}%`);
+                          elements['gradientStop2'].setAttribute('style', `stop-color:${red};stop-opacity:0.5`);
+                          
+                          // End of transition: red
+                          elements['gradientStop3'].setAttribute('offset', `${endTransition}%`);
+                          elements['gradientStop3'].setAttribute('style', `stop-color:${blue};stop-opacity:0.5`);
+                          
+                          // From end of transition to top (100%): red
+                          elements['gradientStop4'].setAttribute('offset', '100%');
+                          elements['gradientStop4'].setAttribute('style', `stop-color:${blue};stop-opacity:0.5`);
+                          
+                          elements['tankPercentageText'].textContent = Math.round(percentage) + '%';
+                      }catch(e){
+                        console.log("Well.. That didn't go as planned",e);
+                      }
+            
+          
+
+
+
+
+
+
