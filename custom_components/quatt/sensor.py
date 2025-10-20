@@ -235,6 +235,7 @@ def create_heatpump_sensor_entity_descriptions(
             name="Status",
             key=f"heatPumps.{index}.status",
             icon="mdi:information",
+            entity_category=EntityCategory.DIAGNOSTIC,
             features=QuattFeatureFlags(
                 quatt_duo=is_duo,
                 quatt_mobile_api=True,
@@ -256,6 +257,7 @@ def create_heatpump_sensor_entity_descriptions(
             key=f"heatPumps.{index}.oduType",
             icon="mdi:hvac",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_duo=is_duo,
                 quatt_mobile_api=True,
@@ -407,6 +409,7 @@ SENSORS = {
             key="installationId",
             icon="mdi:identifier",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -416,6 +419,7 @@ SENSORS = {
             key="installedAt",
             device_class=SensorDeviceClass.TIMESTAMP,
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -424,6 +428,7 @@ SENSORS = {
             name="Status",
             key="status",
             icon="mdi:information",
+            entity_category=EntityCategory.DIAGNOSTIC,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -460,6 +465,7 @@ SENSORS = {
             key="wifiSSID",
             icon="mdi:wifi",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -530,6 +536,8 @@ SENSORS = {
             icon="mdi:heat-pump",
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -542,6 +550,7 @@ SENSORS = {
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
+            entity_registry_enabled_default=False,
         ),
         QuattSensorEntityDescription(
             name="Quatt build",
@@ -581,6 +590,7 @@ SENSORS = {
             key="name",
             icon="mdi:label",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -590,6 +600,7 @@ SENSORS = {
             key="zipCode",
             icon="mdi:map-marker",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -599,6 +610,7 @@ SENSORS = {
             key="country",
             icon="mdi:flag",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -608,6 +620,7 @@ SENSORS = {
             key="orderNumber",
             icon="mdi:receipt",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
             features=QuattFeatureFlags(
                 quatt_mobile_api=True,
             ),
@@ -735,6 +748,7 @@ SENSORS = {
             name="Status",
             key="allEStatus.heatBatteryStatus",
             icon="mdi:battery",
+            entity_category=EntityCategory.DIAGNOSTIC,
             features=QuattFeatureFlags(
                 quatt_all_electric=True,
                 quatt_mobile_api=True,
