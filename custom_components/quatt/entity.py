@@ -166,13 +166,13 @@ class QuattSelect(QuattEntity, SelectEntity):
         self,
         device_name: str,
         device_id: str,
-        select_key: str,
+        sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattSelectEntityDescription,
         attach_to_hub: bool,
     ) -> None:
         """Initialize the select class."""
-        super().__init__(device_name, device_id, select_key, coordinator, attach_to_hub)
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
         self.entity_description = entity_description
 
     @property
