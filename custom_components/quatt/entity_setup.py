@@ -118,14 +118,6 @@ async def async_setup_entities(
             if sensor_keys[sensor_description.key] != remote:
                 continue
 
-            _LOGGER.info(
-                "[%s] Creating entity: %s (device=%s, remote=%s)",
-                entity_domain,
-                sensor_description.key,
-                device_id,
-                remote,
-            )
-
             sensors.append(
                 entity_class(
                     device_name=device_name_map.get(device_id, device_id),
