@@ -767,7 +767,7 @@ SENSORS = {
         QuattSensorEntityDescription(
             name="Percentage",
             key="allEStatus.heatBatteryPercentage",
-            icon="mdi:battery",
+            device_class=SensorDeviceClass.BATTERY,
             native_unit_of_measurement=PERCENTAGE,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
