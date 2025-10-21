@@ -19,7 +19,6 @@ async def async_setup_entities(
     coordinator: QuattDataUpdateCoordinator,
     entry,
     remote: bool,
-    entity_class,
     entity_descriptions: dict[str, list],
     entity_domain: str,
 ):
@@ -46,10 +45,10 @@ async def async_setup_entities(
 
     # Determine which sensors to create based on the detected configuration
     flag_conditions = [
-        ("quatt_hybrid", not all_electric_active),
-        ("quatt_all_electric", all_electric_active),
-        ("quatt_duo", heatpump_2_active),
-        ("quatt_opentherm", is_boiler_opentherm),
+        ("hybrid", not all_electric_active),
+        ("all_electric", all_electric_active),
+        ("duo", heatpump_2_active),
+        ("opentherm", is_boiler_opentherm),
     ]
 
     # Flatten out all sensor descriptions
@@ -62,14 +61,14 @@ async def async_setup_entities(
     # Determine which sensors to create based on the flags
     sensor_keys: dict[str, bool] = {}
     for desc in flat_descriptions:
-        features = desc.features
+        features = desc.quatt_features
 
         # Check if it matches normal feature conditions
         if not any(getattr(features, flag) for flag, _ in flag_conditions) or all(
             condition for flag, condition in flag_conditions if getattr(features, flag)
         ):
             # Include the sensor and the mobile API status
-            sensor_keys[desc.key] = features.quatt_mobile_api
+            sensor_keys[desc.key] = features.mobile_api
 
     # Remove not applicable sensors
     hub_id = (entry.unique_id or entry.entry_id).strip()
@@ -119,7 +118,7 @@ async def async_setup_entities(
                 continue
 
             sensors.append(
-                entity_class(
+                sensor_description.quatt_entity_class(
                     device_name=device_name_map.get(device_id, device_id),
                     device_id=device_id,
                     sensor_key=sensor_description.key,

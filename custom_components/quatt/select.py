@@ -19,7 +19,12 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattFeatureFlags, QuattSelect, QuattSelectEntityDescription
+from .entity import (
+    QuattFeatureFlags,
+    QuattSelect,
+    QuattSelectEntityDescription,
+    QuattSoundSelect,
+)
 from .entity_setup import async_setup_entities
 
 # Sound level options
@@ -33,18 +38,20 @@ SELECTS = {
             name="Day max sound level",
             icon="mdi:volume-high",
             options=SOUND_LEVEL_OPTIONS,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
+            quatt_entity_class=QuattSoundSelect,
         ),
         QuattSelectEntityDescription(
             key="nightMaxSoundLevel",
             name="Night max sound level",
             icon="mdi:volume-low",
             options=SOUND_LEVEL_OPTIONS,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
+            quatt_entity_class=QuattSoundSelect,
         ),
     ],
     DEVICE_HEAT_BATTERY_ID: [],
@@ -72,7 +79,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
         coordinator=local_coordinator,
         entry=entry,
         remote=False,
-        entity_class=QuattSelect,
         entity_descriptions=SELECTS,
         entity_domain=SELECT_DOMAIN,
     )
@@ -83,7 +89,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
             coordinator=remote_coordinator,
             entry=entry,
             remote=True,
-            entity_class=QuattSelect,
             entity_descriptions=SELECTS,
             entity_domain=SELECT_DOMAIN,
         )

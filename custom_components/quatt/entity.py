@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from dataclasses import dataclass
 import logging
 
@@ -24,37 +25,6 @@ from .coordinator import QuattDataUpdateCoordinator
 from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class QuattFeatureFlags:
-    """Quatt feature flags used for the entities."""
-
-    quatt_hybrid: bool = False
-    quatt_all_electric: bool = False
-    quatt_duo: bool = False
-    quatt_opentherm: bool = False
-    quatt_mobile_api: bool = False
-
-
-class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
-    """A class that describes Quatt sensor entities."""
-
-    features: QuattFeatureFlags = QuattFeatureFlags()
-
-
-class QuattBinarySensorEntityDescription(
-    BinarySensorEntityDescription, frozen_or_thawed=True
-):
-    """A class that describes Quatt binary sensor entities."""
-
-    features: QuattFeatureFlags = QuattFeatureFlags()
-
-
-class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
-    """A class that describes Quatt select entities."""
-
-    features: QuattFeatureFlags = QuattFeatureFlags()
 
 
 class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
@@ -189,14 +159,48 @@ class QuattSelect(QuattEntity, SelectEntity):
         """Implement required base class method but do not use it (async handled separately)."""
         raise NotImplementedError("Use async_select_option instead")
 
+    @abstractmethod
+    async def _perform_api_update(self, option: str) -> bool:
+        """Perform the API call to update this setting.
+
+        Must return True if the update succeeded, False otherwise.
+        """
+        raise NotImplementedError
+
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         # Only remote coordinator supports updating settings
         if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
-            _LOGGER.error("Cannot update sound level: only available via remote API")
-            raise NotImplementedError(
-                "Setting sound level is only available via remote API"
+            _LOGGER.error(
+                "Cannot update %s: only available via remote API",
+                self.entity_description.key,
             )
+            raise NotImplementedError(
+                f"Setting {self.entity_description.key} is only available via remote API"
+            )
+
+        success = False
+        try:
+            success = await self._perform_api_update(option)
+        except Exception as err:
+            _LOGGER.exception("Error updating %s", self.entity_description.key)
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            ) from err
+
+        if not success:
+            _LOGGER.warning("Failed to update %s", self.entity_description.key)
+            raise RuntimeError(f"Failed to update {self.entity_description.key}")
+
+        # Always refresh coordinator data after a successful update
+        await self.coordinator.async_request_refresh()
+
+
+class QuattSoundSelect(QuattSelect):
+    """Select entity for Quatt sound level configuration."""
+
+    async def _perform_api_update(self, option: str) -> bool:
+        """Perform paired day/night sound level update."""
 
         # Get current values for both sound levels
         day_level = self.coordinator.get_value("dayMaxSoundLevel")
@@ -215,7 +219,7 @@ class QuattSelect(QuattEntity, SelectEntity):
                 day_level,
                 night_level,
             )
-            raise ValueError("Cannot update sound level: missing current values")
+            return False
 
         # Send both values to the API
         settings = {
@@ -224,11 +228,38 @@ class QuattSelect(QuattEntity, SelectEntity):
         }
 
         _LOGGER.debug("Updating CIC sound levels: %s", settings)
-        success = await self.coordinator.client.update_cic_settings(settings)
+        return await self.coordinator.client.update_cic_settings(settings)
 
-        if not success:
-            _LOGGER.error("Failed to update sound level settings")
-            raise RuntimeError("Failed to update sound level settings")
 
-        # Request a coordinator refresh to update the state
-        await self.coordinator.async_request_refresh()
+@dataclass(frozen=True)
+class QuattFeatureFlags:
+    """Quatt feature flags used an entity."""
+
+    hybrid: bool = False
+    all_electric: bool = False
+    duo: bool = False
+    opentherm: bool = False
+    mobile_api: bool = False
+
+
+class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt sensor entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: QuattSensor = QuattSensor
+
+
+class QuattBinarySensorEntityDescription(
+    BinarySensorEntityDescription, frozen_or_thawed=True
+):
+    """A class that describes Quatt binary sensor entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: QuattSensor = QuattBinarySensor
+
+
+class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt select entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: QuattSensor = QuattSelect
