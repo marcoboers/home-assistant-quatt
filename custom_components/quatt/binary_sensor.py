@@ -96,14 +96,6 @@ BINARY_SENSORS = {
             ),
         ),
         QuattBinarySensorEntityDescription(
-            name="Use pricing to limit heat pump",
-            key="usePricingToLimitHeatPump",
-            icon="mdi:currency-eur",
-            quatt_features=QuattFeatureFlags(
-                mobile_api=True,
-            ),
-        ),
-        QuattBinarySensorEntityDescription(
             name="Avoid nighttime charging",
             key="avoidNighttimeCharging",
             icon="mdi:weather-night",

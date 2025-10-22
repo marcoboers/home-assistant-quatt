@@ -16,6 +16,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
@@ -231,6 +232,99 @@ class QuattSoundSelect(QuattSelect):
         return await self.coordinator.client.update_cic_settings(settings)
 
 
+class QuattSwitch(QuattEntity, SwitchEntity):
+    """Quatt Switch class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattSwitchEntityDescription,
+        attach_to_hub: bool,
+    ) -> None:
+        """Initialize the switch class."""
+        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the switch should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the switch is on."""
+        return self.coordinator.get_value(self.entity_description.key)
+
+    def turn_on(self, **kwargs) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_turn_on instead")
+
+    def turn_off(self, **kwargs) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_turn_off instead")
+
+    @abstractmethod
+    async def _perform_api_update(self, state: bool) -> bool:
+        """Perform the API call to update this setting.
+
+        Must return True if the update succeeded, False otherwise.
+        """
+        raise NotImplementedError
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn the switch on."""
+        await self._async_set_state(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn the switch off."""
+        await self._async_set_state(False)
+
+    async def _async_set_state(self, state: bool) -> None:
+        """Set the switch state."""
+        # Only remote coordinator supports updating settings
+        if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
+            _LOGGER.error(
+                "Cannot update %s: only available via remote API",
+                self.entity_description.key,
+            )
+            raise NotImplementedError(
+                f"Setting {self.entity_description.key} is only available via remote API"
+            )
+
+        success = False
+        try:
+            success = await self._perform_api_update(state)
+        except Exception as err:
+            _LOGGER.exception("Error updating %s", self.entity_description.key)
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            ) from err
+
+        if not success:
+            _LOGGER.warning("Failed to update %s", self.entity_description.key)
+            raise RuntimeError(f"Failed to update {self.entity_description.key}")
+
+        # Always refresh coordinator data after a successful update
+        await self.coordinator.async_request_refresh()
+
+
+class QuattSettingSwitch(QuattSwitch):
+    """Switch entity for Quatt boolean settings."""
+
+    async def _perform_api_update(self, state: bool) -> bool:
+        """Perform boolean setting update."""
+        # Send the setting to the API
+        settings = {
+            self.entity_description.key: state,
+        }
+
+        _LOGGER.debug("Updating CIC setting: %s", settings)
+        return await self.coordinator.client.update_cic_settings(settings)
+
+
 @dataclass(frozen=True)
 class QuattFeatureFlags:
     """Quatt feature flags used an entity."""
@@ -263,3 +357,10 @@ class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: QuattSensor = QuattSelect
+
+
+class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt switch entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: QuattSensor = QuattSwitch
