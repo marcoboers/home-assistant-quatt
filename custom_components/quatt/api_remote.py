@@ -537,7 +537,7 @@ class QuattRemoteApiClient(QuattApiClient):
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403) and retry_on_403:
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         "Got %s, attempting to refresh token", response.status
                     )
                     if await self.refresh_token():
@@ -600,7 +600,7 @@ class QuattRemoteApiClient(QuattApiClient):
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403):
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         "Got %s while updating CIC settings, attempting to refresh token",
                         response.status,
                     )
