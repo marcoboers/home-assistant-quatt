@@ -41,7 +41,7 @@ views:
                     ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
                       && (
                         entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4'
                       )
                       ? 'quatt-show' : ''}
             - element: quatt.househybridv1
@@ -51,7 +51,7 @@ views:
                     ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
                       && (
                         entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4'
                       )
                       ? 'quatt-show' : ''}
             - element: quatt.houseallev2duo
@@ -82,7 +82,7 @@ views:
                       && entities['sensor.heatpump_hc_electrical_power'] 
                       && (
                         entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4'
                       )
                       ? 'quatt-show' : ''}
             - element: quatt.houseallev1
@@ -93,7 +93,7 @@ views:
                       && entities['sensor.heatpump_hc_electrical_power'] 
                       && (
                         entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.0'
+                        || entities['sensor.heatpump_1_odu_type'].state == 'AMM4'
                       )
                       ? 'quatt-show' : ''}
             - element: quatt.mono
