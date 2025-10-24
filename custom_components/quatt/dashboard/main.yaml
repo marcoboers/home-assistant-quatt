@@ -102,12 +102,6 @@ views:
                   service_data: |-
                     ${ entities['sensor.cic_number_of_heat_pumps'].state == 1
                       ? 'quatt-show' : ''}
-            - element: quatt.duo
-              state_action:
-                - service: floorplan.class_set
-                  service_data: |-
-                    ${ entities['sensor.cic_number_of_heat_pumps'].state == 2
-                      ? 'quatt-show' : ''}
             - element: quatt.hybrid
               state_action:
                 - service: floorplan.class_set
@@ -139,27 +133,6 @@ views:
                   service_data: |-
                     ${ entities['sensor.heatpump_hp2_workingmode']
                       && entities['sensor.heatpump_hp2_workingmode'].state >= 1
-                      ? 'quatt-show' : ''}
-            - element: quatt.waterPipe
-              state_action:
-                - service: floorplan.class_set
-                  service_data: |-
-                    ${ entities['binary_sensor.heat_battery_domestic_hot_water_on']
-                      && entities['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
-                      ? 'quatt-show' : ''}
-            - element: quatt.shower
-              state_action:
-                - service: floorplan.class_set
-                  service_data: |-
-                    ${ entities['binary_sensor.heat_battery_domestic_hot_water_on']
-                      && entities['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
-                      ? 'quatt-show' : ''}
-            - element: quatt.boilerSteam
-              state_action:
-                - service: floorplan.class_set
-                  service_data: |-
-                    ${ entities['binary_sensor.heat_battery_charging']
-                      && entities['binary_sensor.heat_battery_charging'].state == 'on'
                       ? 'quatt-show' : ''}
             - element: quatt.outsidePipe
               state_action:
@@ -223,8 +196,36 @@ views:
               state_action:
                 - service: floorplan.class_set
                   service_data: |-
-                    ${ entities['binary_sensor.boiler_heating']
-                      && entities['binary_sensor.boiler_heating'].state == 'on'
+                    ${ entities['binary_sensor.heatpump_boiler_heating']
+                      && entities['binary_sensor.heatpump_boiler_heating'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.chimneySmoke
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heatpump_boiler_heating']
+                      && entities['binary_sensor.heatpump_boiler_heating'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.waterPipe
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heat_battery_domestic_hot_water_on']
+                      && entities['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.shower
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heat_battery_domestic_hot_water_on']
+                      && entities['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
+                      ? 'quatt-show' : ''}
+            - element: quatt.boilerSteam
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['binary_sensor.heat_battery_charging']
+                      && entities['binary_sensor.heat_battery_charging'].state == 'on'
                       ? 'quatt-show' : ''}
             - element: quatt.waterTankIndicator
               state_action:
@@ -250,19 +251,19 @@ views:
                           const startTransition = Math.max(0, centerPoint - transitionWidth / 2);
                           const endTransition = Math.min(100, centerPoint + transitionWidth / 2);
                           
-                          // From bottom (0%) to start of transition: blue
+                          // From bottom (0%) to start of transition: red
                           elements['gradientStop1'].setAttribute('offset', '0%');
                           elements['gradientStop1'].setAttribute('style', `stop-color:${red};stop-opacity:0.5`);
                           
-                          // Start of transition: blue
+                          // Start of transition: red
                           elements['gradientStop2'].setAttribute('offset', `${startTransition}%`);
                           elements['gradientStop2'].setAttribute('style', `stop-color:${red};stop-opacity:0.5`);
                           
-                          // End of transition: red
+                          // End of transition: blue
                           elements['gradientStop3'].setAttribute('offset', `${endTransition}%`);
                           elements['gradientStop3'].setAttribute('style', `stop-color:${blue};stop-opacity:0.5`);
                           
-                          // From end of transition to top (100%): red
+                          // From end of transition to top (100%): blue
                           elements['gradientStop4'].setAttribute('offset', '100%');
                           elements['gradientStop4'].setAttribute('style', `stop-color:${blue};stop-opacity:0.5`);
                           

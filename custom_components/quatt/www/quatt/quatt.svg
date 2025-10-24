@@ -93,17 +93,12 @@
         <clipPath id="hp2FlowLines">
             <rect id="quatt.hp2" x="185" y="1285" width="280" height="150"></rect>
         </clipPath>
-        <clipPath id="alleWaterDrups">
-            <rect id="quatt.shower" x="525" y="800" width="300" height="200"></rect>
-        </clipPath>
         <clipPath id="outsidePipe">
             <rect x="250" y="1245" width="181" height="100"></rect>
+            <rect x="555" y="1387" width="12" height="20"></rect>
 
             <!-- If mono -->
             <rect id="quatt.mono" x="431" y="1300" width="124" height="100"></rect>
-
-            <!-- If duo -->
-            <rect id="quatt.duo" x="555" y="1387" width="12" height="20"></rect>
         </clipPath>
         <clipPath id="bottomPipe">
             <!-- If hybrid -->
@@ -113,18 +108,34 @@
             <rect id="quatt.alle1" x="250" y="1175" width="51" height="100"></rect>
             <rect id="quatt.alle2" x="378" y="1100" width="151" height="125"></rect>
         </clipPath>
-        <clipPath id="waterPipe">
-            <rect x="378" y="1100" width="151" height="125"></rect>
-        </clipPath>
-        <clipPath id="chimneyPipe">
-            <rect x="278" y="1100" width="151" height="125"></rect>
-        </clipPath>
+
+        <filter id="smokeBlur">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8"/>
+        </filter>
     </defs>
+
+    <g id="quatt.legend" class="quatt-show">
+        <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
+
+        <!-- Title -->
+        <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">My house</text>
+
+        <!-- Heat -->
+        <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
+        <text id="legendHeatValue" x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+
+        <!-- Electricity -->
+        <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
+        <text id="legendElectricityValue" x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+
+        <!-- Shower -->
+        <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower</text>
+        <text id="legendElectricityValue" x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+    </g>
 
     <g clip-path="url(#outsidePipe)">
         <path id="quatt.outsidePipe" d="M 274 1253 L 567 1400" stroke="url(#waterGradientToLeft)" stroke-width="8" fill="none" stroke-linecap="round"/>
     </g>
-
     <g clip-path="url(#bottomPipe)">
         <path id="quatt.bottomPipe" d="M 275 1250 L 404 1185" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>
 
@@ -133,17 +144,6 @@
         <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
         <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>
     </g>
-
-    <!-- If AllE -->
-    <g clip-path="url(#waterPipe)">
-        <path id="quatt.waterPipe" d="M 421 1119 L 422 1186" stroke="url(#waterGradientDown)" stroke-width="5" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- If hybrid -->
-    <g clip-path="url(#chimneyPipe)">
-        <path id="quatt.chimneyPipe" d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
-    </g>
-
 
     <g clip-path="url(#hp1FlowLines)">
         <g id="hp1Flow">
@@ -161,7 +161,49 @@
             <path class="fog-line" d="M 310 1395 Q 320 1388, 330 1395 Q 340 1402, 350 1395 Q 360 1388, 370 1395 Q 380 1402, 390 1395 Q 400 1388, 410 1395 Q 420 1402, 430 1395 Q 440 1388, 450 1395 Q 460 1402, 470 1395 Q 480 1388, 490 1395 Q 500 1402, 510 1395 Q 520 1388, 530 1395 Q 540 1402, 550 1395" stroke="#DCE9F2" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
         </g>
     </g>
-    <g clip-path="url(#alleWaterDrups)">
+
+    <!-- If hybrid -->
+    <g id="quatt.chimneyPipe">
+        <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+    </g>
+    <g id="quatt.chimneySmoke">
+        <ellipse cx="400" cy="675" rx="12" ry="15" fill="#6B6B6B" filter="url(#smokeBlur)">
+            <animate attributeName="cy" values="675;555;435" dur="4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" repeatCount="indefinite"/>
+            <animate attributeName="rx" values="12;17;22" dur="4s" repeatCount="indefinite"/>
+            <animate attributeName="ry" values="15;21;27" dur="4s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="408" cy="670" rx="14" ry="16" fill="#7A7A7A" filter="url(#smokeBlur)">
+            <animate attributeName="cy" values="670;550;430" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+            <animate attributeName="rx" values="14;19;24" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+            <animate attributeName="ry" values="16;22;28" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="395" cy="680" rx="13" ry="14" fill="#656565" filter="url(#smokeBlur)">
+            <animate attributeName="cy" values="680;560;440" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+            <animate attributeName="rx" values="13;18;23" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+            <animate attributeName="ry" values="14;20;26" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="403" cy="673" rx="15" ry="17" fill="#707070" filter="url(#smokeBlur)">
+            <animate attributeName="cy" values="673;553;433" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="rx" values="15;20;25" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="ry" values="17;23;29" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="397" cy="677" rx="11" ry="13" fill="#6F6F6F" filter="url(#smokeBlur)">
+            <animate attributeName="cy" values="677;557;437" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+            <animate attributeName="rx" values="11;16;21" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+            <animate attributeName="ry" values="13;19;25" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+        </ellipse>
+    </g>
+
+    <!-- If AllE -->
+    <g id="quatt.waterPipe">
+        <path d="M 421 1119 L 422 1186" stroke="url(#waterGradientDown)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g id="quatt.shower">
         <g id="showerWater" transform="translate(620, 880)">
             <ellipse class="water-droplet" cx="20" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
             <ellipse class="water-droplet" cx="35" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
@@ -177,7 +219,6 @@
         <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
         <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
     </g>
-
     <g id="quatt.waterTankIndicator">
         <!-- Water fill with rounded corners and shadow effect -->
         <defs>
