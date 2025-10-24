@@ -120,6 +120,24 @@ views:
                   service_data: |-
                     ${ entities['sensor.heatpump_hc_electrical_power'] 
                       ? 'quatt-show' : ''}
+            - element: quatt.legend.hybrid
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ !entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
+            - element: quatt.legend.alle
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
+            - element: quatt.legend.showerMinutes
+              state_action:
+                - service: floorplan.class_set
+                  service_data: |-
+                    ${ entities['sensor.heatpump_hc_electrical_power'] 
+                      ? 'quatt-show' : ''}
             - element: quatt.hp1
               state_action:
                 - service: floorplan.class_set
@@ -271,6 +289,31 @@ views:
                       }catch(e){
                         console.log("Well.. That didn't go as planned",e);
                       }
+            - element: legend.waterTemperatureValue
+              state_action:
+                - service: floorplan.text_set
+                  service_data: |
+                    > 
+                    return (entities['sensor.heatpump_flowmeter_temperature'].state*1).toFixed(1) + '°C';
+            - element: legend.heatValue
+              state_action:
+                - service: floorplan.text_set
+                  service_data: |
+                    > 
+                    return (entities['sensor.heatpump_total_power'].state / 1000).toFixed(2) + 'kW';
+            - element: legend.electricityValue
+              state_action:
+                - service: floorplan.text_set
+                  service_data: |
+                    > 
+                    return (entities['sensor.heatpump_total_powerinput'].state / 1000).toFixed(2) + 'kW';
+            - element: legend.showerMinutesValue
+              state_action:
+                - service: floorplan.text_set
+                  service_data: |
+                    > 
+                    return entities['sensor.heat_battery_shower_minutes_remaining'].state + ' min';
+                    
             
           
 

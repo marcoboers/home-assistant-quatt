@@ -115,22 +115,29 @@
     </defs>
 
     <g id="quatt.legend" class="quatt-show">
-        <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
+        <rect id="quatt.legend.hybrid" x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
+        <rect id="quatt.legend.alle" x="50" y="300" width="300" height="410" fill="#1a1a1a" opacity="0.85" rx="20"/>
 
         <!-- Title -->
         <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">My house</text>
 
+        <!-- Water temperature -->
+        <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Water temperature</text>
+        <text id="legend.waterTemperatureValue" x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0°C</text>
+
         <!-- Heat -->
-        <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
-        <text id="legendHeatValue" x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+        <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
+        <text id="legend.heatValue" x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">Off</text>
 
         <!-- Electricity -->
-        <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
-        <text id="legendElectricityValue" x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+        <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
+        <text id="legend.electricityValue" x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
 
         <!-- Shower -->
-        <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower</text>
-        <text id="legendElectricityValue" x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+        <g id="quatt.legend.showerMinutes">
+            <text x="70" y="640" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
+            <text id="legend.showerMinutesValue" x="70" y="675" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0 min</text>
+        </g>
     </g>
 
     <g clip-path="url(#outsidePipe)">
