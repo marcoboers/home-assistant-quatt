@@ -20,69 +20,31 @@ class QuattDashboardCard extends LitElement {
               ${!this.hass.states['sensor.heatpump_hc_electrical_power']
                  ? svg`<image href="/local/quatt/src_assets_images_housechimney.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
               }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 2
-                  && !this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+              
+              ${this.hass.states['sensor.heatpump_hc_electrical_power']
+                  ? (this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
+                      ? (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                        ? svg`<image href="/local/quatt/src_assets_images_houseallev2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                        : svg`<image href="/local/quatt/src_assets_images_houseallev1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                      )
+                      : (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                          ? svg`<image href="/local/quatt/src_assets_images_houseallev2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="/local/quatt/src_assets_images_houseallev1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                      )
                   )
-                 ? svg`<image href="/local/quatt/src_assets_images_househybridv2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
-                  && !this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                  : (this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
+                      ? (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                          ? svg`<image href="/local/quatt/src_assets_images_househybridv2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="/local/quatt/src_assets_images_househybridv1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                      )
+                      : (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0' 
+                          ? svg`<image href="/local/quatt/src_assets_images_househybridv2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="/local/quatt/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                      )
                   )
-                 ? svg`<image href="/local/quatt/src_assets_images_househybridv2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 2
-                  && !this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4'
-                  )
-                 ? svg`<image href="/local/quatt/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
-                  && !this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4'
-                  )
-                 ? svg`<image href="/local/quatt/src_assets_images_househybridv1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 2
-                  && this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
-                  )
-                 ? svg`<image href="/local/quatt/src_assets_images_houseallev2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
-                  && this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
-                  )
-                 ? svg`<image href="/local/quatt/src_assets_images_houseallev2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 2
-                  && this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4'
-                  )
-                 ? svg`<image href="/local/quatt/src_assets_images_houseallev1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
-              }
-              ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
-                  && this.hass.states['sensor.heatpump_hc_electrical_power']
-                  && (
-                      this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V1.5'
-                        || this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4'
-                  )
-                 ? svg`<image href="/local/quatt/src_assets_images_houseallev1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
               }
               
               <defs>
-                  <!-- Gradient definition for flowing water effect -->
                   <linearGradient id="waterGradientToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
                       <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
                           <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
