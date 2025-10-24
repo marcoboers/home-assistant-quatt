@@ -66,7 +66,9 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
     def computedWaterDelta(self, parent_key: str | None = None) -> float | None:  # pylint: disable=invalid-name
         """Compute waterdelta."""
         if parent_key is None:
-            parent_key = ""
+            parent_key = "" if self.heatpump_2_active() else "hp1"
+
+        if parent_key == "":
             temperature_water_out = self.get_value("hp2.temperatureWaterOut")
             temperature_water_in = self.get_value("hp1.temperatureWaterIn")
         else:

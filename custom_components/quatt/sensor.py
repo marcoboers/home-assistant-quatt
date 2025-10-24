@@ -301,9 +301,6 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            quatt_features=QuattFeatureFlags(
-                duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="Total power",
@@ -313,9 +310,6 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            quatt_features=QuattFeatureFlags(
-                duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="Total system power",
@@ -334,9 +328,6 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            quatt_features=QuattFeatureFlags(
-                duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="Total Quatt COP",
@@ -345,9 +336,6 @@ SENSORS = {
             native_unit_of_measurement="CoP",
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            quatt_features=QuattFeatureFlags(
-                duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="QC supervisory control mode code",
