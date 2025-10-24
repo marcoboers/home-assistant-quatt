@@ -134,6 +134,7 @@ This integration includes a fully-featured **Quatt Dashboard** that replicates t
   - Quatt Mono (single heat pump)
   - Quatt Duo (dual heat pumps)
 - **Responsive design**: Adapts to different screen sizes and devices
+- **Custom card implementation**: Uses a dedicated Lovelace custom card for optimal performance
 
 ### Prerequisites
 
@@ -150,49 +151,26 @@ To use the Quatt Dashboard, you need:
    - Find the `OduType` and `Number of heatpumps` sensors
    - Click on each sensor and enable it
 
-3. **Dashboard assets**: Copy the dashboard assets to your Home Assistant `www` directory
-
 ### Installation
 
-#### Step 1: Copy Dashboard Assets
+The Quatt Dashboard is now implemented as a custom Lovelace card, making it easy to add to any dashboard or view in your Home Assistant interface.
 
-The dashboard requires image and icon assets to be available in your Home Assistant `www` directory:
+#### Adding the Dashboard Card
 
-1. Locate the assets in this integration: `custom_components/quatt/www/quatt/`
-2. Copy the entire `quatt` folder to your Home Assistant `www` directory
-3. The final structure should be: `<home-assistant-config>/www/quatt/`
-
-#### Step 2: Add Dashboard to Configuration
-
-Add the following to your `configuration.yaml`:
+Simply add the following card to any Lovelace dashboard view:
 
 ```yaml
-lovelace:
-  dashboards:
-    quatt-dashboard:
-      mode: "yaml"
-      title: Quatt
-      icon: mdi:heat-pump
-      show_in_sidebar: true
-      filename: "custom_components/quatt/dashboard/main.yaml"
+type: custom:quatt-dashboard-card
 ```
 
-#### Step 3: Restart Home Assistant
-
-Restart Home Assistant to apply the configuration changes.
-
-### Accessing the Dashboard
-
-After installation and restart:
-
-1. The dashboard will appear in your Home Assistant sidebar with a heat pump icon
-2. Click on "Quatt" in the sidebar to view your system dashboard
-3. The dashboard will automatically adapt to your specific Quatt configuration (Hybrid/All-Electric, Mono/Duo)
+That's it! No additional configuration or settings are required. The card will automatically:
+- Detect your Quatt system configuration
+- Display the appropriate layout for your setup (Hybrid/All-Electric, Mono/Duo)
+- Fetch and display real-time data from your sensors
 
 ### Troubleshooting
 
-- **Dashboard not appearing**: Ensure you've restarted Home Assistant after adding the configuration
-- **Missing images or icons**: Verify the assets were copied to the correct `www/quatt/` directory
+- **Card not found**: Ensure Home Assistant has loaded the integration properly. Try restarting Home Assistant
 - **Incomplete data**: Make sure both `OduType` and `Number of heatpumps` sensors are enabled
 - **No data showing**: Confirm the Remote API is configured and working (check the Remote API sensors)
 
