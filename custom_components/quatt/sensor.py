@@ -35,7 +35,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattFeatureFlags, QuattSensor, QuattSensorEntityDescription
+from .entity import QuattFeatureFlags, QuattSensor, QuattSensorEntityDescription, QuattSystemSensor
 from .entity_setup import async_setup_entities
 
 
@@ -388,9 +388,10 @@ SENSORS = {
         ),
         # System
         QuattSensorEntityDescription(
-            name="System hostname",
+            name="System",
             key="system.hostName",
             entity_category=EntityCategory.DIAGNOSTIC,
+            quatt_entity_class=QuattSystemSensor,
         ),
         QuattSensorEntityDescription(
             name="Installation ID",

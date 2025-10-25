@@ -65,8 +65,11 @@ class QuattRemoteDataUpdateCoordinator(QuattDataUpdateCoordinator):
 
     def all_electric_active(self) -> bool:
         """Check if it is an all electric installation."""
-        return self.get_value("allEStatus") is not None
+        return self.get_value("allEStatus") or False
 
     def is_boiler_opentherm(self) -> bool:
         """Check if the boiler is connected."""
-        return self.get_value("isBoilerConnected") is not None
+        # Returning whether the boiler is connected is not sufficient, as it may be
+        # connected but not OpenTherm. The sensors using this field should be only
+        # used on the local API when OpenTherm is present.
+        return self.get_value("isBoilerConnected") or False
