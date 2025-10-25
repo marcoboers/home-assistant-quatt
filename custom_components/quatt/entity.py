@@ -21,7 +21,14 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
-from .const import ATTRIBUTION, DOMAIN, NAME
+from .const import (
+    ALL_ELECTRIC_SYSTEM,
+    ATTRIBUTION,
+    DOMAIN,
+    DUO_HEATPUMP_SYSTEM,
+    NAME,
+    OPENTHERM_SYSTEM,
+)
 from .coordinator import QuattDataUpdateCoordinator
 from .coordinator_remote import QuattRemoteDataUpdateCoordinator
 
@@ -101,6 +108,19 @@ class QuattSensor(QuattEntity, SensorEntity):
             value = dt_util.parse_datetime(value)
 
         return value
+
+
+class QuattSystemSensor(QuattSensor):
+    """Quatt System Sensor class."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, bool]:
+        """Expose Quatt feature flags as state attributes."""
+        return {
+            DUO_HEATPUMP_SYSTEM: self.coordinator.heatpump_2_active(),
+            ALL_ELECTRIC_SYSTEM: self.coordinator.all_electric_active(),
+            OPENTHERM_SYSTEM: self.coordinator.is_boiler_opentherm(),
+        }
 
 
 class QuattBinarySensor(QuattEntity, BinarySensorEntity):
