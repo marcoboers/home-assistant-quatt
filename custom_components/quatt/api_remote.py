@@ -145,7 +145,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Authentication failed - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Authentication failed - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
@@ -189,11 +189,13 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Firebase installation error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Firebase installation error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
-            _LOGGER.error("Firebase installation error - invalid JSON response: %s", err)
+            _LOGGER.error(
+                "Firebase installation error - invalid JSON response: %s", err
+            )
             return False
 
     async def _firebase_fetch(self) -> bool:
@@ -242,11 +244,13 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Firebase remote config fetch error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Firebase remote config fetch error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
-            _LOGGER.error("Firebase remote config fetch error - invalid JSON response: %s", err)
+            _LOGGER.error(
+                "Firebase remote config fetch error - invalid JSON response: %s", err
+            )
             return False
 
     def _get_headers(self):
@@ -282,7 +286,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("User signup error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("User signup error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
@@ -295,9 +299,7 @@ class QuattRemoteApiClient(QuattApiClient):
             return False
 
         headers = self._get_headers()
-
         payload = {"idToken": self._id_token}
-
         url = f"{FIREBASE_ACCOUNT_INFO_URL}?key={GOOGLE_API_KEY}"
 
         try:
@@ -314,7 +316,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Get account info error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Get account info error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
@@ -348,7 +350,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("User profile update error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("User profile update error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
@@ -378,7 +380,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Pairing request error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Pairing request error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
@@ -397,7 +399,6 @@ class QuattRemoteApiClient(QuattApiClient):
 
         # Poll for up to PAIRING_TIMEOUT seconds
         start_time = asyncio.get_event_loop().time()
-
         while (asyncio.get_event_loop().time() - start_time) < PAIRING_TIMEOUT:
             try:
                 async with self._session.get(url, headers=headers) as response:
@@ -418,13 +419,17 @@ class QuattRemoteApiClient(QuattApiClient):
                             "Failed to check pairing status: %s", await response.text()
                         )
             except aiohttp.ClientError as err:
-                _LOGGER.warning("Error checking pairing status - network error: %s", err)
-            except asyncio.TimeoutError as err:
+                _LOGGER.warning(
+                    "Error checking pairing status - network error: %s", err
+                )
+            except TimeoutError as err:
                 _LOGGER.warning("Error checking pairing status - timeout: %s", err)
             except json.JSONDecodeError as err:
                 _LOGGER.warning("Error checking pairing status - invalid JSON: %s", err)
             except KeyError as err:
-                _LOGGER.warning("Error checking pairing status - missing key in response: %s", err)
+                _LOGGER.warning(
+                    "Error checking pairing status - missing key in response: %s", err
+                )
 
             # Wait before checking again
             await asyncio.sleep(PAIRING_CHECK_INTERVAL)
@@ -441,7 +446,6 @@ class QuattRemoteApiClient(QuattApiClient):
             return False
 
         installations = await self.get_installations()
-
         if not installations:
             _LOGGER.error("No installations found")
             return False
@@ -463,12 +467,10 @@ class QuattRemoteApiClient(QuattApiClient):
             return False
 
         headers = self._get_headers()
-
         payload = {
             "grantType": "refresh_token",
             "refreshToken": self._refresh_token,
         }
-
         url = f"{FIREBASE_TOKEN_URL}?key={GOOGLE_API_KEY}"
 
         try:
@@ -488,7 +490,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Token refresh error - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Token refresh error - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
@@ -513,7 +515,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Get installations error - network error: %s", err)
             return []
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Get installations error - timeout: %s", err)
             return []
         except json.JSONDecodeError as err:
@@ -535,7 +537,7 @@ class QuattRemoteApiClient(QuattApiClient):
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403) and retry_on_403:
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         "Got %s, attempting to refresh token", response.status
                     )
                     if await self.refresh_token():
@@ -554,7 +556,7 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Get CIC data error - network error: %s", err)
             return None
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Get CIC data error - timeout: %s", err)
             return None
         except json.JSONDecodeError as err:
@@ -598,7 +600,7 @@ class QuattRemoteApiClient(QuattApiClient):
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403):
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         "Got %s while updating CIC settings, attempting to refresh token",
                         response.status,
                     )
@@ -634,9 +636,11 @@ class QuattRemoteApiClient(QuattApiClient):
         except aiohttp.ClientError as err:
             _LOGGER.error("Error updating CIC settings - network error: %s", err)
             return False
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.error("Error updating CIC settings - timeout: %s", err)
             return False
         except json.JSONDecodeError as err:
-            _LOGGER.error("Error updating CIC settings - invalid JSON response: %s", err)
+            _LOGGER.error(
+                "Error updating CIC settings - invalid JSON response: %s", err
+            )
             return False

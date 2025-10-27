@@ -8,7 +8,7 @@ LOGGER: Logger = getLogger(__package__)
 
 NAME = "Quatt"
 DOMAIN = "quatt"
-ATTRIBUTION = "marcoboers"
+ATTRIBUTION = "Data provided by Quatt"
 
 CONF_POWER_SENSOR = "power_sensor"
 CONF_REMOTE_CIC = "cic"
@@ -40,6 +40,11 @@ GOOGLE_FIREBASE_CLIENT = (
 # Storage keys for remote connection
 STORAGE_KEY = "quatt_remote_storage"
 STORAGE_VERSION = 1
+
+# System types
+DUO_HEATPUMP_SYSTEM = "Duo heatpump system"
+ALL_ELECTRIC_SYSTEM = "All electric system"
+OPENTHERM_SYSTEM = "Opentherm system"
 
 # Device IDs
 DEVICE_BOILER_ID = "boiler"

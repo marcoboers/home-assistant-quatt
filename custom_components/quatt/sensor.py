@@ -35,7 +35,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattFeatureFlags, QuattSensor, QuattSensorEntityDescription
+from .entity import QuattFeatureFlags, QuattSensor, QuattSensorEntityDescription, QuattSystemSensor
 from .entity_setup import async_setup_entities
 
 
@@ -50,8 +50,8 @@ def create_heatpump_sensor_entity_descriptions(
             name="Workingmode",
             key=f"{prefix}.getMainWorkingMode",
             icon="mdi:auto-mode",
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -62,8 +62,8 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -74,8 +74,8 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -86,8 +86,8 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -98,8 +98,8 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -110,8 +110,8 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -122,8 +122,8 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -133,8 +133,8 @@ def create_heatpump_sensor_entity_descriptions(
             native_unit_of_measurement="CoP",
             suggested_display_precision=2,
             state_class="measurement",
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
@@ -142,17 +142,17 @@ def create_heatpump_sensor_entity_descriptions(
             key=f"{prefix}.modbusSlaveId",
             icon="mdi:identifier",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
             ),
         ),
         QuattSensorEntityDescription(
             name="On",
             key=f"heatPumps.{index}.on",
             icon="mdi:power",
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -162,9 +162,9 @@ def create_heatpump_sensor_entity_descriptions(
             native_unit_of_measurement="Hz",
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -174,9 +174,9 @@ def create_heatpump_sensor_entity_descriptions(
             native_unit_of_measurement="Hz",
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -187,9 +187,9 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -200,9 +200,9 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -213,9 +213,9 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -226,9 +226,9 @@ def create_heatpump_sensor_entity_descriptions(
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -236,9 +236,9 @@ def create_heatpump_sensor_entity_descriptions(
             key=f"heatPumps.{index}.status",
             icon="mdi:information",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -247,9 +247,9 @@ def create_heatpump_sensor_entity_descriptions(
             icon="mdi:pump",
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -258,9 +258,9 @@ def create_heatpump_sensor_entity_descriptions(
             icon="mdi:hvac",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_duo=is_duo,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
             ),
         ),
     ]
@@ -301,9 +301,6 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="Total power",
@@ -313,9 +310,6 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="Total system power",
@@ -334,9 +328,6 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="Total Quatt COP",
@@ -345,9 +336,6 @@ SENSORS = {
             native_unit_of_measurement="CoP",
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_duo=True,
-            ),
         ),
         QuattSensorEntityDescription(
             name="QC supervisory control mode code",
@@ -360,15 +348,15 @@ SENSORS = {
         QuattSensorEntityDescription(
             name="QC All-Electric supervisory control mode code",
             key="qcAllE.allESupervisoryControlMode",
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
             name="QC All-Electric supervisory control mode",
             key="qcAllE.computedAllESupervisoryControlMode",
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         # Electricity and gas prices and tariffs
@@ -400,9 +388,10 @@ SENSORS = {
         ),
         # System
         QuattSensorEntityDescription(
-            name="System hostname",
+            name="System",
             key="system.hostName",
             entity_category=EntityCategory.DIAGNOSTIC,
+            quatt_entity_class=QuattSystemSensor,
         ),
         QuattSensorEntityDescription(
             name="Installation ID",
@@ -410,8 +399,8 @@ SENSORS = {
             icon="mdi:identifier",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -420,8 +409,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TIMESTAMP,
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -429,8 +418,8 @@ SENSORS = {
             key="status",
             icon="mdi:information",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -438,8 +427,8 @@ SENSORS = {
             key="cableConnectionStatus",
             icon="mdi:ethernet",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -447,8 +436,8 @@ SENSORS = {
             key="lteConnectionStatus",
             icon="mdi:signal",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -456,8 +445,8 @@ SENSORS = {
             key="wifiConnectionStatus",
             icon="mdi:wifi",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -466,8 +455,8 @@ SENSORS = {
             icon="mdi:wifi",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -477,8 +466,8 @@ SENSORS = {
             native_unit_of_measurement=f"{CURRENCY_EURO}/{UnitOfEnergy.KILO_WATT_HOUR}",
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -488,8 +477,8 @@ SENSORS = {
             native_unit_of_measurement=f"{CURRENCY_EURO}/{UnitOfEnergy.KILO_WATT_HOUR}",
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -499,8 +488,8 @@ SENSORS = {
             native_unit_of_measurement=f"{CURRENCY_EURO}/{UnitOfEnergy.KILO_WATT_HOUR}",
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -510,24 +499,24 @@ SENSORS = {
             native_unit_of_measurement=f"{CURRENCY_EURO}/m³",
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
             name="Silent mode",
             key="silentMode",
             icon="mdi:sleep",
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
             name="Supervisory control mode",
             key="supervisoryControlMode",
             icon="mdi:cog",
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -538,8 +527,8 @@ SENSORS = {
             state_class=SensorStateClass.MEASUREMENT,
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -547,8 +536,8 @@ SENSORS = {
             key="insightsStartAt",
             device_class=SensorDeviceClass.TIMESTAMP,
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
             entity_registry_enabled_default=False,
         ),
@@ -557,8 +546,8 @@ SENSORS = {
             key="quattBuild",
             icon="mdi:package-variant",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -569,8 +558,8 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -581,8 +570,8 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -591,8 +580,8 @@ SENSORS = {
             icon="mdi:label",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -601,8 +590,8 @@ SENSORS = {
             icon="mdi:map-marker",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -611,8 +600,8 @@ SENSORS = {
             icon="mdi:flag",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -621,8 +610,8 @@ SENSORS = {
             icon="mdi:receipt",
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -631,8 +620,8 @@ SENSORS = {
             icon="mdi:clock-start",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -641,8 +630,8 @@ SENSORS = {
             icon="mdi:clock-end",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -651,8 +640,8 @@ SENSORS = {
             icon="mdi:clock-start",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -661,8 +650,8 @@ SENSORS = {
             icon="mdi:clock-end",
             native_unit_of_measurement=UnitOfTime.HOURS,
             suggested_display_precision=0,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -671,8 +660,8 @@ SENSORS = {
             icon="mdi:clock-start",
             native_unit_of_measurement=UnitOfTime.MINUTES,
             suggested_display_precision=0,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -681,8 +670,8 @@ SENSORS = {
             icon="mdi:clock-end",
             native_unit_of_measurement=UnitOfTime.MINUTES,
             suggested_display_precision=0,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
     ],
@@ -694,8 +683,8 @@ SENSORS = {
             native_unit_of_measurement="min",
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -706,8 +695,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -718,8 +707,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -730,8 +719,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -739,9 +728,9 @@ SENSORS = {
             key="allEStatus.heatBatterySerialNumber",
             icon="mdi:identifier",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -749,9 +738,9 @@ SENSORS = {
             key="allEStatus.heatBatteryStatus",
             icon="mdi:battery",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -759,21 +748,21 @@ SENSORS = {
             key="allEStatus.heatBatterySize",
             icon="mdi:battery-high",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
             name="Percentage",
             key="allEStatus.heatBatteryPercentage",
-            icon="mdi:battery",
+            device_class=SensorDeviceClass.BATTERY,
             native_unit_of_measurement=PERCENTAGE,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
+                mobile_api=True,
             ),
         ),
     ],
@@ -786,8 +775,8 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -798,8 +787,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -809,8 +798,8 @@ SENSORS = {
             native_unit_of_measurement=UnitOfPressure.BAR,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -821,8 +810,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -830,9 +819,9 @@ SENSORS = {
             key="allEStatus.heatChargerSerialNumber",
             icon="mdi:identifier",
             entity_category=EntityCategory.DIAGNOSTIC,
-            features=QuattFeatureFlags(
-                quatt_all_electric=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
+                mobile_api=True,
             ),
         ),
     ],
@@ -851,9 +840,9 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
-                quatt_opentherm=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                opentherm=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -864,9 +853,9 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
-                quatt_opentherm=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                opentherm=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -876,9 +865,9 @@ SENSORS = {
             native_unit_of_measurement=UnitOfPressure.BAR,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
-                quatt_opentherm=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                opentherm=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -889,8 +878,8 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -901,9 +890,9 @@ SENSORS = {
             device_class=SensorDeviceClass.POWER,
             suggested_display_precision=0,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -914,9 +903,9 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                mobile_api=True,
             ),
         ),
         QuattSensorEntityDescription(
@@ -927,9 +916,9 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=2,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_hybrid=True,
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                mobile_api=True,
             ),
         ),
     ],
@@ -988,8 +977,8 @@ SENSORS = {
             device_class=SensorDeviceClass.TEMPERATURE,
             suggested_display_precision=1,
             state_class=SensorStateClass.MEASUREMENT,
-            features=QuattFeatureFlags(
-                quatt_mobile_api=True,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
             ),
         ),
     ],
@@ -1011,7 +1000,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
         coordinator=local_coordinator,
         entry=entry,
         remote=False,
-        entity_class=QuattSensor,
         entity_descriptions=SENSORS,
         entity_domain=SENSOR_DOMAIN,
     )
@@ -1022,7 +1010,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
             coordinator=remote_coordinator,
             entry=entry,
             remote=True,
-            entity_class=QuattSensor,
             entity_descriptions=SENSORS,
             entity_domain=SENSOR_DOMAIN,
         )
