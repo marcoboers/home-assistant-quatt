@@ -291,6 +291,34 @@ class QuattDashboardCard extends LitElement {
                   </g>
               </g>
 
+              ${(this.isAllElectric() && this.getSensorState('cic_central_heating_on')?.state == 'on')
+                || (this.isHybrid() && (this.getSensorState('hp1_workingmode')?.state >= 1 || this.getSensorState('hp2_workingmode')?.state >= 1))
+                  ? svg`<g id="quatt.radiatorHeat" transform="${this.isAllElectric() ? 'translate(100,-40)' : ''}">
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-12)"
+                                style="animation-duration:6.77s; animation-delay:-2.13s"
+                                d="M415 1186.1 C427 1176.1,403 1168.1,415 1158.1 C427 1148.1,403 1140.1,415 1130.1 C427 1120.1,403 1112.1,415 1102.1 C427 1092.1,403 1084.1,415 1074.1 C427 1064.1,403 1056.1,415 1046.1 C427 1036.1,403 1030.1,415 1025.1"/>
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-28)"
+                                style="animation-duration:7.09s; animation-delay:-5.04s"
+                                d="M425 1181.3 C437 1171.3,413 1163.3,425 1153.3 C437 1143.3,413 1135.3,425 1125.3 C437 1115.3,413 1107.3,425 1097.3 C437 1087.3,413 1079.3,425 1069.3 C437 1059.3,413 1051.3,425 1041.3 C437 1031.3,413 1025.3,425 1020.3"/>
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-40)"
+                                style="animation-duration:6.61s; animation-delay:-0.41s"
+                                d="M435 1176.4 C447 1166.4,423 1158.4,435 1148.4 C447 1138.4,423 1130.4,435 1120.4 C447 1110.4,423 1102.4,435 1092.4 C447 1082.4,423 1074.4,435 1064.4 C447 1054.4,423 1046.4,435 1036.4 C447 1026.4,423 1020.4,435 1015.4"/>
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-16)"
+                                style="animation-duration:7.21s; animation-delay:-3.57s"
+                                d="M445 1171.5 C457 1161.5,433 1153.5,445 1143.5 C457 1133.5,433 1125.5,445 1115.5 C457 1105.5,433 1097.5,445 1087.5 C457 1077.5,433 1069.5,445 1059.5 C457 1049.5,433 1041.5,445 1031.5 C457 1021.5,433 1015.5,445 1010.5"/>
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-32)"
+                                style="animation-duration:6.47s; animation-delay:-1.89s"
+                                d="M455 1161.8 C477 1151.8,453 1143.8,465 1133.8 C477 1123.8,453 1115.8,465 1105.8 C477 1095.8,453 1087.8,465 1077.8 C477 1067.8,453 1059.8,465 1049.8 C477 1039.8,453 1031.8,465 1021.8 C477 1011.8,453 1005.8,465 1000.8"/>
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-10)"
+                                style="animation-duration:6.93s; animation-delay:-6.28s"
+                                d="M465 1166.6 C467 1156.6,443 1148.6,455 1138.6 C467 1128.6,443 1120.6,455 1110.6 C467 1100.6,443 1092.6,455 1082.6 C467 1072.6,443 1064.6,455 1054.6 C467 1044.6,443 1036.6,455 1026.6 C467 1016.6,443 1010.6,455 1005.6"/>
+                          <path class="radiator-heat-line" pathLength="100" transform="translate(0,-24)"
+                                style="animation-duration:7.37s; animation-delay:-4.46s"
+                                d="M474 1157.4 C486 1147.4,462 1139.4,474 1129.4 C486 1119.4,462 1111.4,474 1101.4 C486 1091.4,462 1083.4,474 1073.4 C486 1035.4,462 1027.4,474 1017.4 C486 1007.4,462 1002.4,474  997.4"/>
+                      </g>`
+                  : svg``
+              }
+
               ${this.isHybrid() 
                 && this.getSensorState('boiler_heating')?.state == 'on'
                   ? svg`<g id="quatt.chimneyPipe">
@@ -671,6 +699,25 @@ class QuattDashboardCard extends LitElement {
             .smoke-puff:nth-child(3) { animation-delay: 1.6s; }
             .smoke-puff:nth-child(4) { animation-delay: 2.4s; }
             .smoke-puff:nth-child(5) { animation-delay: 3.2s; }
+
+            @keyframes heatRise {
+                0%   { stroke-dasharray: 0 200;  stroke-dashoffset: 0;   opacity: 0.70; }
+                40%  { stroke-dasharray: 45 200; stroke-dashoffset: -5;  opacity: 0.60; }
+                100% { stroke-dasharray: 45 200; stroke-dashoffset: -64; opacity: 0.06; }
+            }
+
+            .radiator-heat-line {
+                animation-name: heatRise;
+                animation-timing-function: linear;
+                animation-iteration-count: infinite;
+                filter: blur(2px);
+                stroke: #ff8a00;
+                stroke-width: 2;
+                fill: none;
+                stroke-linecap: round;
+                stroke-dasharray: 0 200;
+                stroke-dashoffset: 0;
+            }
         `;
     }
 }
