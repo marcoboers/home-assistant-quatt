@@ -13,31 +13,89 @@ class QuattDashboardCard extends LitElement {
         };
     }
 
+    // Default sensor entity IDs
+    static get DEFAULT_SENSORS() {
+        return {
+            system_hostname: 'sensor.heatpump_system_hostname',
+            heatpump_1_odu_type: 'sensor.heatpump_1_odu_type',
+            flowmeter_temperature: 'sensor.heatpump_flowmeter_temperature',
+            total_power: 'sensor.heatpump_total_power',
+            total_powerinput: 'sensor.heatpump_total_powerinput',
+            shower_minutes_remaining: 'sensor.heat_battery_shower_minutes_remaining',
+            hp1_workingmode: 'sensor.heatpump_hp1_workingmode',
+            hp2_workingmode: 'sensor.heatpump_hp2_workingmode',
+            boiler_heating: 'binary_sensor.heatpump_boiler_heating',
+            domestic_hot_water_on: 'binary_sensor.heat_battery_domestic_hot_water_on',
+            battery_charging: 'binary_sensor.heat_battery_charging',
+            heat_battery_percentage: 'sensor.heat_battery_percentage',
+        };
+    }
+
+    getSensorEntity(sensorKey) {
+        const defaults = QuattDashboardCard.DEFAULT_SENSORS;
+        return this.config?.[`${sensorKey}_entity`] || defaults[sensorKey];
+    }
+
+    getSensorState(sensorKey) {
+        const entityId = this.getSensorEntity(sensorKey);
+        return this.hass.states[entityId];
+    }
+
+    isHybrid() {
+        return this.getSensorState('system_hostname')?.attributes['All electric system'] === false ||
+            this.getSensorState('system_hostname')?.attributes['All electric system'] === 'false';
+    }
+    isAllElectric() {
+        return this.getSensorState('system_hostname')?.attributes['All electric system'] === true ||
+            this.getSensorState('system_hostname')?.attributes['All electric system'] === 'true';
+    }
+    isMonoHeatpump() {
+        return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === false ||
+            this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === 'false';
+    }
+    isDuoHeatpump() {
+        return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === true ||
+            this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === 'true';
+    }
+
+    getSystemVersion() {
+        switch (this.getSensorState('heatpump_1_odu_type')?.state) {
+            case 'AMM4-V2.0':
+                return 'V2';
+            default:
+                return 'V1';
+        }
+    }
+
     render() {
+        if (!this.hass || !this.config) {
+            return html`<ha-card>Loading...</ha-card>`;
+        }
+
         return html`
       <wired-card elevation="2">
           <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
-              ${!this.hass.states['sensor.heatpump_hc_electrical_power']
-                 ? svg`<image href="/local/quatt/src_assets_images_housechimney.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg`` 
+              ${!this.isAllElectric()
+                 ? svg`<image href="/local/quatt/src_assets_images_housechimney.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
               
-              ${this.hass.states['sensor.heatpump_hc_electrical_power']
-                  ? (this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
-                      ? (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
-                        ? svg`<image href="/local/quatt/src_assets_images_houseallev2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
-                        : svg`<image href="/local/quatt/src_assets_images_houseallev1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+              ${this.isAllElectric()
+                  ? (this.isMonoHeatpump()
+                      ? (this.getSystemVersion() === 'V2'
+                          ? svg`<image href="/local/quatt/src_assets_images_houseallev2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="/local/quatt/src_assets_images_houseallev1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
-                      : (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                      : (this.getSystemVersion() === 'V2'
                           ? svg`<image href="/local/quatt/src_assets_images_houseallev2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                           : svg`<image href="/local/quatt/src_assets_images_houseallev1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                   )
-                  : (this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
-                      ? (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0'
+                  : (this.isMonoHeatpump()
+                      ? (this.getSystemVersion() === 'V2'
                           ? svg`<image href="/local/quatt/src_assets_images_househybridv2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                           : svg`<image href="/local/quatt/src_assets_images_househybridv1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
-                      : (this.hass.states['sensor.heatpump_1_odu_type'].state == 'AMM4-V2.0' 
+                      : (this.getSystemVersion() === 'V2'
                           ? svg`<image href="/local/quatt/src_assets_images_househybridv2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                           : svg`<image href="/local/quatt/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
@@ -114,32 +172,30 @@ class QuattDashboardCard extends LitElement {
                       </stop>
                   </linearGradient>
 
-                  ${this.hass.states['sensor.heatpump_hp1_workingmode']
-                    && this.hass.states['sensor.heatpump_hp1_workingmode'].state >= 1
-                          ? svg`<clipPath id="hp1FlowLines">
-                                  <rect id="quatt.hp1" x="305" y="1385" width="280" height="150"></rect>
-                              </clipPath>`
-                          : svg`<clipPath id="hp1FlowLines"></clipPath>`
+                  ${this.getSensorState('hp1_workingmode')?.state >= 1
+                      ? svg`<clipPath id="hp1FlowLines">
+                              <rect id="quatt.hp1" x="305" y="1385" width="280" height="150"></rect>
+                          </clipPath>`
+                      : svg`<clipPath id="hp1FlowLines"></clipPath>`
                   }
-                  ${this.hass.states['sensor.heatpump_hp2_workingmode'] 
-                    && this.hass.states['sensor.heatpump_hp2_workingmode'].state >= 1
-                          ? svg`<clipPath id="hp2FlowLines">
-                                  <rect id="quatt.hp2" x="185" y="1285" width="280" height="150"></rect>
-                              </clipPath>` 
-                          : svg`<clipPath id="hp2FlowLines"></clipPath>`
+                  ${this.getSensorState('hp2_workingmode')?.state >= 1
+                      ? svg`<clipPath id="hp2FlowLines">
+                              <rect id="quatt.hp2" x="185" y="1285" width="280" height="150"></rect>
+                          </clipPath>`
+                      : svg`<clipPath id="hp2FlowLines"></clipPath>`
                   }
                   
                   <clipPath id="outsidePipe">
                       <rect x="250" y="1245" width="181" height="100"></rect>
                       <rect x="555" y="1387" width="12" height="20"></rect>
 
-                      ${this.hass.states['sensor.cic_number_of_heat_pumps'].state == 1
+                      ${this.isMonoHeatpump()
                           ? svg`<rect id="quatt.mono" x="431" y="1300" width="124" height="100"></rect>` : svg``
                       }
                   </clipPath>
                   <clipPath id="bottomPipe">
-                      ${!this.hass.states['sensor.heatpump_hc_electrical_power']
-                          ? svg`<rect id="quatt.hybrid" x="250" y="1175" width="181" height="100"></rect>` 
+                      ${this.isHybrid()
+                          ? svg`<rect id="quatt.hybrid" x="250" y="1175" width="181" height="100"></rect>`
                           : svg`<rect id="quatt.alle1" x="250" y="1175" width="51" height="100"></rect>
                                 <rect id="quatt.alle2" x="378" y="1100" width="151" height="125"></rect>`
                       }
@@ -151,9 +207,9 @@ class QuattDashboardCard extends LitElement {
               </defs>
 
               <g id="quatt.legend">
-                  ${!this.hass.states['sensor.heatpump_hc_electrical_power']
-                          ? svg`<rect id="quatt.legend.hybrid" x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>`
-                          : svg`<rect id="quatt.legend.alle" x="50" y="300" width="300" height="410" fill="#1a1a1a" opacity="0.85" rx="20"/>`
+                  ${this.isHybrid()
+                      ? svg`<rect id="quatt.legend.hybrid" x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>`
+                      : svg`<rect id="quatt.legend.alle" x="50" y="300" width="300" height="410" fill="#1a1a1a" opacity="0.85" rx="20"/>`
                   }
 
                   <!-- Title -->
@@ -162,72 +218,56 @@ class QuattDashboardCard extends LitElement {
                   <!-- Water temperature -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Water temperature</text>
                   <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${(this.hass.states['sensor.heatpump_flowmeter_temperature'].state*1).toFixed(1)}°C
+                      ${(this.getSensorState('flowmeter_temperature')?.state*1 || 0).toFixed(1)}°C
                   </text>
 
                   <!-- Heat -->
                   <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
                   <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${(this.hass.states['sensor.heatpump_total_power'].state / 1000).toFixed(2)}kW
+                      ${((this.getSensorState('total_power')?.state || 0) / 1000).toFixed(2)}kW
                   </text>
 
                   <!-- Electricity -->
                   <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
                   <text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${(this.hass.states['sensor.heatpump_total_powerinput'].state / 1000).toFixed(2)}kW
+                      ${((this.getSensorState('total_powerinput')?.state || 0) / 1000).toFixed(2)}kW
                   </text>
 
                   <!-- Shower -->
-                  ${this.hass.states['sensor.heatpump_hc_electrical_power']
+                  ${this.isAllElectric()
                       ? svg`<text x="70" y="640" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
                             <text x="70" y="675" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                ${this.hass.states['sensor.heat_battery_shower_minutes_remaining'].state} min
+                                ${this.getSensorState('shower_minutes_remaining')?.state || 0} min
                             </text>`
                       : svg``
                   }
               </g>
 
               <g clip-path="url(#outsidePipe)">
-              ${this.hass.states['sensor.heatpump_hp1_workingmode'].state >= 1 
-                || (
-                    this.hass.states['sensor.heatpump_hp2_workingmode'] 
-                    && this.hass.states['sensor.heatpump_hp2_workingmode'].state >= 1
-                )
-                  ? svg`<path id="quatt.outsidePipe" d="M 274 1253 L 567 1400" stroke="url(#waterGradientToLeft)" stroke-width="8" fill="none" stroke-linecap="round"/>` 
+              ${(this.getSensorState('hp1_workingmode')?.state >= 1
+                || this.getSensorState('hp2_workingmode')?.state >= 1)
+                  ? svg`<path id="quatt.outsidePipe" d="M 274 1253 L 567 1400" stroke="url(#waterGradientToLeft)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                   : svg``
               }
               </g>
 
               <g clip-path="url(#bottomPipe)">
-                  ${this.hass.states['sensor.heatpump_hp1_workingmode'].state >= 1 
-                    || (
-                        this.hass.states['sensor.heatpump_hp2_workingmode']
-                        && this.hass.states['sensor.heatpump_hp2_workingmode'].state >= 1
-                    )
+                  ${(this.getSensorState('hp1_workingmode')?.state >= 1
+                    || this.getSensorState('hp2_workingmode')?.state >= 1)
                       ? svg`<path id="quatt.bottomPipe" d="M 275 1250 L 404 1185" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                       : svg``
                   }
-                  
-                  ${this.hass.states['sensor.heatpump_hc_electrical_power'] 
-                    && (
-                        this.hass.states['sensor.heatpump_hp1_workingmode'].state >= 1 
-                        || (
-                            this.hass.states['sensor.heatpump_hp2_workingmode']
-                            && this.hass.states['sensor.heatpump_hp2_workingmode'].state >= 1
-                        )
-                    )
+
+                  ${this.isAllElectric()
+                    && (this.getSensorState('hp1_workingmode')?.state >= 1
+                        || this.getSensorState('hp2_workingmode')?.state >= 1)
                       ? svg`<path id="quatt.alle.bottomPipe" d="M 405 1185 L 406 1117" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                       : svg``
                   }
-                  
-                  ${this.hass.states['sensor.heatpump_hc_electrical_power'] 
-                    && (
-                        this.hass.states['sensor.heatpump_hp1_workingmode'].state >= 1 
-                        || (
-                            this.hass.states['sensor.heatpump_hp2_workingmode']
-                            && this.hass.states['sensor.heatpump_hp2_workingmode'].state >= 1
-                        )
-                    )
+
+                  ${this.isAllElectric()
+                    && (this.getSensorState('hp1_workingmode')?.state >= 1
+                        || this.getSensorState('hp2_workingmode')?.state >= 1)
                       ? svg`<path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
                             <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                       : svg``
@@ -251,82 +291,82 @@ class QuattDashboardCard extends LitElement {
                   </g>
               </g>
 
-              ${this.hass.states['binary_sensor.heatpump_boiler_heating'] 
-                 && this.hass.states['binary_sensor.heatpump_boiler_heating'].state == 'on'
-                      ? svg`<g id="quatt.chimneyPipe">
-                              <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
-                          </g>
-                          <g id="quatt.chimneySmoke">
-                              <ellipse cx="400" cy="675" rx="12" ry="15" fill="#6B6B6B" filter="url(#smokeBlur)">
-                                  <animate attributeName="cy" values="675;555;435" dur="4s" repeatCount="indefinite"/>
-                                  <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" repeatCount="indefinite"/>
-                                  <animate attributeName="rx" values="12;17;22" dur="4s" repeatCount="indefinite"/>
-                                  <animate attributeName="ry" values="15;21;27" dur="4s" repeatCount="indefinite"/>
-                              </ellipse>
-                              <ellipse cx="408" cy="670" rx="14" ry="16" fill="#7A7A7A" filter="url(#smokeBlur)">
-                                  <animate attributeName="cy" values="670;550;430" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                                  <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                                  <animate attributeName="rx" values="14;19;24" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                                  <animate attributeName="ry" values="16;22;28" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                              </ellipse>
-                              <ellipse cx="395" cy="680" rx="13" ry="14" fill="#656565" filter="url(#smokeBlur)">
-                                  <animate attributeName="cy" values="680;560;440" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                                  <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                                  <animate attributeName="rx" values="13;18;23" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                                  <animate attributeName="ry" values="14;20;26" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                              </ellipse>
-                              <ellipse cx="403" cy="673" rx="15" ry="17" fill="#707070" filter="url(#smokeBlur)">
-                                  <animate attributeName="cy" values="673;553;433" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                                  <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                                  <animate attributeName="rx" values="15;20;25" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                                  <animate attributeName="ry" values="17;23;29" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                              </ellipse>
-                              <ellipse cx="397" cy="677" rx="11" ry="13" fill="#6F6F6F" filter="url(#smokeBlur)">
-                                  <animate attributeName="cy" values="677;557;437" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                                  <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                                  <animate attributeName="rx" values="11;16;21" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                                  <animate attributeName="ry" values="13;19;25" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                              </ellipse>
-                          </g>`
-                      : svg``
+              ${this.isHybrid() 
+                && this.getSensorState('boiler_heating')?.state == 'on'
+                  ? svg`<g id="quatt.chimneyPipe">
+                          <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                      </g>
+                      <g id="quatt.chimneySmoke">
+                          <ellipse cx="400" cy="675" rx="12" ry="15" fill="#6B6B6B" filter="url(#smokeBlur)">
+                              <animate attributeName="cy" values="675;555;435" dur="4s" repeatCount="indefinite"/>
+                              <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" repeatCount="indefinite"/>
+                              <animate attributeName="rx" values="12;17;22" dur="4s" repeatCount="indefinite"/>
+                              <animate attributeName="ry" values="15;21;27" dur="4s" repeatCount="indefinite"/>
+                          </ellipse>
+                          <ellipse cx="408" cy="670" rx="14" ry="16" fill="#7A7A7A" filter="url(#smokeBlur)">
+                              <animate attributeName="cy" values="670;550;430" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                              <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                              <animate attributeName="rx" values="14;19;24" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                              <animate attributeName="ry" values="16;22;28" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                          </ellipse>
+                          <ellipse cx="395" cy="680" rx="13" ry="14" fill="#656565" filter="url(#smokeBlur)">
+                              <animate attributeName="cy" values="680;560;440" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                              <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                              <animate attributeName="rx" values="13;18;23" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                              <animate attributeName="ry" values="14;20;26" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                          </ellipse>
+                          <ellipse cx="403" cy="673" rx="15" ry="17" fill="#707070" filter="url(#smokeBlur)">
+                              <animate attributeName="cy" values="673;553;433" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                              <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                              <animate attributeName="rx" values="15;20;25" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                              <animate attributeName="ry" values="17;23;29" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                          </ellipse>
+                          <ellipse cx="397" cy="677" rx="11" ry="13" fill="#6F6F6F" filter="url(#smokeBlur)">
+                              <animate attributeName="cy" values="677;557;437" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                              <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                              <animate attributeName="rx" values="11;16;21" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                              <animate attributeName="ry" values="13;19;25" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                          </ellipse>
+                      </g>`
+                  : svg``
               }
 
-              ${this.hass.states['binary_sensor.heat_battery_domestic_hot_water_on'] 
-                && this.hass.states['binary_sensor.heat_battery_domestic_hot_water_on'].state == 'on'
-                    ? svg`<g id="quatt.waterPipe">
-                          <path d="M 421 1119 L 422 1186" stroke="url(#waterGradientDown)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                      </g>
-                      <g id="quatt.shower">
-                          <g id="showerWater" transform="translate(620, 880)">
-                              <ellipse class="water-droplet" cx="20" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
-                              <ellipse class="water-droplet" cx="35" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
-                              <ellipse class="water-droplet" cx="50" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
-                              <ellipse class="water-droplet" cx="65" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
-                              <ellipse class="water-droplet" cx="80" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
-                          </g>
-                      </g>`
-                      : svg``
+              ${this.isAllElectric() 
+                && this.getSensorState('domestic_hot_water_on')?.state == 'on'
+                  ? svg`<g id="quatt.waterPipe">
+                        <path d="M 421 1119 L 422 1186" stroke="url(#waterGradientDown)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                    </g>
+                    <g id="quatt.shower">
+                        <g id="showerWater" transform="translate(620, 880)">
+                            <ellipse class="water-droplet" cx="20" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
+                            <ellipse class="water-droplet" cx="35" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
+                            <ellipse class="water-droplet" cx="50" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
+                            <ellipse class="water-droplet" cx="65" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
+                            <ellipse class="water-droplet" cx="80" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
+                        </g>
+                    </g>`
+                    : svg``
               }
               
-              ${this.hass.states['binary_sensor.heat_battery_charging']
-                && this.hass.states['binary_sensor.heat_battery_charging'].state == 'on'
-                    ? svg`<g id="quatt.boilerSteam">
-                          <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
-                          <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
-                          <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
-                          <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
-                          <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
-                      </g>`
-                      : svg``
+              ${this.isAllElectric()
+                && this.getSensorState('battery_charging')?.state == 'on'
+                  ? svg`<g id="quatt.boilerSteam">
+                        <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
+                        <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
+                        <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
+                        <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
+                        <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
+                    </g>`
+                    : svg``
               }
               
-              ${this.hass.states['sensor.heatpump_hc_electrical_power']
+              ${this.isAllElectric()
                     ? svg`<g id="quatt.waterTankIndicator">
                           <defs>
                               <linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                   <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                  <stop id="gradientStop2" offset="${Math.max(0, this.hass.states['sensor.heat_battery_percentage'].state - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                  <stop id="gradientStop3" offset="${Math.min(100, this.hass.states['sensor.heat_battery_percentage'].state + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                  <stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('heat_battery_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                  <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('heat_battery_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                   <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                               </linearGradient>
                           
@@ -374,7 +414,7 @@ class QuattDashboardCard extends LitElement {
                                 stroke="#000000"
                                 stroke-width="0.5"
                                 opacity="0.9">
-                              ${Math.round(this.hass.states['sensor.heat_battery_percentage'].state)}%
+                              ${Math.round(this.getSensorState('heat_battery_percentage')?.state || 0)}%
                           </text>
                       </g>`
                       : svg``
@@ -386,6 +426,155 @@ class QuattDashboardCard extends LitElement {
 
     setConfig(config) {
         this.config = config;
+    }
+
+    // Provide default config with auto-detected entities
+    static getStubConfig(hass) {
+        const defaults = QuattDashboardCard.DEFAULT_SENSORS;
+        const config = { type: 'custom:quatt-dashboard-card' };
+
+        // Auto-populate with defaults if entities exist
+        Object.entries(defaults).forEach(([key, entityId]) => {
+            if (hass.states[entityId]) {
+                config[`${key}_entity`] = entityId;
+            }
+        });
+
+        return config;
+    }
+
+    // Return the form schema for Home Assistant's built-in editor
+    static getConfigForm() {
+        return {
+            schema: [
+                {
+                    name: "system_hostname",
+                    label: "Quatt system",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor"
+                        }
+                    }
+                },
+                {
+                    name: "heatpump_1_odu_type_entity",
+                    label: "Heat Pump 1 ODU Type",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor"
+                        }
+                    }
+                },
+                {
+                    name: "flowmeter_temperature_entity",
+                    label: "Flowmeter Temperature",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "total_power_entity",
+                    label: "Total Power",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "power"
+                        }
+                    }
+                },
+                {
+                    name: "total_powerinput_entity",
+                    label: "Total Power Input",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "power"
+                        }
+                    }
+                },
+                {
+                    name: "shower_minutes_remaining_entity",
+                    label: "Shower Minutes Remaining",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor"
+                        }
+                    }
+                },
+                {
+                    name: "hp1_workingmode_entity",
+                    label: "Heat Pump 1 Working Mode",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor"
+                        }
+                    }
+                },
+                {
+                    name: "hp2_workingmode_entity",
+                    label: "Heat Pump 2 Working Mode",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor"
+                        }
+                    }
+                },
+                {
+                    name: "boiler_heating_entity",
+                    label: "Boiler Heating",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "binary_sensor"
+                        }
+                    }
+                },
+                {
+                    name: "domestic_hot_water_on_entity",
+                    label: "Domestic Hot Water On",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "binary_sensor"
+                        }
+                    }
+                },
+                {
+                    name: "battery_charging_entity",
+                    label: "Battery Charging",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "binary_sensor"
+                        }
+                    }
+                },
+                {
+                    name: "heat_battery_percentage_entity",
+                    label: "Heat Battery Percentage",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor"
+                        }
+                    }
+                }
+            ]
+        };
     }
 
     _toggle(state) {
