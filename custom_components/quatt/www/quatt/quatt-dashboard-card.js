@@ -25,6 +25,7 @@ class QuattDashboardCard extends LitElement {
             hp1_workingmode: 'sensor.heatpump_hp1_workingmode',
             hp2_workingmode: 'sensor.heatpump_hp2_workingmode',
             boiler_heating: 'binary_sensor.heatpump_boiler_heating',
+            cic_central_heating_on: 'binary_sensor.cic_central_heating_on',
             domestic_hot_water_on: 'binary_sensor.heat_battery_domestic_hot_water_on',
             battery_charging: 'binary_sensor.heat_battery_charging',
             heat_battery_percentage: 'sensor.heat_battery_percentage',
@@ -266,8 +267,7 @@ class QuattDashboardCard extends LitElement {
                   }
 
                   ${this.isAllElectric()
-                    && (this.getSensorState('hp1_workingmode')?.state >= 1
-                        || this.getSensorState('hp2_workingmode')?.state >= 1)
+                    && this.getSensorState('cic_central_heating_on')?.state == 'on'
                       ? svg`<path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
                             <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                       : svg``
@@ -449,7 +449,6 @@ class QuattDashboardCard extends LitElement {
             schema: [
                 {
                     name: "system_hostname",
-                    label: "Quatt system",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -459,7 +458,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "heatpump_1_odu_type_entity",
-                    label: "Heat Pump 1 ODU Type",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -469,7 +467,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "flowmeter_temperature_entity",
-                    label: "Flowmeter Temperature",
                     required: true,
                     selector: {
                         entity: {
@@ -481,7 +478,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "total_power_entity",
-                    label: "Total Power",
                     required: true,
                     selector: {
                         entity: {
@@ -493,7 +489,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "total_powerinput_entity",
-                    label: "Total Power Input",
                     required: true,
                     selector: {
                         entity: {
@@ -505,7 +500,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "shower_minutes_remaining_entity",
-                    label: "Shower Minutes Remaining",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -515,7 +509,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "hp1_workingmode_entity",
-                    label: "Heat Pump 1 Working Mode",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -525,7 +518,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "hp2_workingmode_entity",
-                    label: "Heat Pump 2 Working Mode",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -534,8 +526,16 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
+                    name: "cic_central_heating_on_entity",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "binary_sensor"
+                        }
+                    }
+                },
+                {
                     name: "boiler_heating_entity",
-                    label: "Boiler Heating",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -545,7 +545,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "domestic_hot_water_on_entity",
-                    label: "Domestic Hot Water On",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -555,7 +554,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "battery_charging_entity",
-                    label: "Battery Charging",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -565,7 +563,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "heat_battery_percentage_entity",
-                    label: "Heat Battery Percentage",
                     selector: {
                         entity: {
                             integration: "quatt",
