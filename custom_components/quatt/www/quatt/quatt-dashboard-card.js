@@ -173,19 +173,6 @@ class QuattDashboardCard extends LitElement {
                       </stop>
                   </linearGradient>
 
-                  ${this.getSensorState('hp1_workingmode')?.state >= 1
-                      ? svg`<clipPath id="hp1FlowLines">
-                              <rect id="quatt.hp1" x="305" y="1385" width="280" height="150"></rect>
-                          </clipPath>`
-                      : svg`<clipPath id="hp1FlowLines"></clipPath>`
-                  }
-                  ${this.getSensorState('hp2_workingmode')?.state >= 1
-                      ? svg`<clipPath id="hp2FlowLines">
-                              <rect id="quatt.hp2" x="185" y="1285" width="280" height="150"></rect>
-                          </clipPath>`
-                      : svg`<clipPath id="hp2FlowLines"></clipPath>`
-                  }
-                  
                   <clipPath id="outsidePipe">
                       <rect x="250" y="1245" width="181" height="100"></rect>
                       <rect x="555" y="1387" width="12" height="20"></rect>
@@ -251,7 +238,6 @@ class QuattDashboardCard extends LitElement {
                   : svg``
               }
               </g>
-
               <g clip-path="url(#bottomPipe)">
                   ${(this.getSensorState('hp1_workingmode')?.state >= 1
                     || this.getSensorState('hp2_workingmode')?.state >= 1)
@@ -274,22 +260,33 @@ class QuattDashboardCard extends LitElement {
                   }
               </g>
 
-              <g clip-path="url(#hp1FlowLines)">
-                  <g id="hp1Flow">
-                      <path class="fog-line" d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415" stroke="#E8F4F8" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
-                      <path class="fog-line" d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430" stroke="#D4E8F0" stroke-width="4" fill="none" stroke-linecap="round" opacity="0"/>
-                      <path class="fog-line" d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445" stroke="#E0EDF5" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
-                      <path class="fog-line" d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460" stroke="#DCE9F2" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
-                  </g>
-              </g>
-              <g clip-path="url(#hp2FlowLines)">
-                  <g id="hp2Flow">
-                      <path class="fog-line" d="M 295 1350 Q 305 1343, 315 1350 Q 325 1357, 335 1350 Q 345 1343, 355 1350 Q 365 1357, 375 1350 Q 385 1343, 395 1350 Q 405 1357, 415 1350 Q 425 1343, 435 1350 Q 445 1357, 455 1350 Q 465 1343, 475 1350 Q 485 1357, 495 1350 Q 505 1343, 515 1350 Q 525 1357, 535 1350" stroke="#E8F4F8" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
-                      <path class="fog-line" d="M 305 1365 Q 315 1358, 325 1365 Q 335 1372, 345 1365 Q 355 1358, 365 1365 Q 375 1372, 385 1365 Q 395 1358, 405 1365 Q 415 1372, 425 1365 Q 435 1358, 445 1365 Q 455 1372, 465 1365 Q 475 1358, 485 1365 Q 495 1372, 505 1365 Q 515 1358, 525 1365 Q 535 1372, 545 1365" stroke="#D4E8F0" stroke-width="4" fill="none" stroke-linecap="round" opacity="0"/>
-                      <path class="fog-line" d="M 300 1380 Q 310 1373, 320 1380 Q 330 1387, 340 1380 Q 350 1373, 360 1380 Q 370 1387, 380 1380 Q 390 1373, 400 1380 Q 410 1387, 420 1380 Q 430 1373, 440 1380 Q 450 1387, 460 1380 Q 470 1373, 480 1380 Q 490 1387, 500 1380 Q 510 1373, 520 1380 Q 530 1387, 540 1380" stroke="#E0EDF5" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
-                      <path class="fog-line" d="M 310 1395 Q 320 1388, 330 1395 Q 340 1402, 350 1395 Q 360 1388, 370 1395 Q 380 1402, 390 1395 Q 400 1388, 410 1395 Q 420 1402, 430 1395 Q 440 1388, 450 1395 Q 460 1402, 470 1395 Q 480 1388, 490 1395 Q 500 1402, 510 1395 Q 520 1388, 530 1395 Q 540 1402, 550 1395" stroke="#DCE9F2" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
-                  </g>
-              </g>
+              ${this.getSensorState('hp1_workingmode')?.state >= 1
+                  ? svg`<g id="quatt.hp1Flow">
+                          <path class="fog-line" pathLength="100" style="animation-duration: 4.2s; animation-delay: 0s; stroke: #E8F4F8; stroke-width: 3;"
+                                d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+                          <path class="fog-line" pathLength="100" style="animation-duration: 3.8s; animation-delay: -1.2s; stroke: #D4E8F0; stroke-width: 4;"
+                                d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+                          <path class="fog-line" pathLength="100" style="animation-duration: 4.5s; animation-delay: -2.5s; stroke: #E0EDF5; stroke-width: 2.5;"
+                                d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+                          <path class="fog-line" pathLength="100" style="animation-duration: 4.0s; animation-delay: -3.7s; stroke: #DCE9F2; stroke-width: 3;"
+                                d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+                        </g>`
+                  : svg``
+              }
+              
+              ${this.getSensorState('hp2_workingmode')?.state >= 1
+                  ? svg`<g id="quatt.hp2Flow">
+                          <path class="fog-line" pathLength="100" style="animation-duration: 4.3s; animation-delay: -0.5s; stroke: #E8F4F8; stroke-width: 3;"
+                                d="M 295 1350 Q 305 1343, 315 1350 Q 325 1357, 335 1350 Q 345 1343, 355 1350 Q 365 1357, 375 1350 Q 385 1343, 395 1350 Q 405 1357, 415 1350 Q 425 1343, 435 1350 Q 445 1357, 455 1350 Q 465 1343, 475 1350 Q 485 1357, 495 1350 Q 505 1343, 515 1350 Q 525 1357, 535 1350"/>
+                          <path class="fog-line" pathLength="100" style="animation-duration: 3.9s; animation-delay: -1.8s; stroke: #D4E8F0; stroke-width: 4;"
+                                d="M 305 1365 Q 315 1358, 325 1365 Q 335 1372, 345 1365 Q 355 1358, 365 1365 Q 375 1372, 385 1365 Q 395 1358, 405 1365 Q 415 1372, 425 1365 Q 435 1358, 445 1365 Q 455 1372, 465 1365 Q 475 1358, 485 1365 Q 495 1372, 505 1365 Q 515 1358, 525 1365 Q 535 1372, 545 1365"/>
+                          <path class="fog-line" pathLength="100" style="animation-duration: 4.6s; animation-delay: -3.1s; stroke: #E0EDF5; stroke-width: 2.5;"
+                                d="M 300 1380 Q 310 1373, 320 1380 Q 330 1387, 340 1380 Q 350 1373, 360 1380 Q 370 1387, 380 1380 Q 390 1373, 400 1380 Q 410 1387, 420 1380 Q 430 1373, 440 1380 Q 450 1387, 460 1380 Q 470 1373, 480 1380 Q 490 1387, 500 1380 Q 510 1373, 520 1380 Q 530 1387, 540 1380"/>
+                          <path class="fog-line" pathLength="100" style="animation-duration: 4.1s; animation-delay: -2.2s; stroke: #DCE9F2; stroke-width: 3;"
+                                d="M 310 1395 Q 320 1388, 330 1395 Q 340 1402, 350 1395 Q 360 1388, 370 1395 Q 380 1402, 390 1395 Q 400 1388, 410 1395 Q 420 1402, 430 1395 Q 440 1388, 450 1395 Q 460 1402, 470 1395 Q 480 1388, 490 1395 Q 500 1402, 510 1395 Q 520 1388, 530 1395 Q 540 1402, 550 1395"/>
+                        </g>`
+                  : svg``
+              }
 
               ${(this.isAllElectric() && this.getSensorState('cic_central_heating_on')?.state == 'on')
                 || (this.isHybrid() && (this.getSensorState('hp1_workingmode')?.state >= 1 || this.getSensorState('hp2_workingmode')?.state >= 1))
@@ -611,24 +608,22 @@ class QuattDashboardCard extends LitElement {
     static get styles() {
         return css`
             @keyframes fogFlow {
-                0% {
-                    opacity: 0.6;
-                    transform: translateX(200px) translateY(0px);
-                }
-                100% {
-                    opacity: 0.1;
-                    transform: translateX(-50px) translateY(0px);
-                }
+                0%   { stroke-dasharray: 0 200;  stroke-dashoffset: -64;  opacity: 0.60; }
+                40%  { stroke-dasharray: 45 200; stroke-dashoffset: -20;  opacity: 0.50; }
+                100% { stroke-dasharray: 45 200; stroke-dashoffset: 64; opacity: 0.10; }
             }
 
             .fog-line {
-                animation: fogFlow 5s ease-in-out infinite;
+                animation-name: fogFlow;
+                animation-timing-function: linear;
+                animation-iteration-count: infinite;
                 filter: blur(2px);
+                stroke-width: 3;
+                fill: none;
+                stroke-linecap: round;
+                stroke-dasharray: 0 200;
+                stroke-dashoffset: 0;
             }
-            .fog-line:nth-child(1) { animation-delay: 0s; }
-            .fog-line:nth-child(2) { animation-delay: 2.4s; }
-            .fog-line:nth-child(3) { animation-delay: 0.8s; }
-            .fog-line:nth-child(4) { animation-delay: 3.2s; }
 
             @keyframes waterDrop {
                 0% {
