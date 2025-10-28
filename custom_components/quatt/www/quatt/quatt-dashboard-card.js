@@ -34,6 +34,9 @@ class QuattDashboardCard extends LitElement {
             hp1_waterdelta: 'sensor.heatpump_hp1_waterdelta',
             hp2_waterdelta: 'sensor.heatpump_hp2_waterdelta',
             airco_hvac: 'climate.airco',
+            solar_power: 'sensor.solar_current_power',
+            electric_boiler_percentage: 'sensor.electric_boiler_percentage',
+            sun: 'sun.sun',
         };
     }
 
@@ -57,6 +60,15 @@ class QuattDashboardCard extends LitElement {
     }
     hasAirco() {
         return !!this.getSensorState('airco_hvac')?.state
+    }
+    hasSolarPanels() {
+        return !!this.getSensorState('solar_power')?.state
+    }
+    hasSolarCollector() {
+        return !!this.config?.[`has_solar_collector`]
+    }
+    hasElectricBoiler() {
+        return !!this.getSensorState('electric_boiler_percentage')?.state
     }
     isMonoHeatpump() {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === false ||
@@ -178,7 +190,19 @@ class QuattDashboardCard extends LitElement {
               ${this.hasAirco()
                   ? svg`<image href="/local/quatt/src_assets_images_houseairco.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
-              
+
+              ${this.hasSolarPanels()
+                  ? svg`<image href="/local/quatt/src_assets_images_housesolarpanels.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+              }
+
+              ${this.hasSolarCollector()
+                  ? svg`<image href="/local/quatt/src_assets_images_housesolarcollector.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+              }
+
+              ${this.hasElectricBoiler()
+                  ? svg`<image href="/local/quatt/src_assets_images_houseboilercylinder.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+              }
+
               <defs>
                   <linearGradient id="waterGradientToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
                       <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
@@ -619,6 +643,60 @@ class QuattDashboardCard extends LitElement {
                       : svg``
               }
 
+              ${this.hasSolarPanels()
+                && this.getSensorState('solar_power')?.state >= 1
+                  ? svg`<g id="quatt.solarTwinkles" transform="translate(630, 350) rotate(-26.5, 545, 945)">
+                          <circle class="solar-twinkle" cx="720" cy="320" r="4" fill="#FFE87C" style="animation-delay: 0s;"/>
+                          <circle class="solar-twinkle" cx="820" cy="280" r="3" fill="#FFF4A3" style="animation-delay: 0.5s;"/>
+                          <circle class="solar-twinkle" cx="950" cy="340" r="5" fill="#FFEB99" style="animation-delay: 1s;"/>
+                          <circle class="solar-twinkle" cx="1050" cy="300" r="4" fill="#FFE87C" style="animation-delay: 1.5s;"/>
+                          <circle class="solar-twinkle" cx="780" cy="380" r="3" fill="#FFF9CC" style="animation-delay: 2s;"/>
+                          <circle class="solar-twinkle" cx="900" cy="260" r="4" fill="#FFE87C" style="animation-delay: 2.5s;"/>
+                          <circle class="solar-twinkle" cx="1100" cy="360" r="3" fill="#FFF4A3" style="animation-delay: 0.8s;"/>
+                          <circle class="solar-twinkle" cx="850" cy="400" r="5" fill="#FFEB99" style="animation-delay: 1.3s;"/>
+                          <circle class="solar-twinkle" cx="1130" cy="340" r="4" fill="#FFE87C" style="animation-delay: 1.8s;"/>
+                          <circle class="solar-twinkle" cx="1020" cy="420" r="3" fill="#FFF9CC" style="animation-delay: 2.3s;"/>
+                          <circle class="solar-twinkle" cx="760" cy="300" r="4" fill="#FFE87C" style="animation-delay: 0.3s;"/>
+                          <circle class="solar-twinkle" cx="920" cy="360" r="3" fill="#FFF4A3" style="animation-delay: 1.1s;"/>
+                          <circle class="solar-twinkle" cx="1080" cy="280" r="5" fill="#FFEB99" style="animation-delay: 1.6s;"/>
+                          <circle class="solar-twinkle" cx="1150" cy="420" r="4" fill="#FFE87C" style="animation-delay: 2.1s;"/>
+                          <circle class="solar-twinkle" cx="1000" cy="380" r="3" fill="#FFF9CC" style="animation-delay: 0.6s;"/>
+                      </g>`
+                  : svg``
+              }
+              
+              ${this.hasSolarPanels()
+                  ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
+                            <rect x="1100" y="675" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                            <text x="1105" y="680" font-size="14" font-family="Arial" fill="#999999">Solar</text>
+                            <text id="temp.waterPipe" x="1170" y="708"
+                                  text-anchor="middle"
+                                  font-size="18"
+                                  font-family="Arial, sans-serif"
+                                  font-weight="bold"
+                                  fill="#ffffff">
+                              ${((this.getSensorState('solar_power')?.state || 0) / 1000).toFixed(2)}kW
+                            </text>
+                        </g>`
+                  : svg``
+                }
+
+        ${this.hasSolarCollector()
+          && this.getSensorState('sun')?.state !== 'above_horizon'
+            ? svg`<g id="quatt.solarCollectorTwinkles" transform="translate(250, 710) rotate(-26.5, 545, 945)">
+                          <circle class="solar-twinkle" cx="800" cy="330" r="4" fill="#FFE87C" style="animation-delay: 0s;"/>
+                          <circle class="solar-twinkle" cx="860" cy="350" r="3" fill="#FFF4A3" style="animation-delay: 0.5s;"/>
+                          <circle class="solar-twinkle" cx="950" cy="340" r="5" fill="#FFEB99" style="animation-delay: 1s;"/>
+                          <circle class="solar-twinkle" cx="780" cy="380" r="3" fill="#FFF9CC" style="animation-delay: 2s;"/>
+                          <circle class="solar-twinkle" cx="850" cy="400" r="5" fill="#FFEB99" style="animation-delay: 1.3s;"/>
+                          <circle class="solar-twinkle" cx="920" cy="360" r="3" fill="#FFF4A3" style="animation-delay: 1.1s;"/>
+                      </g>`
+                  : svg``
+              }
+
+              ${this.hasElectricBoiler()
+                  ? svg`` : svg``
+              }             
 
               <!-- Temperature displays -->
               <g id="quatt.temperatures" class="quatt-show">
@@ -917,6 +995,37 @@ class QuattDashboardCard extends LitElement {
                         }
                     }
                 },
+                {
+                    name: "solar_power_entity",
+                    selector: {
+                        entity: {
+                            domain: "sensor",
+                            device_class: "power"
+                        }
+                    }
+                },
+                {
+                    name: "electric_boiler_percentage_entity",
+                    selector: {
+                        entity: {
+                            domain: "sensor"
+                        }
+                    }
+                },
+                {
+                    name: "has_solar_collector",
+                    selector: {
+                        boolean: {}
+                    }
+                },
+                {
+                    name: "sun_entity",
+                    selector: {
+                        entity: {
+                            domain: "sun"
+                        }
+                    }
+                },
             ]
         };
     }
@@ -1064,6 +1173,20 @@ class QuattDashboardCard extends LitElement {
                 stroke-linecap: round;
                 stroke-dasharray: 0 200;
                 stroke-dashoffset: 0;
+            }
+
+            @keyframes twinkle {
+                0%, 100% {
+                    opacity: 0;
+                }
+                50% {
+                    opacity: 1;
+                }
+            }
+
+            .solar-twinkle {
+                animation: twinkle 2s ease-in-out infinite;
+                filter: blur(1.5px);
             }
         `;
     }
