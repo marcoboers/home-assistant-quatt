@@ -18,7 +18,6 @@ class QuattDashboardCard extends LitElement {
         return {
             system_hostname: 'sensor.heatpump_system_hostname',
             heatpump_1_odu_type: 'sensor.heatpump_1_odu_type',
-            flowmeter_temperature: 'sensor.heatpump_flowmeter_temperature',
             total_power: 'sensor.heatpump_total_power',
             total_powerinput: 'sensor.heatpump_total_powerinput',
             shower_minutes_remaining: 'sensor.heat_battery_shower_minutes_remaining',
@@ -29,6 +28,11 @@ class QuattDashboardCard extends LitElement {
             domestic_hot_water_on: 'binary_sensor.heat_battery_domestic_hot_water_on',
             battery_charging: 'binary_sensor.heat_battery_charging',
             heat_battery_percentage: 'sensor.heat_battery_percentage',
+            flowmeter_temperature: 'sensor.heatpump_flowmeter_temperature',
+            thermostat_room_temperature: 'sensor.heatpump_thermostat_room_temperature',
+            hp1_temperatureoutside: 'sensor.heatpump_hp1_temperatureoutside',
+            hp1_waterdelta: 'sensor.heatpump_hp1_waterdelta',
+            hp2_waterdelta: 'sensor.heatpump_hp2_waterdelta',
         };
     }
 
@@ -58,13 +62,77 @@ class QuattDashboardCard extends LitElement {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === true ||
             this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === 'true';
     }
-
     getSystemVersion() {
         switch (this.getSensorState('heatpump_1_odu_type')?.state) {
             case 'AMM4-V2.0':
                 return 'V2';
             default:
                 return 'V1';
+        }
+    }
+
+    firstUpdated() {
+        const tank = this.shadowRoot.querySelector('#tankPercentage');
+        const room = this.shadowRoot.querySelector('#roomTemperature');
+        const outside = this.shadowRoot.querySelector('#outsideTemperature');
+        const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
+        const hp1Delta = this.shadowRoot.querySelector('#hp1DeltaTemperature');
+        const hp2Delta = this.shadowRoot.querySelector('#hp2DeltaTemperature');
+
+        if (tank) {
+            tank.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipTankPercentage').classList.add('tooltip-show');
+            });
+
+            tank.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipTankPercentage').classList.remove('tooltip-show');
+            });
+        }
+        if (room) {
+            room.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.add('tooltip-show');
+            });
+
+            room.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.remove('tooltip-show');
+            });
+        }
+        if (outside) {
+            outside.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipOutsideTemperature').classList.add('tooltip-show');
+            });
+
+            outside.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipOutsideTemperature').classList.remove('tooltip-show');
+            });
+        }
+        if (waterPipe) {
+            waterPipe.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.add('tooltip-show');
+            });
+
+            waterPipe.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.remove('tooltip-show');
+            });
+        }
+        if (hp1Delta) {
+            hp1Delta.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipHp1DeltaTemperature').classList.add('tooltip-show');
+            });
+
+            hp1Delta.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipHp1DeltaTemperature').classList.remove('tooltip-show');
+            });
+        }
+
+        if (hp2Delta) {
+            hp2Delta.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.add('tooltip-show');
+            });
+
+            hp2Delta.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.remove('tooltip-show');
+            });
         }
     }
 
@@ -431,6 +499,8 @@ class QuattDashboardCard extends LitElement {
         
                           <!-- Percentage text -->
                           <text x="340" y="1172"
+                                id="tankPercentage"
+                                style="cursor: pointer;"
                                 text-anchor="middle"
                                 font-size="24"
                                 font-family="Arial, sans-serif"
@@ -444,6 +514,109 @@ class QuattDashboardCard extends LitElement {
                       </g>`
                       : svg``
               }
+
+
+              <!-- Temperature displays -->
+              <g id="quatt.temperatures" class="quatt-show">
+                  <g id="waterPipeTemperature" style="cursor: pointer;">
+                      <rect x="300" y="1275" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="305" y="1290" font-size="14" font-family="Arial" fill="#999999">Pipe</text>
+                      <text id="temp.waterPipe" x="370" y="1308"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${Math.round(this.getSensorState('flowmeter_temperature')?.state || 0)}°C
+                      </text>
+                  </g>
+                  <g id="roomTemperature" style="cursor: pointer;">
+                      <rect x="550" y="1200" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="555" y="1215" font-size="14" font-family="Arial" fill="#999999">Room</text>
+                      <text id="temp.room" x="620" y="1233"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${Math.round(this.getSensorState('thermostat_room_temperature')?.state || 0)}°C
+                      </text>
+                  </g>
+                  <g id="outsideTemperature" style="cursor: pointer;">
+                      <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
+                      <text id="temp.outside" x="630" y="1578"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${Math.round(this.getSensorState('hp1_temperatureoutside')?.state || 0)}°C
+                      </text>
+                  </g>
+                  <g id="hp1DeltaTemperature" style="cursor: pointer;">
+                      <rect x="560" y="1500" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="565" y="1515" font-size="14" font-family="Arial" fill="#999999">HP1 Δ</text>
+                      <text id="temp.hp1.delta" x="630" y="1533"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${this.getSensorState('hp1_waterdelta')?.state >= 1 || this.getSensorState('hp1_waterdelta')?.state <= -1
+                                  ? Math.round(this.getSensorState('hp1_waterdelta')?.state || 0)+'°C'
+                                  : 'Off'}
+                      </text>
+                  </g>
+
+                  ${this.isDuoHeatpump()
+                      ? svg`<g id="hp2DeltaTemperature" style="cursor: pointer;">
+                              <rect x="420" y="1435" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                              <text x="425" y="1450" font-size="14" font-family="Arial" fill="#999999">HP2 Δ</text>
+                              <text id="temp.hp2.delta" x="490" y="1468"
+                                    text-anchor="middle"
+                                    font-size="18"
+                                    font-family="Arial, sans-serif"
+                                    font-weight="bold"
+                                    fill="#ffffff">
+                          ${this.getSensorState('hp2_waterdelta')?.state >= 1 || this.getSensorState('hp2_waterdelta')?.state <= -1
+                                    ? Math.round(this.getSensorState('hp2_waterdelta')?.state || 0)+'°C'
+                                    : 'Off'}
+                              </text>
+                          </g>` 
+                      : svg``
+                  }
+
+                  <g id="tooltipTankPercentage" transform="translate(80, -108)">>
+                      <rect x="290" y="1155" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="305" y="1190" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipWaterPipeTemperature" transform="translate(120, -108)">>
+                      <rect x="370" y="1295" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="385" y="1330" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipRoomTemperature" transform="translate(120, -108)">>
+                      <rect x="550" y="1200" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="565" y="1235" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipOutsideTemperature" transform="translate(120, -108)">>
+                      <rect x="560" y="1545" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="575" y="1580" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">>
+                      <rect x="560" y="1500" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="575" y="1535" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+
+                  ${this.isDuoHeatpump()
+                      ? svg`<g id="tooltipHp2DeltaTemperature" transform="translate(120, -108)">>
+                              <rect x="420" y="1435" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                              <text x="435" y="1465" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                          </g>`
+                      : svg``
+                  }
+                  
+              </g>
           </svg>
       </wired-card>
     `;
@@ -487,17 +660,6 @@ class QuattDashboardCard extends LitElement {
                         entity: {
                             integration: "quatt",
                             domain: "sensor"
-                        }
-                    }
-                },
-                {
-                    name: "flowmeter_temperature_entity",
-                    required: true,
-                    selector: {
-                        entity: {
-                            integration: "quatt",
-                            domain: "sensor",
-                            device_class: "temperature"
                         }
                     }
                 },
@@ -594,7 +756,62 @@ class QuattDashboardCard extends LitElement {
                             domain: "sensor"
                         }
                     }
-                }
+                },
+                {
+                    name: "flowmeter_temperature_entity",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "thermostat_room_temperature",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "hp1_temperatureoutside",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "hp1_waterdelta",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "hp2_waterdelta",
+                    required: true,
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
             ]
         };
     }
@@ -607,6 +824,18 @@ class QuattDashboardCard extends LitElement {
 
     static get styles() {
         return css`
+            [id*="tooltip"].tooltip-show{
+                opacity: 1;
+                pointer-events: auto;
+                transition: opacity 0.3s ease-in-out;
+            }
+
+            [id*="tooltip"]{
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease-in-out;
+            }
+            
             @keyframes fogFlow {
                 0%   { stroke-dasharray: 0 200;  stroke-dashoffset: -64;  opacity: 0.60; }
                 40%  { stroke-dasharray: 45 200; stroke-dashoffset: -20;  opacity: 0.50; }
