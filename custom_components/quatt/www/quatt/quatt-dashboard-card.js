@@ -56,7 +56,7 @@ class QuattDashboardCard extends LitElement {
             this.getSensorState('system_hostname')?.attributes['All electric system'] === 'true';
     }
     hasAirco() {
-        return this.getSensorState('airco_hvac')?.state
+        return !!this.getSensorState('airco_hvac')?.state
     }
     isMonoHeatpump() {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === false ||
@@ -174,6 +174,7 @@ class QuattDashboardCard extends LitElement {
                       )
                   )
               }
+
               ${this.hasAirco()
                   ? svg`<image href="/local/quatt/src_assets_images_houseairco.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
@@ -389,6 +390,102 @@ class QuattDashboardCard extends LitElement {
                                 d="M474 1157.4 C486 1147.4,462 1139.4,474 1129.4 C486 1119.4,462 1111.4,474 1101.4 C486 1091.4,462 1083.4,474 1073.4 C486 1035.4,462 1027.4,474 1017.4 C486 1007.4,462 1002.4,474  997.4"/>
                       </g>`
                   : svg``
+              }
+
+              ${this.hasAirco()
+                  && this.getSensorState('airco_hvac')?.state !== 'off'
+                  ? svg`<g id="quatt.acFlow" transform="translate(380, 15)">
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.2s; animation-delay: 0s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 3.8s; animation-delay: -1.2s; stroke-width: 4;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.5s; animation-delay: -2.5s; stroke-width: 2.5;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.0s; animation-delay: -3.7s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+                      </g>
+                      <g id="quatt.acHeat" class="quatt-show" transform="translate(420, -70) rotate(67.5, 545, 945)">
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.2s; animation-delay: 0s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 3.8s; animation-delay: -1.2s; stroke-width: 4;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.5s; animation-delay: -2.5s; stroke-width: 2.5;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.0s; animation-delay: -3.7s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+                      </g>` : svg``
               }
 
               ${this.isHybrid() 
@@ -850,8 +947,26 @@ class QuattDashboardCard extends LitElement {
                 100% { stroke-dasharray: 45 200; stroke-dashoffset: 64; opacity: 0.10; }
             }
 
+            @keyframes fogFlowReverse {
+                0%   { stroke-dasharray: 0 200;  stroke-dashoffset: 64;  opacity: 0.60; }
+                40%  { stroke-dasharray: 45 200; stroke-dashoffset: 20;  opacity: 0.50; }
+                100% { stroke-dasharray: 45 200; stroke-dashoffset: -64; opacity: 0.10; }
+            }
+
             .fog-line {
                 animation-name: fogFlow;
+                animation-timing-function: linear;
+                animation-iteration-count: infinite;
+                filter: blur(2px);
+                stroke-width: 3;
+                fill: none;
+                stroke-linecap: round;
+                stroke-dasharray: 0 200;
+                stroke-dashoffset: 0;
+            }
+
+            .fog-line-reverse {
+                animation-name: fogFlowReverse;
                 animation-timing-function: linear;
                 animation-iteration-count: infinite;
                 filter: blur(2px);
