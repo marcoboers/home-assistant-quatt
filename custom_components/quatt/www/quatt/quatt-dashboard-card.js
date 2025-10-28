@@ -33,6 +33,7 @@ class QuattDashboardCard extends LitElement {
             hp1_temperatureoutside: 'sensor.heatpump_hp1_temperatureoutside',
             hp1_waterdelta: 'sensor.heatpump_hp1_waterdelta',
             hp2_waterdelta: 'sensor.heatpump_hp2_waterdelta',
+            airco_hvac: 'climate.airco',
         };
     }
 
@@ -53,6 +54,9 @@ class QuattDashboardCard extends LitElement {
     isAllElectric() {
         return this.getSensorState('system_hostname')?.attributes['All electric system'] === true ||
             this.getSensorState('system_hostname')?.attributes['All electric system'] === 'true';
+    }
+    hasAirco() {
+        return this.getSensorState('airco_hvac')?.state
     }
     isMonoHeatpump() {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === false ||
@@ -169,6 +173,9 @@ class QuattDashboardCard extends LitElement {
                           : svg`<image href="/local/quatt/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                   )
+              }
+              ${this.hasAirco()
+                  ? svg`<image href="/local/quatt/src_assets_images_houseairco.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
               
               <defs>
@@ -665,7 +672,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "total_power_entity",
-                    required: true,
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -676,7 +682,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "total_powerinput_entity",
-                    required: true,
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -759,7 +764,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "flowmeter_temperature_entity",
-                    required: true,
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -769,8 +773,7 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
-                    name: "thermostat_room_temperature",
-                    required: true,
+                    name: "thermostat_room_temperature_entity",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -780,8 +783,7 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
-                    name: "hp1_temperatureoutside",
-                    required: true,
+                    name: "hp1_temperatureoutside_entity",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -791,8 +793,7 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
-                    name: "hp1_waterdelta",
-                    required: true,
+                    name: "hp1_waterdelta_entity",
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -802,13 +803,20 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
-                    name: "hp2_waterdelta",
-                    required: true,
+                    name: "hp2_waterdelta_entity",
                     selector: {
                         entity: {
                             integration: "quatt",
                             domain: "sensor",
                             device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "airco_hvac_entity",
+                    selector: {
+                        entity: {
+                            domain: "climate"
                         }
                     }
                 },
