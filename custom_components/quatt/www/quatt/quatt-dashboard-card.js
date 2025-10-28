@@ -682,7 +682,7 @@ class QuattDashboardCard extends LitElement {
                 }
 
         ${this.hasSolarCollector()
-          && this.getSensorState('sun')?.state !== 'above_horizon'
+          && this.getSensorState('sun')?.state == 'above_horizon'
             ? svg`<g id="quatt.solarCollectorTwinkles" transform="translate(250, 710) rotate(-26.5, 545, 945)">
                           <circle class="solar-twinkle" cx="800" cy="330" r="4" fill="#FFE87C" style="animation-delay: 0s;"/>
                           <circle class="solar-twinkle" cx="860" cy="350" r="3" fill="#FFF4A3" style="animation-delay: 0.5s;"/>
