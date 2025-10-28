@@ -667,7 +667,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${this.getSensorState('hp1_waterdelta')?.state >= 1 || this.getSensorState('hp1_waterdelta')?.state <= -1
+                          ${this.getSensorState('hp1_workingmode')?.state >= 1
                                   ? Math.round(this.getSensorState('hp1_waterdelta')?.state || 0)+'°C'
                                   : 'Off'}
                       </text>
@@ -683,7 +683,7 @@ class QuattDashboardCard extends LitElement {
                                     font-family="Arial, sans-serif"
                                     font-weight="bold"
                                     fill="#ffffff">
-                          ${this.getSensorState('hp2_waterdelta')?.state >= 1 || this.getSensorState('hp2_waterdelta')?.state <= -1
+                          ${this.getSensorState('hp2_workingmode')?.state >= 1
                                     ? Math.round(this.getSensorState('hp2_waterdelta')?.state || 0)+'°C'
                                     : 'Off'}
                               </text>
