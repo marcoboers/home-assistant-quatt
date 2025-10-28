@@ -18,7 +18,6 @@ class QuattDashboardCard extends LitElement {
         return {
             system_hostname: 'sensor.heatpump_system_hostname',
             heatpump_1_odu_type: 'sensor.heatpump_1_odu_type',
-            flowmeter_temperature: 'sensor.heatpump_flowmeter_temperature',
             total_power: 'sensor.heatpump_total_power',
             total_powerinput: 'sensor.heatpump_total_powerinput',
             shower_minutes_remaining: 'sensor.heat_battery_shower_minutes_remaining',
@@ -29,6 +28,12 @@ class QuattDashboardCard extends LitElement {
             domestic_hot_water_on: 'binary_sensor.heat_battery_domestic_hot_water_on',
             battery_charging: 'binary_sensor.heat_battery_charging',
             heat_battery_percentage: 'sensor.heat_battery_percentage',
+            flowmeter_temperature: 'sensor.heatpump_flowmeter_temperature',
+            thermostat_room_temperature: 'sensor.heatpump_thermostat_room_temperature',
+            hp1_temperatureoutside: 'sensor.heatpump_hp1_temperatureoutside',
+            hp1_waterdelta: 'sensor.heatpump_hp1_waterdelta',
+            hp2_waterdelta: 'sensor.heatpump_hp2_waterdelta',
+            airco_hvac: 'climate.airco',
         };
     }
 
@@ -50,6 +55,9 @@ class QuattDashboardCard extends LitElement {
         return this.getSensorState('system_hostname')?.attributes['All electric system'] === true ||
             this.getSensorState('system_hostname')?.attributes['All electric system'] === 'true';
     }
+    hasAirco() {
+        return !!this.getSensorState('airco_hvac')?.state
+    }
     isMonoHeatpump() {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === false ||
             this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === 'false';
@@ -58,13 +66,77 @@ class QuattDashboardCard extends LitElement {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === true ||
             this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === 'true';
     }
-
     getSystemVersion() {
         switch (this.getSensorState('heatpump_1_odu_type')?.state) {
             case 'AMM4-V2.0':
                 return 'V2';
             default:
                 return 'V1';
+        }
+    }
+
+    firstUpdated() {
+        const tank = this.shadowRoot.querySelector('#tankPercentage');
+        const room = this.shadowRoot.querySelector('#roomTemperature');
+        const outside = this.shadowRoot.querySelector('#outsideTemperature');
+        const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
+        const hp1Delta = this.shadowRoot.querySelector('#hp1DeltaTemperature');
+        const hp2Delta = this.shadowRoot.querySelector('#hp2DeltaTemperature');
+
+        if (tank) {
+            tank.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipTankPercentage').classList.add('tooltip-show');
+            });
+
+            tank.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipTankPercentage').classList.remove('tooltip-show');
+            });
+        }
+        if (room) {
+            room.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.add('tooltip-show');
+            });
+
+            room.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.remove('tooltip-show');
+            });
+        }
+        if (outside) {
+            outside.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipOutsideTemperature').classList.add('tooltip-show');
+            });
+
+            outside.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipOutsideTemperature').classList.remove('tooltip-show');
+            });
+        }
+        if (waterPipe) {
+            waterPipe.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.add('tooltip-show');
+            });
+
+            waterPipe.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.remove('tooltip-show');
+            });
+        }
+        if (hp1Delta) {
+            hp1Delta.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipHp1DeltaTemperature').classList.add('tooltip-show');
+            });
+
+            hp1Delta.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipHp1DeltaTemperature').classList.remove('tooltip-show');
+            });
+        }
+
+        if (hp2Delta) {
+            hp2Delta.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.add('tooltip-show');
+            });
+
+            hp2Delta.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.remove('tooltip-show');
+            });
         }
     }
 
@@ -101,6 +173,10 @@ class QuattDashboardCard extends LitElement {
                           : svg`<image href="/local/quatt/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                   )
+              }
+
+              ${this.hasAirco()
+                  ? svg`<image href="/local/quatt/src_assets_images_houseairco.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
               
               <defs>
@@ -316,6 +392,102 @@ class QuattDashboardCard extends LitElement {
                   : svg``
               }
 
+              ${this.hasAirco()
+                  && this.getSensorState('airco_hvac')?.state !== 'off'
+                  ? svg`<g id="quatt.acFlow" transform="translate(380, 15)">
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.2s; animation-delay: 0s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 3.8s; animation-delay: -1.2s; stroke-width: 4;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.5s; animation-delay: -2.5s; stroke-width: 2.5;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.0s; animation-delay: -3.7s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#DCE9F2';
+                                              default:
+                                                  return '#ff8a00';
+                                          }
+                                      })()};"
+                                d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+                      </g>
+                      <g id="quatt.acHeat" class="quatt-show" transform="translate(420, -70) rotate(67.5, 545, 945)">
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.2s; animation-delay: 0s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 3.8s; animation-delay: -1.2s; stroke-width: 4;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.5s; animation-delay: -2.5s; stroke-width: 2.5;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+                          <path class="fog-line-reverse" pathLength="100"
+                                style="animation-duration: 4.0s; animation-delay: -3.7s; stroke-width: 3;
+                                    stroke:  ${(() => {
+                                          switch (this.getSensorState('airco_hvac')?.state) {
+                                              case 'heat':
+                                                  return '#ff8a00';
+                                              default:
+                                                  return '#DCE9F2';
+                                          }
+                                      })()};"
+                                d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+                      </g>` : svg``
+              }
+
               ${this.isHybrid() 
                 && this.getSensorState('boiler_heating')?.state == 'on'
                   ? svg`<g id="quatt.chimneyPipe">
@@ -431,6 +603,8 @@ class QuattDashboardCard extends LitElement {
         
                           <!-- Percentage text -->
                           <text x="340" y="1172"
+                                id="tankPercentage"
+                                style="cursor: pointer;"
                                 text-anchor="middle"
                                 font-size="24"
                                 font-family="Arial, sans-serif"
@@ -444,6 +618,109 @@ class QuattDashboardCard extends LitElement {
                       </g>`
                       : svg``
               }
+
+
+              <!-- Temperature displays -->
+              <g id="quatt.temperatures" class="quatt-show">
+                  <g id="waterPipeTemperature" style="cursor: pointer;">
+                      <rect x="300" y="1275" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="305" y="1290" font-size="14" font-family="Arial" fill="#999999">Pipe</text>
+                      <text id="temp.waterPipe" x="370" y="1308"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${Math.round(this.getSensorState('flowmeter_temperature')?.state || 0)}°C
+                      </text>
+                  </g>
+                  <g id="roomTemperature" style="cursor: pointer;">
+                      <rect x="550" y="1200" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="555" y="1215" font-size="14" font-family="Arial" fill="#999999">Room</text>
+                      <text id="temp.room" x="620" y="1233"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${Math.round(this.getSensorState('thermostat_room_temperature')?.state || 0)}°C
+                      </text>
+                  </g>
+                  <g id="outsideTemperature" style="cursor: pointer;">
+                      <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
+                      <text id="temp.outside" x="630" y="1578"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${Math.round(this.getSensorState('hp1_temperatureoutside')?.state || 0)}°C
+                      </text>
+                  </g>
+                  <g id="hp1DeltaTemperature" style="cursor: pointer;">
+                      <rect x="560" y="1500" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <text x="565" y="1515" font-size="14" font-family="Arial" fill="#999999">HP1 Δ</text>
+                      <text id="temp.hp1.delta" x="630" y="1533"
+                            text-anchor="middle"
+                            font-size="18"
+                            font-family="Arial, sans-serif"
+                            font-weight="bold"
+                            fill="#ffffff">
+                          ${this.getSensorState('hp1_workingmode')?.state >= 1
+                                  ? Math.round(this.getSensorState('hp1_waterdelta')?.state || 0)+'°C'
+                                  : 'Off'}
+                      </text>
+                  </g>
+
+                  ${this.isDuoHeatpump()
+                      ? svg`<g id="hp2DeltaTemperature" style="cursor: pointer;">
+                              <rect x="420" y="1435" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                              <text x="425" y="1450" font-size="14" font-family="Arial" fill="#999999">HP2 Δ</text>
+                              <text id="temp.hp2.delta" x="490" y="1468"
+                                    text-anchor="middle"
+                                    font-size="18"
+                                    font-family="Arial, sans-serif"
+                                    font-weight="bold"
+                                    fill="#ffffff">
+                          ${this.getSensorState('hp2_workingmode')?.state >= 1
+                                    ? Math.round(this.getSensorState('hp2_waterdelta')?.state || 0)+'°C'
+                                    : 'Off'}
+                              </text>
+                          </g>` 
+                      : svg``
+                  }
+
+                  <g id="tooltipTankPercentage" transform="translate(80, -108)">>
+                      <rect x="290" y="1155" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="305" y="1190" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipWaterPipeTemperature" transform="translate(120, -108)">>
+                      <rect x="370" y="1295" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="385" y="1330" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipRoomTemperature" transform="translate(120, -108)">>
+                      <rect x="550" y="1200" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="565" y="1235" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipOutsideTemperature" transform="translate(120, -108)">>
+                      <rect x="560" y="1545" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="575" y="1580" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+                  <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">>
+                      <rect x="560" y="1500" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <text x="575" y="1535" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                  </g>
+
+                  ${this.isDuoHeatpump()
+                      ? svg`<g id="tooltipHp2DeltaTemperature" transform="translate(120, -108)">>
+                              <rect x="420" y="1435" width="500" height="250" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                              <text x="435" y="1465" font-size="16" font-family="monospace" font-weight="bold" fill="#ffffff">Data:</text>
+                          </g>`
+                      : svg``
+                  }
+                  
+              </g>
           </svg>
       </wired-card>
     `;
@@ -491,19 +768,7 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
-                    name: "flowmeter_temperature_entity",
-                    required: true,
-                    selector: {
-                        entity: {
-                            integration: "quatt",
-                            domain: "sensor",
-                            device_class: "temperature"
-                        }
-                    }
-                },
-                {
                     name: "total_power_entity",
-                    required: true,
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -514,7 +779,6 @@ class QuattDashboardCard extends LitElement {
                 },
                 {
                     name: "total_powerinput_entity",
-                    required: true,
                     selector: {
                         entity: {
                             integration: "quatt",
@@ -594,7 +858,65 @@ class QuattDashboardCard extends LitElement {
                             domain: "sensor"
                         }
                     }
-                }
+                },
+                {
+                    name: "flowmeter_temperature_entity",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "thermostat_room_temperature_entity",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "hp1_temperatureoutside_entity",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "hp1_waterdelta_entity",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "hp2_waterdelta_entity",
+                    selector: {
+                        entity: {
+                            integration: "quatt",
+                            domain: "sensor",
+                            device_class: "temperature"
+                        }
+                    }
+                },
+                {
+                    name: "airco_hvac_entity",
+                    selector: {
+                        entity: {
+                            domain: "climate"
+                        }
+                    }
+                },
             ]
         };
     }
@@ -607,14 +929,44 @@ class QuattDashboardCard extends LitElement {
 
     static get styles() {
         return css`
+            [id*="tooltip"].tooltip-show{
+                opacity: 1;
+                pointer-events: auto;
+                transition: opacity 0.3s ease-in-out;
+            }
+
+            [id*="tooltip"]{
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease-in-out;
+            }
+            
             @keyframes fogFlow {
                 0%   { stroke-dasharray: 0 200;  stroke-dashoffset: -64;  opacity: 0.60; }
                 40%  { stroke-dasharray: 45 200; stroke-dashoffset: -20;  opacity: 0.50; }
                 100% { stroke-dasharray: 45 200; stroke-dashoffset: 64; opacity: 0.10; }
             }
 
+            @keyframes fogFlowReverse {
+                0%   { stroke-dasharray: 0 200;  stroke-dashoffset: 64;  opacity: 0.60; }
+                40%  { stroke-dasharray: 45 200; stroke-dashoffset: 20;  opacity: 0.50; }
+                100% { stroke-dasharray: 45 200; stroke-dashoffset: -64; opacity: 0.10; }
+            }
+
             .fog-line {
                 animation-name: fogFlow;
+                animation-timing-function: linear;
+                animation-iteration-count: infinite;
+                filter: blur(2px);
+                stroke-width: 3;
+                fill: none;
+                stroke-linecap: round;
+                stroke-dasharray: 0 200;
+                stroke-dashoffset: 0;
+            }
+
+            .fog-line-reverse {
+                animation-name: fogFlowReverse;
                 animation-timing-function: linear;
                 animation-iteration-count: infinite;
                 filter: blur(2px);
