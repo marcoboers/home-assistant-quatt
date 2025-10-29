@@ -298,37 +298,37 @@ class QuattDashboardCard extends LitElement {
               </g>
 
               <g id="quatt.legend">
-                  ${this.isHybrid()
-                      ? svg`<rect id="quatt.legend.hybrid" x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>`
-                      : svg`<rect id="quatt.legend.alle" x="50" y="300" width="300" height="410" fill="#1a1a1a" opacity="0.85" rx="20"/>`
-                  }
+                  <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
 
                   <!-- Title -->
                   <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config.current_setup.house_label}</text>
 
-                  <!-- Water temperature -->
-                  <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Water temperature</text>
-                  <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${(this.getSensorState('cic.flowmeter_temperature')?.state*1 || 0).toFixed(1)}°C
-                  </text>
-
                   <!-- Heat -->
-                  <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
-                  <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                  <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
+                  <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                       ${((this.getSensorState('legend.total_power')?.state || 0) / 1000).toFixed(2)}kW
                   </text>
 
                   <!-- Electricity -->
-                  <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
-                  <text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                  <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
+                  <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                       ${((this.getSensorState('legend.total_powerinput')?.state || 0) / 1000).toFixed(2)}kW
                   </text>
 
+                  <!-- Boiler -->
+                  ${this.isHybrid()
+                       ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Boiler</text>
+                             <text id="legend.boilerValue" x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                ${this.getSensorState('cic.boiler_heating')?.state || 'Off'}
+                             </text>`
+                      : svg``
+                  }
+
                   <!-- Shower -->
                   ${this.isAllElectric()
-                      ? svg`<text x="70" y="640" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
-                            <text x="70" y="675" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                ${this.getSensorState('shower_minutes_remaining')?.state || 0} min
+                      ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
+                            <text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
                             </text>`
                       : svg``
                   }
