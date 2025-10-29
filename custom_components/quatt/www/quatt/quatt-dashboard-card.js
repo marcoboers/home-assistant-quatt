@@ -304,7 +304,7 @@ class QuattDashboardCard extends LitElement {
                   }
 
                   <!-- Title -->
-                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">My house</text>
+                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config.current_setup.house_label}</text>
 
                   <!-- Water temperature -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Water temperature</text>
@@ -850,6 +850,15 @@ class QuattDashboardCard extends LitElement {
                     type: "grid",
                     name: "current_setup",
                     schema: [
+                        {
+                            name: "house_label",
+                            required: true,
+                            selector: {
+                                text: {
+                                    max_length: 32
+                                }
+                            }
+                        },
                         {
                             name: "system_hostname",
                             required: true,
