@@ -289,6 +289,36 @@ class QuattDashboardCard extends LitElement {
                       }
                   </clipPath>
 
+                  <filter id="softGlow" x="-200%" y="-200%" width="400%" height="400%">
+                      <feGaussianBlur stdDeviation="8" result="b"/>
+                      <feMerge>
+                          <feMergeNode in="b"/>
+                          <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                  </filter>
+                  <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+                      <stop offset="0%" stop-color="#ffffff" stop-opacity="0" />
+                      <stop offset="45%" stop-color="#ffffff" stop-opacity="0.9" />
+                      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.9" />
+                      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                  </linearGradient>
+                  <clipPath id="solarGlare">
+                      ${this.hasSolarCollector()
+                        && this.getSensorState('sun')?.state == 'above_horizon'
+                          ? svg`<polygon points="684 1001,744 1093,945 990,887 902" style=" fill: blue; stroke:black;"/>`
+                          : svg``
+                      }
+                      
+                      ${this.hasSolarPanels()
+                        && this.getSensorState('solar_power')?.state >= 0.001
+                          ? svg`<polygon points="1002 610,1110 762,1212 712,1103 560" style=" fill: blue; stroke:black;"/>
+                                <polygon points="1117 553,1224 705,1315 657,1207 508" style=" fill: blue; stroke:black;"/>
+                                <polygon points="1220 502,1327 650,1425 602,1317 453" style=" fill: blue; stroke:black;"/>
+                                <polygon points="1331 446,1437 595,1528 547,1423 401" style=" fill: blue; stroke:black;"/>`
+                          : svg``
+                      }
+                  </clipPath>
+
                   <filter id="smokeBlur">
                       <feGaussianBlur in="SourceGraphic" stdDeviation="8"/>
                   </filter>
@@ -643,27 +673,14 @@ class QuattDashboardCard extends LitElement {
                       : svg``
               }
 
-              ${this.hasSolarPanels()
-                && this.getSensorState('solar_power')?.state >= 1
-                  ? svg`<g id="quatt.solarTwinkles" transform="translate(630, 350) rotate(-26.5, 545, 945)">
-                          <circle class="solar-twinkle" cx="720" cy="320" r="4" fill="#FFE87C" style="animation-delay: 0s;"/>
-                          <circle class="solar-twinkle" cx="820" cy="280" r="3" fill="#FFF4A3" style="animation-delay: 0.5s;"/>
-                          <circle class="solar-twinkle" cx="950" cy="340" r="5" fill="#FFEB99" style="animation-delay: 1s;"/>
-                          <circle class="solar-twinkle" cx="1050" cy="300" r="4" fill="#FFE87C" style="animation-delay: 1.5s;"/>
-                          <circle class="solar-twinkle" cx="780" cy="380" r="3" fill="#FFF9CC" style="animation-delay: 2s;"/>
-                          <circle class="solar-twinkle" cx="900" cy="260" r="4" fill="#FFE87C" style="animation-delay: 2.5s;"/>
-                          <circle class="solar-twinkle" cx="1100" cy="360" r="3" fill="#FFF4A3" style="animation-delay: 0.8s;"/>
-                          <circle class="solar-twinkle" cx="850" cy="400" r="5" fill="#FFEB99" style="animation-delay: 1.3s;"/>
-                          <circle class="solar-twinkle" cx="1130" cy="340" r="4" fill="#FFE87C" style="animation-delay: 1.8s;"/>
-                          <circle class="solar-twinkle" cx="1020" cy="420" r="3" fill="#FFF9CC" style="animation-delay: 2.3s;"/>
-                          <circle class="solar-twinkle" cx="760" cy="300" r="4" fill="#FFE87C" style="animation-delay: 0.3s;"/>
-                          <circle class="solar-twinkle" cx="920" cy="360" r="3" fill="#FFF4A3" style="animation-delay: 1.1s;"/>
-                          <circle class="solar-twinkle" cx="1080" cy="280" r="5" fill="#FFEB99" style="animation-delay: 1.6s;"/>
-                          <circle class="solar-twinkle" cx="1150" cy="420" r="4" fill="#FFE87C" style="animation-delay: 2.1s;"/>
-                          <circle class="solar-twinkle" cx="1000" cy="380" r="3" fill="#FFF9CC" style="animation-delay: 0.6s;"/>
-                      </g>`
-                  : svg``
-              }
+              <g clip-path="url(#solarGlare)" filter="url(#softGlow)">
+                  <rect x="500" y="220" width="1200" height="900" fill="#7ad6ff" opacity="0.15">
+                      <animate attributeName="opacity" values="0.08;0.18;0.10;0.18;0.08" dur="6s" repeatCount="indefinite"></animate>
+                  </rect>
+                  <rect id="sweepBar" x="100" y="0" width="300" height="1400" fill="url(#sweep)" opacity="0.6">
+                      <animateTransform attributeName="transform" type="translate" from="100 0" to="1500 0" dur="5.5s" repeatCount="indefinite"></animateTransform>
+                  </rect>
+              </g>
               
               ${this.hasSolarPanels()
                   ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
@@ -675,24 +692,11 @@ class QuattDashboardCard extends LitElement {
                                   font-family="Arial, sans-serif"
                                   font-weight="bold"
                                   fill="#ffffff">
-                              ${((this.getSensorState('solar_power')?.state || 0) / 1000).toFixed(2)}kW
+                              ${((this.getSensorState('solar_power')?.state || 0) / 1).toFixed(3)}kW
                             </text>
                         </g>`
                   : svg``
                 }
-
-        ${this.hasSolarCollector()
-          && this.getSensorState('sun')?.state == 'above_horizon'
-            ? svg`<g id="quatt.solarCollectorTwinkles" transform="translate(250, 710) rotate(-26.5, 545, 945)">
-                          <circle class="solar-twinkle" cx="800" cy="330" r="4" fill="#FFE87C" style="animation-delay: 0s;"/>
-                          <circle class="solar-twinkle" cx="860" cy="350" r="3" fill="#FFF4A3" style="animation-delay: 0.5s;"/>
-                          <circle class="solar-twinkle" cx="950" cy="340" r="5" fill="#FFEB99" style="animation-delay: 1s;"/>
-                          <circle class="solar-twinkle" cx="780" cy="380" r="3" fill="#FFF9CC" style="animation-delay: 2s;"/>
-                          <circle class="solar-twinkle" cx="850" cy="400" r="5" fill="#FFEB99" style="animation-delay: 1.3s;"/>
-                          <circle class="solar-twinkle" cx="920" cy="360" r="3" fill="#FFF4A3" style="animation-delay: 1.1s;"/>
-                      </g>`
-                  : svg``
-              }
 
               ${this.hasElectricBoiler()
                   ? svg`` : svg``
@@ -1173,20 +1177,6 @@ class QuattDashboardCard extends LitElement {
                 stroke-linecap: round;
                 stroke-dasharray: 0 200;
                 stroke-dashoffset: 0;
-            }
-
-            @keyframes twinkle {
-                0%, 100% {
-                    opacity: 0;
-                }
-                50% {
-                    opacity: 1;
-                }
-            }
-
-            .solar-twinkle {
-                animation: twinkle 2s ease-in-out infinite;
-                filter: blur(1.5px);
             }
         `;
     }
