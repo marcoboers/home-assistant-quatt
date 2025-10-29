@@ -318,18 +318,51 @@ class QuattDashboardCard extends LitElement {
                   <!-- Boiler -->
                   ${this.isHybrid()
                        ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Boiler</text>
-                             <text id="legend.boilerValue" x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                ${this.getSensorState('cic.boiler_heating')?.state || 'Off'}
-                             </text>`
+                            ${(() => {
+                              if (this.getSensorState('cic.boiler_heating')?.state == 'on')
+                                  return svg`<g id="quatt.legend.boilerIcon.flame">
+                                                 <path d="M 80 595 Q 77 590, 77 585 Q 77 580, 80 577 Q 81 574, 80 571 Q 79 569, 80 567 Q 82 565, 83 567 Q 84 569, 83 571 Q 82 574, 83 577 Q 86 580, 86 585 Q 86 590, 83 595 Q 81.5 597, 80 595 Z" fill="#FF6B35" stroke="#FF4500" stroke-width="0.5"/>
+                                                 <ellipse cx="81.5" cy="587" rx="2" ry="3" fill="#FFD700"/>
+                                             </g>
+                                             <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                                 ${this.getSensorState('cic.boiler_heating')?.state || 'Off'}
+                                             </text>`
+                                  return svg`<g id="quatt.legend.boilerIcon.euro" class="quatt-show">
+                                                <circle cx="80" cy="585" r="11" fill="none" stroke="#FFA500" stroke-width="2"/>
+                                                <path d="M 86 579 Q 82 577, 78 579 Q 74 581, 74 585 Q 74 589, 78 591 Q 82 593, 86 591" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                                                <line x1="72" y1="583" x2="84" y2="583" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                                                <line x1="72" y1="587" x2="84" y2="587" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                                            </g>
+                                             <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                                 ${this.getSensorState('cic.boiler_heating')?.state || 'Off'}
+                                             </text>`
+                          })()}`
                       : svg``
                   }
-
+                  
                   <!-- Shower -->
                   ${this.isAllElectric()
                       ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
-                            <text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
-                            </text>`
+                            ${(() => {
+                                if (this.getSensorState('heat_battery.heat_battery_domestic_hot_water_on')?.state == 'on')
+                                  return svg`<g id="quatt.legend.showerIcon.down">
+                                                 <path d="M 80 577 L 80 593 M 80 593 L 74 587 M 80 593 L 86 587" fill="none" stroke="#FF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                             </g>
+                                             <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
+                                             </text>`
+                                if (this.getSensorState('heat_battery.heat_battery_charging')?.state == 'on')
+                                  return svg`<g id="quatt.legend.showerIcon.up">
+                                                <path d="M 80 593 L 80 577 M 80 577 L 74 583 M 80 577 L 86 583" fill="none" stroke="#44FF44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                             </g>
+                                             <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
+                                             </text>`
+                                
+                                return svg`<text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                               ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
+                                           </text>`
+                            })()}`
                       : svg``
                   }
               </g>
