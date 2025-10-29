@@ -39,7 +39,7 @@ class QuattDashboardCard extends LitElement {
         return !!this.getSensorState('other.solar_power')?.state
     }
     hasSolarCollector() {
-        return !!this.config?.[`other`][`has_solar_collector`]
+        return !!(this.config?.[`other`]?.[`has_solar_collector`] ?? false)
     }
     hasHotWaterCylinder() {
         return !!this.getSensorState('other.hot_water_cylinder_percentage')?.state
