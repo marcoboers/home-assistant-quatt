@@ -674,7 +674,8 @@ class QuattDashboardCard extends LitElement {
                                   font-family="Arial, sans-serif"
                                   font-weight="bold"
                                   fill="#ffffff">
-                              ${((this.getSensorState('other.solar_power')?.state || 0) / 1).toFixed(3)}kW
+                              ${((this.getSensorState('other.solar_power')?.state || 0) / 1).toFixed(3)}
+                              ${this.getSensorState('other.solar_power').attributes['unit_of_measurement']}
                             </text>
                         </g>`
                   : svg``
