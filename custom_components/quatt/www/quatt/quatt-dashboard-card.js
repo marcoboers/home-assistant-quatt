@@ -1060,8 +1060,8 @@ class QuattDashboardCard extends LitElement {
                 if (schema.name === "hp1_workingmode") return "HP1 working mode";
                 if (schema.name === "hp1_waterdelta") return "HP1 water delta";
                 if (schema.name === "hp1_temperatureoutside") return "HP1 outside temperature";
-                if (schema.name === "hp2_workingmode") return "HP1 working mode";
-                if (schema.name === "hp2_waterdelta") return "HP1 water delta";
+                if (schema.name === "hp2_workingmode") return "HP2 working mode";
+                if (schema.name === "hp2_waterdelta") return "HP2 water delta";
                 if (schema.name === "cic_central_heating_on") return "CIC central heating on";
                 if (schema.name === "boiler_heating") return "Boiler heating";
                 if (schema.name === "flowmeter_temperature") return "Flowmeter temperature";
