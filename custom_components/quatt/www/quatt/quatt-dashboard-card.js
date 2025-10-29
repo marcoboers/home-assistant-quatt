@@ -611,13 +611,17 @@ class QuattDashboardCard extends LitElement {
                     : svg``
               }
               
-              ${this.isAllElectric()
+              ${this.isAllElectric() || this.hasElectricBoiler()
                     ? svg`<g id="quatt.waterTankIndicator">
                           <defs>
                               <linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                   <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                  <stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('heat_battery_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                  <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('heat_battery_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                  ${this.isAllElectric()
+                                    ? svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('heat_battery_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                          <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('heat_battery_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
+                                    : svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('electric_boiler_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                          <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('electric_boiler_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
+                                  }
                                   <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                               </linearGradient>
                           
@@ -644,30 +648,34 @@ class QuattDashboardCard extends LitElement {
                           </defs>
         
                           <!-- Main water fill -->
-                          <rect x="305" y="1070" width="70" height="195"
-                                fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>
-        
+                          ${this.isAllElectric()
+                            ? svg`<rect x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
+                            : svg`<rect x="508" y="990" width="79" height="165" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
+                          }
+
                           <!-- Glossy highlight overlay -->
-                          <rect x="310" y="1075" width="25" height="180"
-                                fill="url(#waterGloss)" rx="20" opacity="0.6"/>
-        
+                          ${this.isAllElectric()
+                            ? svg`<rect x="310" y="1075" width="25" height="180" fill="url(#waterGloss)" rx="20" opacity="0.6"/>`
+                            : svg`<rect x="513" y="995" width="28" height="150" fill="url(#waterGloss)" rx="20" opacity="0.6"/>`
+                          }
+
                           <!-- Subtle shine on edges -->
-                          <rect x="305" y="1070" width="70" height="190"
-                                fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>
-        
+                          ${this.isAllElectric()
+                            ? svg`<rect x="305" y="1070" width="70" height="195" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>`
+                            : svg`<rect x="508" y="990" width="79" height="165" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>`
+                          }
+
                           <!-- Percentage text -->
-                          <text x="340" y="1172"
-                                id="tankPercentage"
-                                style="cursor: pointer;"
-                                text-anchor="middle"
-                                font-size="24"
-                                font-family="Arial, sans-serif"
-                                font-weight="bold"
-                                fill="#ffffff"
-                                stroke="#000000"
-                                stroke-width="0.5"
-                                opacity="0.9">
-                              ${Math.round(this.getSensorState('heat_battery_percentage')?.state || 0)}%
+                          <text 
+                            x="${(() => this.isAllElectric() ? '340' : '547')()}"
+                            y="${(() => this.isAllElectric() ? '1172' : '1080')()}"
+                            id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9"
+                          >
+                              ${(() => this.isAllElectric()
+                                  ? Math.round(this.getSensorState('heat_battery_percentage')?.state || 0)
+                                  : Math.round(this.getSensorState('electric_boiler_percentage')?.state || 0)
+                                )()
+                              }%
                           </text>
                       </g>`
                       : svg``
@@ -697,10 +705,6 @@ class QuattDashboardCard extends LitElement {
                         </g>`
                   : svg``
                 }
-
-              ${this.hasElectricBoiler()
-                  ? svg`` : svg``
-              }             
 
               <!-- Temperature displays -->
               <g id="quatt.temperatures" class="quatt-show">
