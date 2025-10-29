@@ -42,7 +42,7 @@ class QuattDashboardCard extends LitElement {
         return !!(this.config?.[`other`]?.[`has_solar_collector`] ?? false)
     }
     hasHotWaterCylinder() {
-        return !!this.getSensorState('other.hot_water_cylinder_percentage')?.state
+        return !!this.getSensorState('other.hot_water_cylinder_temperature')?.state
     }
     isMonoHeatpump() {
         return this.getSensorState('current_setup.system_hostname')?.attributes['Duo heatpump system'] === false ||
@@ -297,6 +297,16 @@ class QuattDashboardCard extends LitElement {
                       <feGaussianBlur in="SourceGraphic" stdDeviation="8"/>
                   </filter>
               </defs>
+
+              <!-- Sunshine -->
+              <g clip-path="url(#solarGlare)" filter="url(#softGlow)">
+                  <rect x="500" y="220" width="1200" height="900" fill="#7ad6ff" opacity="0.15">
+                      <animate attributeName="opacity" values="0.08;0.18;0.10;0.18;0.08" dur="6s" repeatCount="indefinite"></animate>
+                  </rect>
+                  <rect id="sweepBar" x="100" y="0" width="300" height="1400" fill="url(#sweep)" opacity="0.6">
+                      <animateTransform attributeName="transform" type="translate" from="100 0" to="1500 0" dur="5.5s" repeatCount="indefinite"></animateTransform>
+                  </rect>
+              </g>
 
               <g id="quatt.legend">
                   ${this.isHybrid()
@@ -588,17 +598,16 @@ class QuattDashboardCard extends LitElement {
               ${this.isAllElectric() || this.hasHotWaterCylinder()
                     ? svg`<g id="quatt.waterTankIndicator">
                           <defs>
-                              <linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                  <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                  ${this.isAllElectric()
-                                    ? svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('heat_battery.heat_battery_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                          <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('heat_battery.heat_battery_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
-                                    : svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('other.hot_water_cylinder_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                          <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('other.hot_water_cylinder_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
-                                  }
-                                  <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
-                              </linearGradient>
-                          
+                              ${this.isAllElectric()
+                                ? svg`<linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                      <stop id="gradientStop2" offset="${Math.max(0, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                      <stop id="gradientStop3" offset="${Math.min(100, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                      <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                    </linearGradient>`
+                                : svg``
+                              }
+
                               <!-- Inner shadow for depth -->
                               <filter id="waterDepth" x="-50%" y="-50%" width="200%" height="200%">
                                   <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
@@ -624,7 +633,27 @@ class QuattDashboardCard extends LitElement {
                           <!-- Main water fill -->
                           ${this.isAllElectric()
                             ? svg`<rect x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
-                            : svg`<rect x="508" y="990" width="79" height="165" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
+                            : svg`<rect x="508" y="990" width="79" height="165" 
+                                        fill="${(() => {switch (true) {
+                                              case (10 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#0066FF';
+                                              case (20 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#2461E4';
+                                              case (30 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#495CCA';
+                                              case (40 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#6D57AF';
+                                              case (50 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#925394';
+                                              case (60 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#B64E79';
+                                              case (70 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#DB495F';
+                                              case (80 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#FF4444';
+                                        }})()}" 
+                                        opacity="0.5"
+                                        rx="28" filter="url(#waterDepth)"/>`
                           }
 
                           <!-- Glossy highlight overlay -->
@@ -646,23 +675,14 @@ class QuattDashboardCard extends LitElement {
                             id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9"
                           >
                               ${(() => this.isAllElectric()
-                                  ? Math.round(this.getSensorState('heat_battery.heat_battery_percentage')?.state || 0)
-                                  : Math.round(this.getSensorState('other.hot_water_cylinder_percentage')?.state || 0)
+                                  ? Math.round(this.getSensorState('heat_battery.heat_battery_percentage')?.state || 0)+'%'
+                                  : Math.round(this.getSensorState('other.hot_water_cylinder_temperature')?.state || 0)+'°C'
                                 )()
-                              }%
+                              }
                           </text>
                       </g>`
                       : svg``
               }
-
-              <g clip-path="url(#solarGlare)" filter="url(#softGlow)">
-                  <rect x="500" y="220" width="1200" height="900" fill="#7ad6ff" opacity="0.15">
-                      <animate attributeName="opacity" values="0.08;0.18;0.10;0.18;0.08" dur="6s" repeatCount="indefinite"></animate>
-                  </rect>
-                  <rect id="sweepBar" x="100" y="0" width="300" height="1400" fill="url(#sweep)" opacity="0.6">
-                      <animateTransform attributeName="transform" type="translate" from="100 0" to="1500 0" dur="5.5s" repeatCount="indefinite"></animateTransform>
-                  </rect>
-              </g>
               
               ${this.hasSolarPanels()
                   ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
@@ -1028,7 +1048,7 @@ class QuattDashboardCard extends LitElement {
                             }
                         },
                         {
-                            name: "hot_water_cylinder_percentage",
+                            name: "hot_water_cylinder_temperature",
                             selector: {
                                 entity: {
                                     domain: "sensor"
@@ -1072,7 +1092,7 @@ class QuattDashboardCard extends LitElement {
                 if (schema.name === "heat_battery_domestic_hot_water_on") return "Heat battery domestic hot water on";
                 if (schema.name === "airco_hvac") return "Airco climate";
                 if (schema.name === "solar_power") return "Solar current production";
-                if (schema.name === "hot_water_cylinder_percentage") return "Hot water cylinder percentage";
+                if (schema.name === "hot_water_cylinder_temperature") return "Hot water cylinder temperature";
                 if (schema.name === "has_solar_collector") return "Solar collector";
                 if (schema.name === "sun") return "Sun";
                 return undefined;
@@ -1097,7 +1117,7 @@ class QuattDashboardCard extends LitElement {
                 if (schema.name === "heat_battery_domestic_hot_water_on") return "Provided by remote api";
                 if (schema.name === "airco_hvac") return "Provided by a other integration";
                 if (schema.name === "solar_power") return "Provided by a other integration";
-                if (schema.name === "hot_water_cylinder_percentage") return "Provided by a other integration";
+                if (schema.name === "hot_water_cylinder_temperature") return "Provided by a other integration";
                 if (schema.name === "has_solar_collector") return "Provided by a other integration";
                 if (schema.name === "sun") return "Provided by home assistant";
                 return undefined;
