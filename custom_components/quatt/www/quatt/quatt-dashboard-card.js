@@ -35,7 +35,7 @@ class QuattDashboardCard extends LitElement {
             hp2_waterdelta: 'sensor.heatpump_hp2_waterdelta',
             airco_hvac: 'climate.airco',
             solar_power: 'sensor.solar_current_power',
-            electric_boiler_percentage: 'sensor.electric_boiler_percentage',
+            hot_water_cylinder_percentage: 'sensor.hot_water_cylinder_percentage',
             sun: 'sun.sun',
         };
     }
@@ -67,8 +67,8 @@ class QuattDashboardCard extends LitElement {
     hasSolarCollector() {
         return !!this.config?.[`has_solar_collector`]
     }
-    hasElectricBoiler() {
-        return !!this.getSensorState('electric_boiler_percentage')?.state
+    hasHotWaterCylinder() {
+        return !!this.getSensorState('hot_water_cylinder_percentage')?.state
     }
     isMonoHeatpump() {
         return this.getSensorState('system_hostname')?.attributes['Duo heatpump system'] === false ||
@@ -199,7 +199,7 @@ class QuattDashboardCard extends LitElement {
                   ? svg`<image href="/local/quatt/src_assets_images_housesolarcollector.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
 
-              ${this.hasElectricBoiler()
+              ${this.hasHotWaterCylinder()
                   ? svg`<image href="/local/quatt/src_assets_images_houseboilercylinder.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
 
@@ -611,7 +611,7 @@ class QuattDashboardCard extends LitElement {
                     : svg``
               }
               
-              ${this.isAllElectric() || this.hasElectricBoiler()
+              ${this.isAllElectric() || this.hasHotWaterCylinder()
                     ? svg`<g id="quatt.waterTankIndicator">
                           <defs>
                               <linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -619,8 +619,8 @@ class QuattDashboardCard extends LitElement {
                                   ${this.isAllElectric()
                                     ? svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('heat_battery_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
                                           <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('heat_battery_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
-                                    : svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('electric_boiler_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                          <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('electric_boiler_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
+                                    : svg`<stop id="gradientStop2" offset="${Math.max(0, (this.getSensorState('hot_water_cylinder_percentage')?.state || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                          <stop id="gradientStop3" offset="${Math.min(100, (this.getSensorState('hot_water_cylinder_percentage')?.state || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>`
                                   }
                                   <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                               </linearGradient>
@@ -673,7 +673,7 @@ class QuattDashboardCard extends LitElement {
                           >
                               ${(() => this.isAllElectric()
                                   ? Math.round(this.getSensorState('heat_battery_percentage')?.state || 0)
-                                  : Math.round(this.getSensorState('electric_boiler_percentage')?.state || 0)
+                                  : Math.round(this.getSensorState('hot_water_cylinder_percentage')?.state || 0)
                                 )()
                               }%
                           </text>
@@ -1013,7 +1013,7 @@ class QuattDashboardCard extends LitElement {
                     }
                 },
                 {
-                    name: "electric_boiler_percentage_entity",
+                    name: "hot_water_cylinder_percentage_entity",
                     selector: {
                         entity: {
                             domain: "sensor"
