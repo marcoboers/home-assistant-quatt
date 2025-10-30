@@ -560,6 +560,16 @@
                       font-weight="bold"
                       fill="#ffffff">--°C</text>
             </g>
+            <g id="aircoTemperature" style="cursor: pointer;">
+                <rect x="350" y="875" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="355" y="890" font-size="14" font-family="Arial" fill="#999999">Airco</text>
+                <text id="temp.room" x="420" y="908"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#ffffff">--°C</text>
+            </g>
             <g id="outsideTemperature" style="cursor: pointer;">
                 <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
                 <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
@@ -725,6 +735,7 @@
 
     const tank = document.getElementById('tankPercentage');
     const room = document.getElementById('roomTemperature');
+    const ac = document.getElementById('aircoTemperature');
     const outside = document.getElementById('outsideTemperature');
     const waterPipe = document.getElementById('waterPipeTemperature');
     const hp1Delta = document.getElementById('hp1DeltaTemperature');
@@ -746,6 +757,15 @@
 
         room.addEventListener('mouseleave', () => {
             document.getElementById('tooltipRoomTemperature').classList.remove('tooltip-show');
+        });
+    }
+    if (ac) {
+        room.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipAircoTemperature').classList.add('tooltip-show');
+        });
+
+        room.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipAircoTemperature').classList.remove('tooltip-show');
         });
     }
     if (outside) {

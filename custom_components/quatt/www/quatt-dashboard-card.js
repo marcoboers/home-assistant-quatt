@@ -87,6 +87,7 @@ class QuattDashboardCard extends LitElement {
     firstUpdated() {
         const tank = this.shadowRoot.querySelector('#tankPercentage');
         const room = this.shadowRoot.querySelector('#roomTemperature');
+        const ac = this.shadowRoot.querySelector('#aircoTemperature');
         const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
         const hp1Delta = this.shadowRoot.querySelector('#hp1DeltaTemperature');
         const hp2Delta = this.shadowRoot.querySelector('#hp2DeltaTemperature');
@@ -107,6 +108,31 @@ class QuattDashboardCard extends LitElement {
 
             room.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.remove('tooltip-show');
+            });
+
+            room.addEventListener('click', () => {
+                const thermostatEntity = this.config?.other?.thermostat_hvac;
+
+                if (thermostatEntity) {
+                    this._openMoreInfo(thermostatEntity);
+                }
+            });
+        }
+        if (ac) {
+            ac.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.add('tooltip-show');
+            });
+
+            ac.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.remove('tooltip-show');
+            });
+
+            ac.addEventListener('click', () => {
+                const aircoEntity = this.config?.other?.airco_hvac;
+
+                if (aircoEntity) {
+                    this._openMoreInfo(aircoEntity);
+                }
             });
         }
         if (waterPipe) {
@@ -136,6 +162,15 @@ class QuattDashboardCard extends LitElement {
                 this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.remove('tooltip-show');
             });
         }
+    }
+
+    _openMoreInfo(entityId) {
+        const event = new Event('hass-more-info', {
+            bubbles: true,
+            composed: true,
+        });
+        event.detail = { entityId };
+        this.dispatchEvent(event);
     }
 
     render() {
@@ -781,6 +816,21 @@ class QuattDashboardCard extends LitElement {
                           ${Math.round(this.getSensorState('cic.thermostat_room_temperature')?.state || 0)}°C
                       </text>
                   </g>
+                  ${this.hasAirco()
+                    ? svg`<g id="aircoTemperature" style="cursor: pointer;">
+                          <rect x="350" y="875" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                          <text x="355" y="890" font-size="14" font-family="Arial" fill="#999999">Airco</text>
+                          <text id="temp.room" x="420" y="908"
+                                text-anchor="middle"
+                                font-size="18"
+                                font-family="Arial, sans-serif"
+                                font-weight="bold"
+                                fill="#ffffff">
+                              ${Math.round(this.getSensorState('other.airco_hvac')?.attributes['current_temperature'] || 0)}°C
+                          </text>
+                      </g>` 
+                    : svg``
+                  }
                   <g id="outsideTemperature" style="cursor: pointer;">
                       <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
@@ -857,6 +907,18 @@ class QuattDashboardCard extends LitElement {
                       <text x="565" y="1340" font-size="16" font-family="Arial, sans-serif" fill="#999999">Heating:</text>
                       <text x="920" y="1340" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.thermostat_heating')?.state}</text>
                   </g>
+                  ${this.hasAirco()
+                    ? svg`<g id="tooltipAircoTemperature" transform="translate(120, -108)">
+                              <rect x="350" y="875" width="400" height="145" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                              <text x="365" y="910" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room temperature:</text>
+                              <text x="720" y="910" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.airco_hvac')?.attributes['current_temperature']}</text>
+                              <text x="365" y="955" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room setpoint:</text>
+                              <text x="720" y="955" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.airco_hvac')?.attributes['temperature']}</text>
+                              <text x="365" y="980" font-size="16" font-family="Arial, sans-serif" fill="#999999">Mode:</text>
+                              <text x="720" y="980" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.airco_hvac')?.state}</text>
+                          </g>`
+                    : svg``
+                  }
                   <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">
                       <rect x="560" y="1500" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="575" y="1535" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
@@ -1325,6 +1387,14 @@ class QuattDashboardCard extends LitElement {
                     name: "other",
                     schema: [
                         {
+                            name: "thermostat_hvac",
+                            selector: {
+                                entity: {
+                                    domain: "climate"
+                                }
+                            }
+                        },
+                        {
                             name: "airco_hvac",
                             selector: {
                                 entity: {
@@ -1402,6 +1472,7 @@ class QuattDashboardCard extends LitElement {
                 if (schema.name === "heat_battery_top_temperature") return "Heat battery top temperature";
                 if (schema.name === "heat_battery_middle_temperature") return "Heat battery middle temperature";
                 if (schema.name === "heat_battery_bottom_temperature") return "Heat battery bottom temperature";
+                if (schema.name === "thermostat_hvac") return "Thermostat climate";
                 if (schema.name === "airco_hvac") return "Airco climate";
                 if (schema.name === "solar_power") return "Solar current production";
                 if (schema.name === "hot_water_cylinder_temperature") return "Hot water cylinder temperature";
@@ -1445,6 +1516,7 @@ class QuattDashboardCard extends LitElement {
                 if (schema.name === "heat_battery_top_temperature") return "Provided by local api";
                 if (schema.name === "heat_battery_middle_temperature") return "Provided by local api";
                 if (schema.name === "heat_battery_bottom_temperature") return "Provided by local api";
+                if (schema.name === "thermostat_hvac") return "Provided by a other integration";
                 if (schema.name === "airco_hvac") return "Provided by a other integration";
                 if (schema.name === "solar_power") return "Provided by a other integration";
                 if (schema.name === "hot_water_cylinder_temperature") return "Provided by a other integration";
