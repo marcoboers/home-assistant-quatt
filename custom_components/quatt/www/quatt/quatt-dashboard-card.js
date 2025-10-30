@@ -709,7 +709,7 @@ class QuattDashboardCard extends LitElement {
               ${this.hasSolarPanels()
                   ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
                             <rect x="1100" y="675" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
-                            <text x="1105" y="680" font-size="14" font-family="Arial" fill="#999999">Solar</text>
+                            <text x="1105" y="690" font-size="14" font-family="Arial" fill="#999999">Solar</text>
                             <text id="temp.waterPipe" x="1170" y="708"
                                   text-anchor="middle"
                                   font-size="18"
