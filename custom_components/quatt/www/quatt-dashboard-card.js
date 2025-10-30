@@ -40,6 +40,13 @@ class QuattDashboardCard extends LitElement {
         return this.hass.states[entityId];
     }
 
+    isReady() {
+        return this.hass
+                && this.config
+                && this.getSensorState('current_setup.system_hostname')
+                && this.getSensorState('current_setup.heatpump_1_odu_type')
+    }
+
     isHybrid() {
         return this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === false ||
             this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === 'false';
@@ -132,8 +139,17 @@ class QuattDashboardCard extends LitElement {
     }
 
     render() {
-        if (!this.hass || !this.config) {
-            return html`<ha-card>Loading...</ha-card>`;
+        if (!this.isReady()) {
+            return html`
+              <wired-card elevation="2">
+                  <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
+                      <image href="${this._BASE_URL}/src_assets_images_houseallev2.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                      <image href="${this._BASE_URL}/src_assets_images_houseairco.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                      <image href="${this._BASE_URL}/src_assets_images_housesolarpanels.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                      <image href="${this._BASE_URL}/src_assets_images_housesolarcollector.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                  </svg>
+              </wired-card>
+            `;
         }
 
         return html`
@@ -317,7 +333,7 @@ class QuattDashboardCard extends LitElement {
                   <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
 
                   <!-- Title -->
-                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config.current_setup.house_label}</text>
+                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config?.current_setup?.house_label}</text>
 
                   <!-- Heat -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
@@ -850,7 +866,7 @@ class QuattDashboardCard extends LitElement {
                       <text x="575" y="1605" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
                       <text x="930" y="1605" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_workingmode')?.state}</text>
                       <text x="575" y="1640" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
-                      <text x="930" y="1640" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_quatt_cop')?.state}</text>
+                      <text x="930" y="1640" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_cop')?.state}</text>
                       <text x="575" y="1675" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
                       <text x="930" y="1675" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_powerinput')?.state}</text>
                       <text x="575" y="1710" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
@@ -867,7 +883,7 @@ class QuattDashboardCard extends LitElement {
                                 <text x="435" y="1540" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
                                 <text x="790" y="1540" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_workingmode')?.state}</text>
                                 <text x="435" y="1575" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
-                                <text x="790" y="1575" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_quatt_cop')?.state}</text>
+                                <text x="790" y="1575" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_cop')?.state}</text>
                                 <text x="435" y="1610" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
                                 <text x="790" y="1610" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput')?.state}</text>
                                 <text x="435" y="1645" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
