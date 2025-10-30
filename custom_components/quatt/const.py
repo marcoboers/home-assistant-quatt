@@ -10,6 +10,9 @@ NAME = "Quatt"
 DOMAIN = "quatt"
 ATTRIBUTION = "Data provided by Quatt"
 
+CARD_FILE = "quatt-dashboard-card.js"
+CARD_MOUNT = "/quatt-dashboard-card"
+
 CONF_POWER_SENSOR = "power_sensor"
 CONF_REMOTE_CIC = "cic"
 CONF_LOCAL_CIC = "ip_address"

@@ -6,6 +6,22 @@ import {
 } from "https://unpkg.com/lit-element@2.0.1/lit-element.js?module";
 
 class QuattDashboardCard extends LitElement {
+    // Determine the base url and version of this card <script src=".../quatt-dashboard-card.js?v=...">
+    static _getBaseUrlAndVersion() {
+        // e.g. /quatt-dashboard-card/quatt-dashboard-card.js?v=1.2.3
+        const url = new URL(import.meta.url);
+        const base = url.pathname.slice(0, url.pathname.lastIndexOf("/"));
+        const version = url.searchParams.get("v") || "0";
+        return { base, version };
+    }
+
+   constructor() {
+        super();
+        const { base, version } = QuattDashboardCard._getBaseUrlAndVersion();
+        this._BASE_URL = base;
+        this._VERSION = version;
+    }
+
     static get properties() {
         return {
             hass: {},
@@ -124,46 +140,46 @@ class QuattDashboardCard extends LitElement {
       <wired-card elevation="2">
           <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
               ${!this.isAllElectric()
-                 ? svg`<image href="/local/quatt/src_assets_images_housechimney.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+                 ? svg`<image href="${this._BASE_URL}/src_assets_images_housechimney.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
-              
+
               ${this.isAllElectric()
                   ? (this.isMonoHeatpump()
                       ? (this.getSystemVersion() === 'V2'
-                          ? svg`<image href="/local/quatt/src_assets_images_houseallev2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
-                          : svg`<image href="/local/quatt/src_assets_images_houseallev1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          ? svg`<image href="${this._BASE_URL}/src_assets_images_houseallev2.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="${this._BASE_URL}/src_assets_images_houseallev1.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                       : (this.getSystemVersion() === 'V2'
-                          ? svg`<image href="/local/quatt/src_assets_images_houseallev2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
-                          : svg`<image href="/local/quatt/src_assets_images_houseallev1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          ? svg`<image href="${this._BASE_URL}/src_assets_images_houseallev2duo.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="${this._BASE_URL}/src_assets_images_houseallev1duo.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                   )
                   : (this.isMonoHeatpump()
                       ? (this.getSystemVersion() === 'V2'
-                          ? svg`<image href="/local/quatt/src_assets_images_househybridv2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
-                          : svg`<image href="/local/quatt/src_assets_images_househybridv1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          ? svg`<image href="${this._BASE_URL}/src_assets_images_househybridv2.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="${this._BASE_URL}/src_assets_images_househybridv1.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                       : (this.getSystemVersion() === 'V2'
-                          ? svg`<image href="/local/quatt/src_assets_images_househybridv2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
-                          : svg`<image href="/local/quatt/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          ? svg`<image href="${this._BASE_URL}/src_assets_images_househybridv2duo.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
+                          : svg`<image href="${this._BASE_URL}/src_assets_images_househybridv1duo.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>`
                       )
                   )
               }
 
               ${this.hasAirco()
-                  ? svg`<image href="/local/quatt/src_assets_images_houseairco.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+                  ? svg`<image href="${this._BASE_URL}/src_assets_images_houseairco.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
 
               ${this.hasSolarPanels()
-                  ? svg`<image href="/local/quatt/src_assets_images_housesolarpanels.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+                  ? svg`<image href="${this._BASE_URL}/src_assets_images_housesolarpanels.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
 
               ${this.hasSolarCollector()
-                  ? svg`<image href="/local/quatt/src_assets_images_housesolarcollector.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+                  ? svg`<image href="${this._BASE_URL}/src_assets_images_housesolarcollector.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
 
               ${this.hasHotWaterCylinder()
-                  ? svg`<image href="/local/quatt/src_assets_images_houseboilercylinder.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
+                  ? svg`<image href="${this._BASE_URL}/src_assets_images_houseboilercylinder.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
               }
 
               <defs>
@@ -271,7 +287,7 @@ class QuattDashboardCard extends LitElement {
                           ? svg`<polygon points="684 1001,744 1093,945 990,887 902" style=" fill: blue; stroke:black;"/>`
                           : svg``
                       }
-                      
+
                       ${this.hasSolarPanels()
                         && this.getSensorState('other.solar_power')?.state >= 0.001
                           ? svg`<polygon points="1002 610,1110 762,1212 712,1103 560" style=" fill: blue; stroke:black;"/>
@@ -339,7 +355,7 @@ class QuattDashboardCard extends LitElement {
                           })()}`
                       : svg``
                   }
-                  
+
                   <!-- Shower -->
                   ${this.isAllElectric()
                       ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
@@ -358,7 +374,7 @@ class QuattDashboardCard extends LitElement {
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                                                  ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
                                              </text>`
-                                
+
                                 return svg`<text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                                                ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
                                            </text>`
@@ -409,7 +425,7 @@ class QuattDashboardCard extends LitElement {
                         </g>`
                   : svg``
               }
-              
+
               ${this.getSensorState('hp2.hp2_workingmode')?.state >= 1
                   ? svg`<g id="quatt.hp2Flow">
                           <path class="fog-line" pathLength="100" style="animation-duration: 4.3s; animation-delay: -0.5s; stroke: #E8F4F8; stroke-width: 3;"
@@ -548,7 +564,7 @@ class QuattDashboardCard extends LitElement {
                       </g>` : svg``
               }
 
-              ${this.isHybrid() 
+              ${this.isHybrid()
                 && this.getSensorState('cic.boiler_heating')?.state == 'on'
                   ? svg`<g id="quatt.chimneyPipe">
                           <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
@@ -588,7 +604,7 @@ class QuattDashboardCard extends LitElement {
                   : svg``
               }
 
-              ${this.isAllElectric() 
+              ${this.isAllElectric()
                 && this.getSensorState('heat_battery.heat_battery_domestic_hot_water_on')?.state == 'on'
                   ? svg`<g id="quatt.waterPipe">
                         <path d="M 421 1119 L 422 1186" stroke="url(#waterGradientDown)" stroke-width="5" fill="none" stroke-linecap="round"/>
@@ -604,7 +620,7 @@ class QuattDashboardCard extends LitElement {
                     </g>`
                     : svg``
               }
-              
+
               ${this.isAllElectric()
                 && this.getSensorState('heat_battery.heat_battery_charging')?.state == 'on'
                   ? svg`<g id="quatt.boilerSteam">
@@ -616,7 +632,7 @@ class QuattDashboardCard extends LitElement {
                     </g>`
                     : svg``
               }
-              
+
               ${this.isAllElectric() || this.hasHotWaterCylinder()
                     ? svg`<g id="quatt.waterTankIndicator">
                           <defs>
@@ -642,7 +658,7 @@ class QuattDashboardCard extends LitElement {
                                       <feMergeNode in="SourceGraphic"/>
                                   </feMerge>
                               </filter>
-        
+
                               <!-- Glossy highlight effect -->
                               <linearGradient id="waterGloss" x1="0%" y1="0%" x2="100%" y2="0%">
                                   <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0"/>
@@ -651,11 +667,11 @@ class QuattDashboardCard extends LitElement {
                                   <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
                               </linearGradient>
                           </defs>
-        
+
                           <!-- Main water fill -->
                           ${this.isAllElectric()
                             ? svg`<rect x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
-                            : svg`<rect x="508" y="990" width="79" height="165" 
+                            : svg`<rect x="508" y="990" width="79" height="165"
                                         fill="${(() => {switch (true) {
                                               case (10 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#0066FF';
@@ -673,7 +689,7 @@ class QuattDashboardCard extends LitElement {
                                                   return '#DB495F';
                                               case (80 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#FF4444';
-                                        }})()}" 
+                                        }})()}"
                                         opacity="0.5"
                                         rx="28" filter="url(#waterDepth)"/>`
                           }
@@ -691,7 +707,7 @@ class QuattDashboardCard extends LitElement {
                           }
 
                           <!-- Percentage text -->
-                          <text 
+                          <text
                             x="${(() => this.isAllElectric() ? '340' : '547')()}"
                             y="${(() => this.isAllElectric() ? '1172' : '1080')()}"
                             id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9"
@@ -705,7 +721,7 @@ class QuattDashboardCard extends LitElement {
                       </g>`
                       : svg``
               }
-              
+
               ${this.hasSolarPanels()
                   ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
                             <rect x="1100" y="675" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
@@ -790,7 +806,7 @@ class QuattDashboardCard extends LitElement {
                                     ? Math.round(this.getSensorState('hp2.hp2_waterdelta')?.state || 0)+'°C'
                                     : 'Off'}
                               </text>
-                          </g>` 
+                          </g>`
                       : svg``
                   }
 
@@ -859,7 +875,7 @@ class QuattDashboardCard extends LitElement {
                           </g>`
                       : svg``
                   }
-                  
+
               </g>
           </svg>
       </wired-card>
@@ -1442,7 +1458,7 @@ class QuattDashboardCard extends LitElement {
                 pointer-events: none;
                 transition: opacity 0.3s ease-in-out;
             }
-            
+
             @keyframes fogFlow {
                 0%   { stroke-dasharray: 0 200;  stroke-dashoffset: -64;  opacity: 0.60; }
                 40%  { stroke-dasharray: 45 200; stroke-dashoffset: -20;  opacity: 0.50; }
@@ -1572,3 +1588,13 @@ class QuattDashboardCard extends LitElement {
 }
 
 customElements.define("quatt-dashboard-card", QuattDashboardCard);
+
+// Register for the card picker (run once at module load)
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c) => c.type === "quatt-dashboard-card")) {
+    window.customCards.push({
+        type: "quatt-dashboard-card",
+        name: "Quatt Dashboard Card",
+        description: "Quatt heat pump dashboard card"
+    });
+}
