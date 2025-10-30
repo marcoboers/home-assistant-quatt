@@ -680,14 +680,10 @@ class QuattDashboardCard extends LitElement {
                                               case (30 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#495CCA';
                                               case (40 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
-                                                  return '#6D57AF';
-                                              case (50 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
-                                                  return '#925394';
-                                              case (60 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#B64E79';
-                                              case (70 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (50 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#DB495F';
-                                              case (80 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              default:
                                                   return '#FF4444';
                                         }})()}"
                                         opacity="0.5"
