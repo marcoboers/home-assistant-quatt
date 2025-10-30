@@ -40,6 +40,13 @@ class QuattDashboardCard extends LitElement {
         return this.hass.states[entityId];
     }
 
+    isReady() {
+        return this.hass
+                && this.config
+                && this.getSensorState('current_setup.system_hostname')
+                && this.getSensorState('current_setup.heatpump_1_odu_type')
+    }
+
     isHybrid() {
         return this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === false ||
             this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === 'false';
@@ -132,8 +139,17 @@ class QuattDashboardCard extends LitElement {
     }
 
     render() {
-        if (!this.hass || !this.config) {
-            return html`<ha-card>Loading...</ha-card>`;
+        if (!this.isReady()) {
+            return html`
+              <wired-card elevation="2">
+                  <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
+                      <image href="${this._BASE_URL}/src_assets_images_houseallev2.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                      <image href="${this._BASE_URL}/src_assets_images_houseairco.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                      <image href="${this._BASE_URL}/src_assets_images_housesolarpanels.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                      <image href="${this._BASE_URL}/src_assets_images_housesolarcollector.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+                  </svg>
+              </wired-card>
+            `;
         }
 
         return html`
@@ -317,7 +333,7 @@ class QuattDashboardCard extends LitElement {
                   <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
 
                   <!-- Title -->
-                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config.current_setup.house_label}</text>
+                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config?.current_setup?.house_label}</text>
 
                   <!-- Heat -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
@@ -680,10 +696,14 @@ class QuattDashboardCard extends LitElement {
                                               case (30 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#495CCA';
                                               case (40 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
-                                                  return '#B64E79';
+                                                  return '#6D57AF';
                                               case (50 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#925394';
+                                              case (60 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                                  return '#B64E79';
+                                              case (70 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#DB495F';
-                                              default:
+                                              case (80 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
                                                   return '#FF4444';
                                         }})()}"
                                         opacity="0.5"
