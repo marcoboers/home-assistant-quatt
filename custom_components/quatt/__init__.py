@@ -55,15 +55,13 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-async def async_setup(hass: HomeAssistant, config):
+async def async_setup(hass: HomeAssistant, _config):
     """Set up this integration."""
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
                 CARD_MOUNT,
-                hass.config.path(
-                    "custom_components/quatt/www"
-                ),
+                hass.config.path("custom_components/quatt/www"),
                 cache_headers=True,
             )
         ]

@@ -32,7 +32,7 @@ SWITCHES = {
     DEVICE_CIC_ID: [
         QuattSwitchEntityDescription(
             key="usePricingToLimitHeatPump",
-            name="Use pricing to limit heat pump",
+            name="Use pricing to limit heatpump",
             icon="mdi:currency-eur",
             quatt_features=QuattFeatureFlags(
                 mobile_api=True,
