@@ -29,31 +29,88 @@ class QuattDashboardCard extends LitElement {
         };
     }
 
-    jsonValueUsingPath(rec, path, index = 0) {
-        let item = rec[path[index]];
-
-        return ['string', 'number', 'bigint', 'boolean', 'undefined', 'symbol', 'null'].includes((typeof item).toLowerCase()) ? item : this.jsonValueUsingPath(item, path, index + 1)
+    _isTrue(value) {
+        return value === true || value === 'true';
     }
 
-    getSensorState(path) {
+    _isFalse(value) {
+        return value === false || value === 'false';
+    }
+
+    jsonValueUsingPath(rec, path, index = 0) {
+        let item = rec?.[path[index]];
+
+        return ['string', 'number', 'bigint', 'boolean', 'undefined', 'symbol', 'null'].includes((typeof item).toLowerCase()) ? item : this.jsonValueUsingPath(item, path, index + 1)
+
+    }
+    /**
+     * Get HA state by config path.
+     * Default: returns the full state object
+     * If options.number === true, returns a number
+     *
+     * @param {string} path - dot path into this.config (e.g. 'boiler.boiler_water_pressure')
+     * @param {object}  [options]
+     * @param {boolean} [options.number=true] - format .state as number
+     * @param {number}  [options.decimals=2]   - fraction digits to show
+     * @param {string}  [options.locale=navigator.language||'en-US'] - locale for formatting
+     * @param {boolean} [options.asString=true] - return string; if false returns Number rounded
+     * @param {*}       [options.fallback='0.00' or 0] - value if state is missing/non-numeric
+     */
+    getSensorState(path, options = {}) {
         const entityId = this.jsonValueUsingPath(this.config, path.split('.'));
-        return this.hass.states[entityId];
+        const stateObject = this.hass?.states?.[entityId];
+
+        // If no numeric formatting requested, return the full state object
+        if (!options.number)
+            return stateObject;
+
+        // If not found, return fallback
+        if (!stateObject)
+            return options.fallback;
+
+        // Numeric formatting
+        const raw = stateObject?.state;
+        const number = typeof raw === 'number' ? raw : Number(raw);
+        const decimals = Number.isInteger(options.decimals) ? options.decimals : 2;
+        const locale = options.locale || (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
+        const asString = options.asString !== false;
+
+        if (Number.isFinite(number)) {
+            if (asString) {
+                return number.toLocaleString(locale, {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals,
+                });
+            }
+            // Numeric result rounded to requested decimals
+            return Number(number.toFixed(decimals));
+        }
+
+        // Fallbacks when value is missing or non-numeric
+        if (asString) {
+            const fallback = options.fallback;
+            if (typeof fallback === 'string')
+                return fallback;
+            const zero = 0;
+            return zero.toLocaleString(locale, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals,
+            });
+        }
+        return typeof options.fallback === 'number' ? options.fallback : 0;
     }
 
     isReady() {
         return this.hass
                 && this.config
-                && this.getSensorState('current_setup.system_hostname')
-                && this.getSensorState('current_setup.heatpump_1_odu_type')
+                && this.getSensorState('system_setup.system')
     }
 
     isHybrid() {
-        return this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === false ||
-            this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === 'false';
+        return this._isFalse(this.getSensorState('system_setup.system')?.attributes['All electric system']);
     }
     isAllElectric() {
-        return this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === true ||
-            this.getSensorState('current_setup.system_hostname')?.attributes['All electric system'] === 'true';
+        return this._isTrue(this.getSensorState('system_setup.system')?.attributes['All electric system']);
     }
     hasAirco() {
         return !!this.getSensorState('other.airco_hvac')?.state
@@ -68,15 +125,16 @@ class QuattDashboardCard extends LitElement {
         return !!this.getSensorState('other.hot_water_cylinder_temperature')?.state
     }
     isMonoHeatpump() {
-        return this.getSensorState('current_setup.system_hostname')?.attributes['Duo heatpump system'] === false ||
-            this.getSensorState('current_setup.system_hostname')?.attributes['Duo heatpump system'] === 'false';
+        return this._isFalse(this.getSensorState('system_setup.system')?.attributes['Duo heatpump system']);
     }
     isDuoHeatpump() {
-        return this.getSensorState('current_setup.system_hostname')?.attributes['Duo heatpump system'] === true ||
-            this.getSensorState('current_setup.system_hostname')?.attributes['Duo heatpump system'] === 'true';
+        return this._isTrue(this.getSensorState('system_setup.system')?.attributes['Duo heatpump system']);
+    }
+    isBoilerOpentherm() {
+        return this._isTrue(this.getSensorState('system_setup.system')?.attributes['Opentherm system']);
     }
     getSystemVersion() {
-        switch (this.getSensorState('current_setup.heatpump_1_odu_type')?.state) {
+        switch (this.getSensorState('hp1.hp1_odu_type')?.state) {
             case 'AMM4-V2.0':
                 return 'V2';
             default:
@@ -141,19 +199,19 @@ class QuattDashboardCard extends LitElement {
     render() {
         if (!this.isReady()) {
             return html`
-              <wired-card elevation="2">
+              <ha-card>
                   <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
                       <image href="${this._BASE_URL}/src_assets_images_houseallev2.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
                       <image href="${this._BASE_URL}/src_assets_images_houseairco.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
                       <image href="${this._BASE_URL}/src_assets_images_housesolarpanels.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
                       <image href="${this._BASE_URL}/src_assets_images_housesolarcollector.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
                   </svg>
-              </wired-card>
+              </ha-card>
             `;
         }
 
         return html`
-      <wired-card elevation="2">
+      <ha-card>
           <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
               ${!this.isAllElectric()
                  ? svg`<image href="${this._BASE_URL}/src_assets_images_housechimney.png?v=${this._VERSION}" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>` : svg``
@@ -333,40 +391,40 @@ class QuattDashboardCard extends LitElement {
                   <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
 
                   <!-- Title -->
-                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config?.current_setup?.house_label}</text>
+                  <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config?.system_setup?.house_label}</text>
 
                   <!-- Heat -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
                   <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${((this.getSensorState('legend.total_power')?.state || 0) / 1000).toFixed(2)}kW
+                      ${((this.getSensorState('cic.total_power')?.state || 0) / 1000).toFixed(2)} kW
                   </text>
 
                   <!-- Electricity -->
                   <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
                   <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${((this.getSensorState('legend.total_powerinput')?.state || 0) / 1000).toFixed(2)}kW
+                      ${((this.getSensorState('cic.total_powerinput')?.state || 0) / 1000).toFixed(2)} kW
                   </text>
 
                   <!-- Boiler -->
                   ${this.isHybrid()
                        ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Boiler</text>
                             ${(() => {
-                              if (this.getSensorState('cic.boiler_heating')?.state == 'on')
-                                  return svg`<g id="quatt.legend.boilerIcon.flame">
+                              if (this.getSensorState('boiler.boiler_heating')?.state == 'on')
+                                  return svg`<g id="quatt.cic.boilerIcon.flame">
                                                  <path d="M 80 595 Q 77 590, 77 585 Q 77 580, 80 577 Q 81 574, 80 571 Q 79 569, 80 567 Q 82 565, 83 567 Q 84 569, 83 571 Q 82 574, 83 577 Q 86 580, 86 585 Q 86 590, 83 595 Q 81.5 597, 80 595 Z" fill="#FF6B35" stroke="#FF4500" stroke-width="0.5"/>
                                                  <ellipse cx="81.5" cy="587" rx="2" ry="3" fill="#FFD700"/>
                                              </g>
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                                 ${this.getSensorState('cic.boiler_heating')?.state || 'Off'}
+                                                 ${this.getSensorState('boiler.boiler_heating')?.state || 'Off'}
                                              </text>`
-                                  return svg`<g id="quatt.legend.boilerIcon.euro" class="quatt-show">
+                                  return svg`<g id="quatt.cic.boilerIcon.euro" class="quatt-show">
                                                 <circle cx="80" cy="585" r="11" fill="none" stroke="#FFA500" stroke-width="2"/>
                                                 <path d="M 86 579 Q 82 577, 78 579 Q 74 581, 74 585 Q 74 589, 78 591 Q 82 593, 86 591" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
                                                 <line x1="72" y1="583" x2="84" y2="583" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
                                                 <line x1="72" y1="587" x2="84" y2="587" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
                                             </g>
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                                 ${this.getSensorState('cic.boiler_heating')?.state || 'Off'}
+                                                 ${this.getSensorState('boiler.boiler_heating')?.state || 'Off'}
                                              </text>`
                           })()}`
                       : svg``
@@ -377,22 +435,22 @@ class QuattDashboardCard extends LitElement {
                       ? svg`<text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
                             ${(() => {
                                 if (this.getSensorState('heat_battery.heat_battery_domestic_hot_water_on')?.state == 'on')
-                                  return svg`<g id="quatt.legend.showerIcon.down">
+                                  return svg`<g id="quatt.cic.showerIcon.down">
                                                  <path d="M 80 577 L 80 593 M 80 593 L 74 587 M 80 593 L 86 587" fill="none" stroke="#FF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                                              </g>
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
+                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})} min
                                              </text>`
                                 if (this.getSensorState('heat_battery.heat_battery_charging')?.state == 'on')
-                                  return svg`<g id="quatt.legend.showerIcon.up">
+                                  return svg`<g id="quatt.cic.showerIcon.up">
                                                 <path d="M 80 593 L 80 577 M 80 577 L 74 583 M 80 577 L 86 583" fill="none" stroke="#44FF44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                                              </g>
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
+                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})} min
                                              </text>`
 
                                 return svg`<text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                               ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state || 0} min
+                                               ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})} min
                                            </text>`
                             })()}`
                       : svg``
@@ -581,7 +639,7 @@ class QuattDashboardCard extends LitElement {
               }
 
               ${this.isHybrid()
-                && this.getSensorState('cic.boiler_heating')?.state == 'on'
+                && this.getSensorState('boiler.boiler_heating')?.state == 'on'
                   ? svg`<g id="quatt.chimneyPipe">
                           <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
                       </g>
@@ -655,8 +713,8 @@ class QuattDashboardCard extends LitElement {
                               ${this.isAllElectric()
                                 ? svg`<linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                       <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop2" offset="${Math.max(0, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop3" offset="${Math.min(100, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                      <stop id="gradientStop2" offset="${Math.max(0, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) - 12.5)} %" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                      <stop id="gradientStop3" offset="${Math.min(100, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) + 12.5)} %" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                       <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                     </linearGradient>`
                                 : svg``
@@ -689,21 +747,21 @@ class QuattDashboardCard extends LitElement {
                             ? svg`<rect x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
                             : svg`<rect x="508" y="990" width="79" height="165"
                                         fill="${(() => {switch (true) {
-                                              case (10 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case ( 0 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#0066FF';
-                                              case (20 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (20 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#2461E4';
-                                              case (30 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (30 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#495CCA';
-                                              case (40 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (40 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#6D57AF';
-                                              case (50 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (50 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#925394';
-                                              case (60 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (60 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#B64E79';
-                                              case (70 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (70 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#DB495F';
-                                              case (80 >= (parseFloat(this.getSensorState('other.hot_water_cylinder_temperature')?.state) || 0)):
+                                              case (80 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#FF4444';
                                         }})()}"
                                         opacity="0.5"
@@ -729,8 +787,8 @@ class QuattDashboardCard extends LitElement {
                             id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9"
                           >
                               ${(() => this.isAllElectric()
-                                  ? Math.round(this.getSensorState('heat_battery.heat_battery_percentage')?.state || 0)+'%'
-                                  : Math.round(this.getSensorState('other.hot_water_cylinder_temperature')?.state || 0)+'°C'
+                                  ? this.getSensorState('heat_battery.heat_battery_percentage', {number: true, decimals: 0})+' %'
+                                  : this.getSensorState('other.hot_water_cylinder_temperature', {number: true, decimals: 0})+' °C'
                                 )()
                               }
                           </text>
@@ -766,7 +824,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${Math.round(this.getSensorState('cic.flowmeter_temperature')?.state || 0)}°C
+                          ${this.getSensorState('flowmeter.flowmeter_temperature', {number: true, decimals: 1})} °C
                       </text>
                   </g>
                   <g id="roomTemperature" style="cursor: pointer;">
@@ -778,7 +836,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${Math.round(this.getSensorState('cic.thermostat_room_temperature')?.state || 0)}°C
+                          ${this.getSensorState('thermostat.thermostat_room_temperature', {number: true, decimals: 1})} °C
                       </text>
                   </g>
                   <g id="outsideTemperature" style="cursor: pointer;">
@@ -790,7 +848,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${Math.round(this.getSensorState('hp1.hp1_temperatureoutside')?.state || 0)}°C
+                          ${this.getSensorState('hp1.hp1_temperatureoutside', {number: true, decimals: 1})} °C
                       </text>
                   </g>
                   <g id="hp1DeltaTemperature" style="cursor: pointer;">
@@ -803,7 +861,7 @@ class QuattDashboardCard extends LitElement {
                             font-weight="bold"
                             fill="#ffffff">
                           ${this.getSensorState('hp1.hp1_workingmode')?.state >= 1
-                                  ? Math.round(this.getSensorState('hp1.hp1_waterdelta')?.state || 0)+'°C'
+                                  ? this.getSensorState('hp1.hp1_waterdelta', {number: true, decimals: 1})+' °C'
                                   : 'Off'}
                       </text>
                   </g>
@@ -819,7 +877,7 @@ class QuattDashboardCard extends LitElement {
                                     font-weight="bold"
                                     fill="#ffffff">
                           ${this.getSensorState('hp2.hp2_workingmode')?.state >= 1
-                                    ? Math.round(this.getSensorState('hp2.hp2_waterdelta')?.state || 0)+'°C'
+                                    ? this.getSensorState('hp2.hp2_waterdelta', {number: true, decimals: 1})+' °C'
                                     : 'Off'}
                               </text>
                           </g>`
@@ -831,70 +889,83 @@ class QuattDashboardCard extends LitElement {
                       <text x="305" y="1190" font-size="16" font-family="Arial, sans-serif" fill="#999999">Charging:</text>
                       <text x="660" y="1190" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_charging')?.state}</text>
                       <text x="305" y="1225" font-size="16" font-family="Arial, sans-serif" fill="#999999">Top temperature:</text>
-                      <text x="660" y="1225" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_top_temperature')?.state}</text>
+                      <text x="660" y="1225" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_top_temperature', {number: true, decimals: 0})} °C</text>
                       <text x="305" y="1260" font-size="16" font-family="Arial, sans-serif" fill="#999999">Middle temperature:</text>
-                      <text x="660" y="1260" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_middle_temperature')?.state}</text>
+                      <text x="660" y="1260" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_middle_temperature', {number: true, decimals: 0})} °C</text>
                       <text x="305" y="1295" font-size="16" font-family="Arial, sans-serif" fill="#999999">Bottom temperature:</text>
-                      <text x="660" y="1295" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_bottom_temperature')?.state}</text>
+                      <text x="660" y="1295" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_bottom_temperature', {number: true, decimals: 0})} °C</text>
                       <text x="305" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Shower minutes remaining:</text>
-                      <text x="660" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining')?.state}</text>
+                      <text x="660" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})}</text>
                   </g>
                   <g id="tooltipWaterPipeTemperature" transform="translate(55, -68)">
                       <rect x="370" y="1295" width="400" height="110" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="385" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Flowrate:</text>
-                      <text x="740" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.flowmeter_flowrate')?.state}</text>
-                      <text x="385" y="1365" font-size="16" font-family="Arial, sans-serif" fill="#999999">System pressure:</text>
-                      <text x="740" y="1365" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.heat_charger_heating_system_pressure')?.state}</text>
+                      <text x="740" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('flowmeter.flowmeter_flowrate', {number: true, decimals: 1})} L/h</text>
+                      ${this.isAllElectric() ? svg`
+                            <text x="385" y="1365" font-size="16" font-family="Arial, sans-serif" fill="#999999">System pressure:</text>
+                            <text x="740" y="1365" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">
+                                ${this.getSensorState('cic.heat_charger_heating_system_pressure', {number: true, decimals: 2})} bar
+                            </text>
+                            `
+                        : (this.isBoilerOpentherm()
+                            ? svg`
+                                <text x="385" y="1365" font-size="16" font-family="Arial, sans-serif" fill="#999999">Water pressure:</text>
+                                <text x="740" y="1365" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">
+                                    ${this.getSensorState('boiler.boiler_water_pressure', {number: true, decimals: 2})} bar
+                                </text>
+                                `
+                            : svg``)
+                      }
                   </g>
                   <g id="tooltipRoomTemperature" transform="translate(120, -108)">
                       <rect x="550" y="1200" width="400" height="180" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="565" y="1235" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room temperature:</text>
-                      <text x="920" y="1235" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.thermostat_room_temperature')?.state}</text>
+                      <text x="920" y="1235" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_temperature', {number: true, decimals: 1})} °C</text>
                       <text x="565" y="1270" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room setpoint:</text>
-                      <text x="920" y="1270" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.thermostat_room_setpoint')?.state}</text>
+                      <text x="920" y="1270" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_setpoint', {number: true, decimals: 1})} °C</text>
                       <text x="565" y="1305" font-size="16" font-family="Arial, sans-serif" fill="#999999">Control setpoint:</text>
-                      <text x="920" y="1305" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.thermostat_control_setpoint')?.state}</text>
+                      <text x="920" y="1305" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_control_setpoint', {number: true, decimals: 1})} °C</text>
                       <text x="565" y="1340" font-size="16" font-family="Arial, sans-serif" fill="#999999">Heating:</text>
-                      <text x="920" y="1340" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('cic.thermostat_heating')?.state}</text>
+                      <text x="920" y="1340" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_heating')?.state}</text>
                   </g>
                   <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">
                       <rect x="560" y="1500" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="575" y="1535" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
-                      <text x="930" y="1535" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterin')?.state}</text>
+                      <text x="930" y="1535" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterin', {number: true, decimals: 1})} °C</text>
                       <text x="575" y="1570" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water out:</text>
-                      <text x="930" y="1570" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterout')?.state}</text>
+                      <text x="930" y="1570" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterout', {number: true, decimals: 1})}°C</text>
                       <text x="575" y="1605" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
                       <text x="930" y="1605" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_workingmode')?.state}</text>
                       <text x="575" y="1640" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
                       <text x="930" y="1640" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_cop')?.state}</text>
                       <text x="575" y="1675" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
-                      <text x="930" y="1675" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_powerinput')?.state}</text>
+                      <text x="930" y="1675" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end"> ${this.getSensorState('hp1.hp1_powerinput', {number: true, decimals: 0})} W</text>
                       <text x="575" y="1710" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
-                      <text x="930" y="1710" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_power')?.state}</text>
+                      <text x="930" y="1710" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_power', {number: true, decimals: 0})} W</text>
                   </g>
 
                   ${this.isDuoHeatpump()
                       ? svg`<g id="tooltipHp2DeltaTemperature" transform="translate(120, -108)">
                                 <rect x="420" y="1435" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                                 <text x="435" y="1470" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
-                                <text x="790" y="1470" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterin')?.state}</text>
+                                <text x="790" y="1470" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterin', {number: true, decimals: 1})} °C</text>
                                 <text x="435" y="1505" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water out:</text>
-                                <text x="790" y="1505" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterout')?.state}</text>
+                                <text x="790" y="1505" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterout', {number: true, decimals: 1})} °C</text>
                                 <text x="435" y="1540" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
                                 <text x="790" y="1540" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_workingmode')?.state}</text>
                                 <text x="435" y="1575" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
                                 <text x="790" y="1575" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_cop')?.state}</text>
                                 <text x="435" y="1610" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
-                                <text x="790" y="1610" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput')?.state}</text>
+                                <text x="790" y="1610" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput', {number: true, decimals: 0})} W</text>
                                 <text x="435" y="1645" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
-                                <text x="790" y="1645" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power')?.state}</text>
+                                <text x="790" y="1645" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power', {number: true, decimals: 0})} W</text>
                           </g>`
                       : svg``
                   }
 
               </g>
           </svg>
-      </wired-card>
+      </ha-card>
     `;
     }
 
@@ -904,555 +975,20 @@ class QuattDashboardCard extends LitElement {
 
     // Provide default config with auto-detected entities
     static getStubConfig() {
-        return { type: 'custom:quatt-dashboard-card' };
-    }
-
-    // Return the form schema for Home Assistant's built-in editor
-    static getConfigForm() {
         return {
-            schema: [
-                {
-                    type: "grid",
-                    name: "current_setup",
-                    schema: [
-                        {
-                            name: "house_label",
-                            required: true,
-                            selector: {
-                                text: {
-                                    max_length: 32
-                                }
-                            }
-                        },
-                        {
-                            name: "system_hostname",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "heatpump_1_odu_type",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                    ],
-                },
-                {
-                    type: "grid",
-                    name: "legend",
-                    schema: [
-                        {
-                            name: "total_power",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                        {
-                            name: "total_powerinput",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                    ]
-                },
-                {
-                    type: "grid",
-                    name: "hp1",
-                    schema: [
-                        {
-                            name: "hp1_workingmode",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_waterdelta",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_temperatureoutside",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_temperaturewaterin",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_temperaturewaterout",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_powerinput",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_power",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp1_cop",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                    ]
-                },
-                {
-                    type: "grid",
-                    name: "hp2",
-                    schema: [
-                        {
-                            name: "hp2_workingmode",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_waterdelta",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_temperatureoutside",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_temperaturewaterin",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_temperaturewaterout",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_powerinput",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_power",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                        {
-                            name: "hp2_cop",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                    ]
-                },
-                {
-                    type: "grid",
-                    name: "cic",
-                    schema: [
-                        {
-                            name: "cic_central_heating_on",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "binary_sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "boiler_heating",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "binary_sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "flowmeter_temperature",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "flowmeter_flowrate",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "thermostat_room_temperature",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "thermostat_room_setpoint",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "thermostat_control_setpoint",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "thermostat_heating",
-                            required: true,
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "binary_sensor",
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_charger_heating_system_pressure",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                    ]
-                },
-                {
-                    type: "grid",
-                    name: "heat_battery",
-                    schema: [
-                        {
-                            name: "heat_battery_charging",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "binary_sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_battery_percentage",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_battery_shower_minutes_remaining",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_battery_domestic_hot_water_on",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "binary_sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_battery_top_temperature",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_battery_middle_temperature",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                        {
-                            name: "heat_battery_bottom_temperature",
-                            selector: {
-                                entity: {
-                                    integration: "quatt",
-                                    domain: "sensor",
-                                    device_class: "temperature"
-                                }
-                            }
-                        },
-                    ]
-                },
-                {
-                    type: "grid",
-                    name: "other",
-                    schema: [
-                        {
-                            name: "airco_hvac",
-                            selector: {
-                                entity: {
-                                    domain: "climate"
-                                }
-                            }
-                        },
-                        {
-                            name: "solar_power",
-                            selector: {
-                                entity: {
-                                    domain: "sensor",
-                                    device_class: "power"
-                                }
-                            }
-                        },
-                        {
-                            name: "hot_water_cylinder_temperature",
-                            selector: {
-                                entity: {
-                                    domain: "sensor"
-                                }
-                            }
-                        },
-                        {
-                            name: "has_solar_collector",
-                            selector: {
-                                boolean: {}
-                            }
-                        },
-                        {
-                            name: "sun",
-                            selector: {
-                                entity: {
-                                    domain: "sun"
-                                }
-                            }
-                        },
-                    ]
-                },
-            ],
-            computeLabel: (schema) => {
-                if (schema.name === "system_hostname") return "The CIC hostname to determine your Quatt setup";
-                if (schema.name === "heatpump_1_odu_type") return "Heatpump version to determine your Quatt setup";
-                if (schema.name === "total_power") return "Total power";
-                if (schema.name === "total_powerinput") return "Total power input";
-                if (schema.name === "hp1_workingmode") return "HP1 working mode";
-                if (schema.name === "hp1_waterdelta") return "HP1 water delta";
-                if (schema.name === "hp1_temperatureoutside") return "HP1 outside temperature";
-                if (schema.name === "hp1_temperaturewaterin") return "HP1 water temperature in";
-                if (schema.name === "hp1_temperaturewaterout") return "HP1 water temperature out";
-                if (schema.name === "hp1_powerinput") return "HP1 power input";
-                if (schema.name === "hp1_power") return "HP1 power";
-                if (schema.name === "hp1_cop") return "HP1 COP";
-                if (schema.name === "hp2_workingmode") return "HP2 working mode";
-                if (schema.name === "hp2_waterdelta") return "HP2 water delta";
-                if (schema.name === "hp2_temperatureoutside") return "HP2 outside temperature";
-                if (schema.name === "hp2_temperaturewaterin") return "HP2 water temperature in";
-                if (schema.name === "hp2_temperaturewaterout") return "HP2 water temperature out";
-                if (schema.name === "hp2_powerinput") return "HP2 power input";
-                if (schema.name === "hp2_power") return "HP2 power";
-                if (schema.name === "hp2_cop") return "HP2 COP";
-                if (schema.name === "cic_central_heating_on") return "CIC central heating on";
-                if (schema.name === "boiler_heating") return "Boiler heating";
-                if (schema.name === "flowmeter_temperature") return "Flowmeter temperature";
-                if (schema.name === "thermostat_room_temperature") return "Thermostat room temperature";
-                if (schema.name === "thermostat_room_setpoint") return "Thermostat room setpoint";
-                if (schema.name === "thermostat_control_setpoint") return "Thermostat control setpoint";
-                if (schema.name === "thermostat_heating") return "Thermostat heating";
-                if (schema.name === "heat_charger_heating_system_pressure") return "Heat charger system pressure";
-                if (schema.name === "heat_battery_charging") return "Heat battery charging";
-                if (schema.name === "heat_battery_percentage") return "Heat battery percentage";
-                if (schema.name === "heat_battery_shower_minutes_remaining") return "Heat battery shower minutes remaining";
-                if (schema.name === "heat_battery_domestic_hot_water_on") return "Heat battery domestic hot water on";
-                if (schema.name === "heat_battery_top_temperature") return "Heat battery top temperature";
-                if (schema.name === "heat_battery_middle_temperature") return "Heat battery middle temperature";
-                if (schema.name === "heat_battery_bottom_temperature") return "Heat battery bottom temperature";
-                if (schema.name === "airco_hvac") return "Airco climate";
-                if (schema.name === "solar_power") return "Solar current production";
-                if (schema.name === "hot_water_cylinder_temperature") return "Hot water cylinder temperature";
-                if (schema.name === "has_solar_collector") return "Solar collector";
-                if (schema.name === "sun") return "Sun";
-                return undefined;
-            },
-            computeHelper: (schema) => {
-                if (schema.name === "system_hostname") return "Provided by local api";
-                if (schema.name === "heatpump_1_odu_type") return "Provided by remote api";
-                if (schema.name === "total_power") return "Provided by local api";
-                if (schema.name === "total_powerinput") return "Provided by local api";
-                if (schema.name === "hp1_workingmode") return "Provided by local api";
-                if (schema.name === "hp1_waterdelta") return "Provided by local api";
-                if (schema.name === "hp1_temperatureoutside") return "Provided by local api";
-                if (schema.name === "hp1_temperaturewaterin") return "Provided by local api";
-                if (schema.name === "hp1_temperaturewaterout") return "Provided by local api";
-                if (schema.name === "hp1_powerinput") return "Provided by local api";
-                if (schema.name === "hp1_power") return "Provided by local api";
-                if (schema.name === "hp1_cop") return "Provided by local api";
-                if (schema.name === "hp2_workingmode") return "Provided by local api";
-                if (schema.name === "hp2_waterdelta") return "Provided by local api";
-                if (schema.name === "hp2_temperatureoutside") return "Provided by local api";
-                if (schema.name === "hp2_temperaturewaterin") return "Provided by local api";
-                if (schema.name === "hp2_temperaturewaterout") return "Provided by local api";
-                if (schema.name === "hp2_powerinput") return "Provided by local api";
-                if (schema.name === "hp2_power") return "Provided by local api";
-                if (schema.name === "hp2_cop") return "Provided by local api";
-                if (schema.name === "cic_central_heating_on") return "Provided by local api";
-                if (schema.name === "boiler_heating") return "Provided by local api";
-                if (schema.name === "flowmeter_temperature") return "Provided by local api";
-                if (schema.name === "thermostat_room_temperature") return "Provided by local api";
-                if (schema.name === "thermostat_room_setpoint") return "Provided by local api";
-                if (schema.name === "thermostat_control_setpoint") return "Provided by local api";
-                if (schema.name === "thermostat_heating") return "Provided by local api";
-                if (schema.name === "heat_charger_heating_system_pressure") return "Provided by local api";
-                if (schema.name === "heat_battery_charging") return "Provided by remote api";
-                if (schema.name === "heat_battery_percentage") return "Provided by remote api";
-                if (schema.name === "heat_battery_shower_minutes_remaining") return "Provided by local api";
-                if (schema.name === "heat_battery_domestic_hot_water_on") return "Provided by remote api";
-                if (schema.name === "heat_battery_top_temperature") return "Provided by local api";
-                if (schema.name === "heat_battery_middle_temperature") return "Provided by local api";
-                if (schema.name === "heat_battery_bottom_temperature") return "Provided by local api";
-                if (schema.name === "airco_hvac") return "Provided by a other integration";
-                if (schema.name === "solar_power") return "Provided by a other integration";
-                if (schema.name === "hot_water_cylinder_temperature") return "Provided by a other integration";
-                if (schema.name === "has_solar_collector") return "Provided by a other integration";
-                if (schema.name === "sun") return "Provided by home assistant";
-                return undefined;
+            type: "custom:quatt-dashboard-card",
+            system_setup: {
+                house_label: "My house",
             },
         };
+    }
+
+    // Return the editor element for the card
+    static async getConfigElement() {
+        const { base, version } = QuattDashboardCard._getBaseUrlAndVersion();
+        // Lazy load the editor and include version for cache busting
+        await import(`${base}/quatt-dashboard-card-editor.js?v=${version}`);
+        return document.createElement("quatt-dashboard-card-editor");
     }
 
     _toggle(state) {
@@ -1603,7 +1139,9 @@ class QuattDashboardCard extends LitElement {
     }
 }
 
-customElements.define("quatt-dashboard-card", QuattDashboardCard);
+if (!customElements.get("quatt-dashboard-card")) {
+    customElements.define("quatt-dashboard-card", QuattDashboardCard);
+}
 
 // Register for the card picker (run once at module load)
 window.customCards = window.customCards || [];
