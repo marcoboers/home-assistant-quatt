@@ -41,63 +41,74 @@ class QuattDashboardCard extends LitElement {
         let item = rec?.[path[index]];
 
         return ['string', 'number', 'bigint', 'boolean', 'undefined', 'symbol', 'null'].includes((typeof item).toLowerCase()) ? item : this.jsonValueUsingPath(item, path, index + 1)
-
     }
+
     /**
-     * Get HA state by config path.
+     * Get HA state (or a direct attribute) by config path.
      * Default: returns the full state object
-     * If options.number === true, returns a number
+     * If options.attribute is set (string key), returns that attribute (or number-formatted when options.number===true).
      *
      * @param {string} path - dot path into this.config (e.g. 'boiler.boiler_water_pressure')
      * @param {object}  [options]
-     * @param {boolean} [options.number=true] - format .state as number
-     * @param {number}  [options.decimals=2]   - fraction digits to show
-     * @param {string}  [options.locale=navigator.language||'en-US'] - locale for formatting
-     * @param {boolean} [options.asString=true] - return string; if false returns Number rounded
-     * @param {*}       [options.fallback='0.00' or 0] - value if state is missing/non-numeric
+     * @param {string}  [options.attribute]     - direct attribute key
+     * @param {boolean} [options.number=true]   - format value as number
+     * @param {number}  [options.decimals=2]    - fraction digits
+     * @param {number}  [options.scale=1]       - multiply value by this factor (e.g. 1/1000 for W→kW)
+     * @param {string}  [options.locale=navigator.language||'en-US'] - for toLocaleString
+     * @param {boolean} [options.asString=true] - when number=true: return string; if false returns Number
+     * @param {*}       [options.fallback]      - used when missing/non-numeric (string if asString, number if !asString)
      */
     getSensorState(path, options = {}) {
         const entityId = this.jsonValueUsingPath(this.config, path.split('.'));
         const stateObject = this.hass?.states?.[entityId];
+        const hasAttr = typeof options.attribute === 'string' && options.attribute.length > 0;
 
-        // If no numeric formatting requested, return the full state object
-        if (!options.number)
+        // If no numeric formatting requested, return the full state object or the requested attribute
+        if (!options.number) {
+            if (hasAttr) {
+                return stateObject ? stateObject.attributes?.[options.attribute] : options.fallback;
+            }
             return stateObject;
+        }
 
         // If not found, return fallback
-        if (!stateObject)
-            return options.fallback;
+        if (!stateObject) {
+            return options.asString !== false
+                ? (typeof options.fallback === 'string' ? options.fallback : '0.00')
+                : (typeof options.fallback === 'number' ? options.fallback : 0);
+        }
 
         // Numeric formatting
-        const raw = stateObject?.state;
-        const number = typeof raw === 'number' ? raw : Number(raw);
+        const rawValue = hasAttr ? stateObject.attributes?.[options.attribute] : stateObject.state;
+        const num = typeof rawValue === 'number' ? rawValue : Number(rawValue);
         const decimals = Number.isInteger(options.decimals) ? options.decimals : 2;
+        const scale = (typeof options.scale === 'number') ? options.scale : 1;
         const locale = options.locale || (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
         const asString = options.asString !== false;
 
-        if (Number.isFinite(number)) {
+        if (Number.isFinite(num)) {
+            const numScaled = num * scale;
             if (asString) {
-                return number.toLocaleString(locale, {
+                return numScaled.toLocaleString(locale, {
                     minimumFractionDigits: decimals,
                     maximumFractionDigits: decimals,
                 });
             }
             // Numeric result rounded to requested decimals
-            return Number(number.toFixed(decimals));
+            return Number(numScaled.toFixed(decimals));
         }
+
 
         // Fallbacks when value is missing or non-numeric
         if (asString) {
-            const fallback = options.fallback;
-            if (typeof fallback === 'string')
-                return fallback;
-            const zero = 0;
-            return zero.toLocaleString(locale, {
+            if (typeof options.fallback === 'string')
+                return options.fallback;
+            return (0).toLocaleString(locale, {
                 minimumFractionDigits: decimals,
                 maximumFractionDigits: decimals,
             });
         }
-        return typeof options.fallback === 'number' ? options.fallback : 0;
+        return (typeof options.fallback === 'number') ? options.fallback : 0;
     }
 
     isReady() {
@@ -107,13 +118,13 @@ class QuattDashboardCard extends LitElement {
     }
 
     isHybrid() {
-        return this._isFalse(this.getSensorState('system_setup.system')?.attributes['All electric system']);
+        return this._isFalse(this.getSensorState('system_setup.system', {attribute: 'All electric system'}));
     }
     isAllElectric() {
-        return this._isTrue(this.getSensorState('system_setup.system')?.attributes['All electric system']);
+        return this._isTrue(this.getSensorState('system_setup.system', {attribute: 'All electric system'}));
     }
     hasAirco() {
-        return !!this.getSensorState('other.airco_hvac')?.state
+        return !!this.getSensorState('other.thermostat_airco')?.state
     }
     hasSolarPanels() {
         return !!this.getSensorState('other.solar_power')?.state
@@ -125,13 +136,13 @@ class QuattDashboardCard extends LitElement {
         return !!this.getSensorState('other.hot_water_cylinder_temperature')?.state
     }
     isMonoHeatpump() {
-        return this._isFalse(this.getSensorState('system_setup.system')?.attributes['Duo heatpump system']);
+        return this._isFalse(this.getSensorState('system_setup.system', {attribute: 'Duo heatpump system'}));
     }
     isDuoHeatpump() {
-        return this._isTrue(this.getSensorState('system_setup.system')?.attributes['Duo heatpump system']);
+        return this._isTrue(this.getSensorState('system_setup.system', {attribute: 'Duo heatpump system'}));
     }
     isBoilerOpentherm() {
-        return this._isTrue(this.getSensorState('system_setup.system')?.attributes['Opentherm system']);
+        return this._isTrue(this.getSensorState('system_setup.system', {attribute: 'Opentherm system'}));
     }
     getSystemVersion() {
         switch (this.getSensorState('hp1.hp1_odu_type')?.state) {
@@ -145,6 +156,7 @@ class QuattDashboardCard extends LitElement {
     firstUpdated() {
         const tank = this.shadowRoot.querySelector('#tankPercentage');
         const room = this.shadowRoot.querySelector('#roomTemperature');
+        const ac = this.shadowRoot.querySelector('#aircoTemperature');
         const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
         const hp1Delta = this.shadowRoot.querySelector('#hp1DeltaTemperature');
         const hp2Delta = this.shadowRoot.querySelector('#hp2DeltaTemperature');
@@ -165,6 +177,31 @@ class QuattDashboardCard extends LitElement {
 
             room.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.remove('tooltip-show');
+            });
+
+            room.addEventListener('click', () => {
+                const thermostatEntity = this.config?.other?.thermostat_room;
+
+                if (thermostatEntity) {
+                    this._openMoreInfo(thermostatEntity);
+                }
+            });
+        }
+        if (ac) {
+            ac.addEventListener('mouseenter', () => {
+                this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.add('tooltip-show');
+            });
+
+            ac.addEventListener('mouseleave', () => {
+                this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.remove('tooltip-show');
+            });
+
+            ac.addEventListener('click', () => {
+                const aircoEntity = this.config?.other?.thermostat_airco;
+
+                if (aircoEntity) {
+                    this._openMoreInfo(aircoEntity);
+                }
             });
         }
         if (waterPipe) {
@@ -194,6 +231,15 @@ class QuattDashboardCard extends LitElement {
                 this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.remove('tooltip-show');
             });
         }
+    }
+
+    _openMoreInfo(entityId) {
+        const event = new Event('hass-more-info', {
+            bubbles: true,
+            composed: true,
+        });
+        event.detail = { entityId };
+        this.dispatchEvent(event);
     }
 
     render() {
@@ -396,13 +442,13 @@ class QuattDashboardCard extends LitElement {
                   <!-- Heat -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
                   <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${((this.getSensorState('cic.total_power')?.state || 0) / 1000).toFixed(2)} kW
+                      ${this.getSensorState('cic.total_power', { number: true, decimals: 2, scale: 1/1000 })} kW
                   </text>
 
                   <!-- Electricity -->
                   <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
                   <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${((this.getSensorState('cic.total_powerinput')?.state || 0) / 1000).toFixed(2)} kW
+                      ${this.getSensorState('cic.total_powerinput', { number: true, decimals: 2, scale: 1/1000 })} kW
                   </text>
 
                   <!-- Boiler -->
@@ -543,12 +589,12 @@ class QuattDashboardCard extends LitElement {
               }
 
               ${this.hasAirco()
-                  && this.getSensorState('other.airco_hvac')?.state !== 'off'
+                  && this.getSensorState('other.thermostat_airco')?.state !== 'off'
                   ? svg`<g id="quatt.acFlow" transform="translate(380, 15)">
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 4.2s; animation-delay: 0s; stroke-width: 3;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#DCE9F2';
                                               default:
@@ -559,7 +605,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 3.8s; animation-delay: -1.2s; stroke-width: 4;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#DCE9F2';
                                               default:
@@ -570,7 +616,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 4.5s; animation-delay: -2.5s; stroke-width: 2.5;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#DCE9F2';
                                               default:
@@ -581,7 +627,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 4.0s; animation-delay: -3.7s; stroke-width: 3;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#DCE9F2';
                                               default:
@@ -594,7 +640,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 4.2s; animation-delay: 0s; stroke-width: 3;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#ff8a00';
                                               default:
@@ -605,7 +651,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 3.8s; animation-delay: -1.2s; stroke-width: 4;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#ff8a00';
                                               default:
@@ -616,7 +662,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 4.5s; animation-delay: -2.5s; stroke-width: 2.5;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#ff8a00';
                                               default:
@@ -627,7 +673,7 @@ class QuattDashboardCard extends LitElement {
                           <path class="fog-line-reverse" pathLength="100"
                                 style="animation-duration: 4.0s; animation-delay: -3.7s; stroke-width: 3;
                                     stroke:  ${(() => {
-                                          switch (this.getSensorState('other.airco_hvac')?.state) {
+                                          switch (this.getSensorState('other.thermostat_airco')?.state) {
                                               case 'heat':
                                                   return '#ff8a00';
                                               default:
@@ -713,8 +759,8 @@ class QuattDashboardCard extends LitElement {
                               ${this.isAllElectric()
                                 ? svg`<linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                       <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop2" offset="${Math.max(0, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) - 12.5)} %" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop3" offset="${Math.min(100, (parseFloat(this.getSensorState('heat_battery.heat_battery_percentage')?.state) || 0) + 12.5)} %" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                      <stop id="gradientStop2" offset="${Math.max(0, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) - 12.5)} %" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                      <stop id="gradientStop3" offset="${Math.min(100, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) + 12.5)} %" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                       <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                     </linearGradient>`
                                 : svg``
@@ -749,19 +795,19 @@ class QuattDashboardCard extends LitElement {
                                         fill="${(() => {switch (true) {
                                               case ( 0 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#0066FF';
-                                              case (20 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (18 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#2461E4';
-                                              case (30 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (25 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#495CCA';
-                                              case (40 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (32 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#6D57AF';
-                                              case (50 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (39 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#925394';
-                                              case (60 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (46 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#B64E79';
-                                              case (70 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (53 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#DB495F';
-                                              case (80 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
+                                              case (60 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
                                                   return '#FF4444';
                                         }})()}"
                                         opacity="0.5"
@@ -806,8 +852,8 @@ class QuattDashboardCard extends LitElement {
                                   font-family="Arial, sans-serif"
                                   font-weight="bold"
                                   fill="#ffffff">
-                              ${((this.getSensorState('other.solar_power')?.state || 0) / 1).toFixed(this.getSensorState('other.solar_power').attributes['unit_of_measurement'] == 'kW' ? 3 : 0)}
-                              ${this.getSensorState('other.solar_power').attributes['unit_of_measurement']}
+                              ${this.getSensorState('other.solar_power', { number: true, decimals: this.getSensorState('other.solar_power', { attribute: 'unit_of_measurement' }) == 'kW' ? 3 : 0 })}
+                              ${this.getSensorState('other.solar_power', {attribute: 'unit_of_measurement'})}
                             </text>
                         </g>`
                   : svg``
@@ -839,6 +885,21 @@ class QuattDashboardCard extends LitElement {
                           ${this.getSensorState('thermostat.thermostat_room_temperature', {number: true, decimals: 1})} °C
                       </text>
                   </g>
+                  ${this.hasAirco()
+                    ? svg`<g id="aircoTemperature" style="cursor: pointer;">
+                          <rect x="350" y="875" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                          <text x="355" y="890" font-size="14" font-family="Arial" fill="#999999">Airco</text>
+                          <text id="temp.room" x="420" y="908"
+                                text-anchor="middle"
+                                font-size="18"
+                                font-family="Arial, sans-serif"
+                                font-weight="bold"
+                                fill="#ffffff">
+                              ${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'current_temperature'})} °C
+                          </text>
+                      </g>`
+                    : svg``
+                  }
                   <g id="outsideTemperature" style="cursor: pointer;">
                       <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
@@ -928,6 +989,18 @@ class QuattDashboardCard extends LitElement {
                       <text x="565" y="1340" font-size="16" font-family="Arial, sans-serif" fill="#999999">Heating:</text>
                       <text x="920" y="1340" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_heating')?.state}</text>
                   </g>
+                  ${this.hasAirco()
+                    ? svg`<g id="tooltipAircoTemperature" transform="translate(120, -108)">
+                              <rect x="350" y="875" width="400" height="145" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                              <text x="365" y="910" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room temperature:</text>
+                              <text x="720" y="910" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'current_temperature'})} °C</text>
+                              <text x="365" y="945" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room setpoint:</text>
+                              <text x="720" y="945" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'temperature'})} °C</text>
+                              <text x="365" y="980" font-size="16" font-family="Arial, sans-serif" fill="#999999">Mode:</text>
+                              <text x="720" y="980" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco')?.state}</text>
+                          </g>`
+                    : svg``
+                  }
                   <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">
                       <rect x="560" y="1500" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="575" y="1535" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>

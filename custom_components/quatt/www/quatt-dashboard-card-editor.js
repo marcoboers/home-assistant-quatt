@@ -142,7 +142,8 @@ class QuattDashboardCardEditor extends LitElement {
             type: "grid",
             name: "other",
             schema: [
-                { name: "airco_hvac", selector: { entity: { domain: "climate" } } },
+                { name: "thermostat_room", selector: { entity: { domain: "climate" } } },
+                { name: "thermostat_airco", selector: { entity: { domain: "climate" } } },
                 { name: "solar_power", selector: { entity: { domain: "sensor", device_class: "power" } } },
                 { name: "hot_water_cylinder_temperature", selector: { entity: { domain: "sensor" } } },
                 { name: "has_solar_collector", selector: { boolean: {} } },
@@ -253,7 +254,8 @@ class QuattDashboardCardEditor extends LitElement {
             boiler_water_pressure: "Water pressure",
 
             // Other
-            airco_hvac: "Airco climate",
+            thermostat_room: "Thermostat room",
+            thermostat_airco: "Thermostat airco",
             solar_power: "Solar current production",
             hot_water_cylinder_temperature: "Hot water cylinder temperature",
             has_solar_collector: "Solar collector",
@@ -322,7 +324,8 @@ class QuattDashboardCardEditor extends LitElement {
             boiler_water_pressure: "Provided by local API",
 
             // Other
-            airco_hvac: "Provided by another integration",
+            thermostat_room: "Provided by another integration",
+            thermostat_airco: "Provided by another integration",
             solar_power: "Provided by another integration",
             hot_water_cylinder_temperature: "Provided by another integration",
             has_solar_collector: "Provided by another integration",
