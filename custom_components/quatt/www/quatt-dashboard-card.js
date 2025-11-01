@@ -1222,6 +1222,7 @@ if (!window.customCards.some((c) => c.type === "quatt-dashboard-card")) {
     window.customCards.push({
         type: "quatt-dashboard-card",
         name: "Quatt Dashboard Card",
-        description: "Quatt heat pump dashboard card"
+        description: "Quatt heat pump dashboard card",
+        preview: true,
     });
 }
