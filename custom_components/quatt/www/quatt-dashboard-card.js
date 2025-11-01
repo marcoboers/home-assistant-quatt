@@ -946,7 +946,7 @@ class QuattDashboardCard extends LitElement {
                   }
 
                   <g id="tooltipTankPercentage" transform="translate(80, -108)">
-                      <rect x="290" y="1155" width="400" height="230" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <rect x="290" y="1155" width="400" height="200" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="305" y="1190" font-size="16" font-family="Arial, sans-serif" fill="#999999">Charging:</text>
                       <text x="660" y="1190" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_charging')?.state}</text>
                       <text x="305" y="1225" font-size="16" font-family="Arial, sans-serif" fill="#999999">Top temperature:</text>
@@ -959,7 +959,7 @@ class QuattDashboardCard extends LitElement {
                       <text x="660" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})}</text>
                   </g>
                   <g id="tooltipWaterPipeTemperature" transform="translate(55, -68)">
-                      <rect x="370" y="1295" width="400" height="110" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <rect x="370" y="1295" width="400" height="95" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="385" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Flowrate:</text>
                       <text x="740" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('flowmeter.flowmeter_flowrate', {number: true, decimals: 1})} L/h</text>
                       ${this.isAllElectric() ? svg`
@@ -979,7 +979,7 @@ class QuattDashboardCard extends LitElement {
                       }
                   </g>
                   <g id="tooltipRoomTemperature" transform="translate(120, -108)">
-                      <rect x="550" y="1200" width="400" height="180" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <rect x="550" y="1200" width="400" height="165" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="565" y="1235" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room temperature:</text>
                       <text x="920" y="1235" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_temperature', {number: true, decimals: 1})} °C</text>
                       <text x="565" y="1270" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room setpoint:</text>
@@ -991,7 +991,7 @@ class QuattDashboardCard extends LitElement {
                   </g>
                   ${this.hasAirco()
                     ? svg`<g id="tooltipAircoTemperature" transform="translate(120, -108)">
-                              <rect x="350" y="875" width="400" height="145" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                              <rect x="350" y="875" width="400" height="130" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                               <text x="365" y="910" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room temperature:</text>
                               <text x="720" y="910" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'current_temperature'})} °C</text>
                               <text x="365" y="945" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room setpoint:</text>
@@ -1002,11 +1002,11 @@ class QuattDashboardCard extends LitElement {
                     : svg``
                   }
                   <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">
-                      <rect x="560" y="1500" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                      <rect x="560" y="1500" width="400" height="235" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="575" y="1535" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
                       <text x="930" y="1535" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterin', {number: true, decimals: 1})} °C</text>
                       <text x="575" y="1570" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water out:</text>
-                      <text x="930" y="1570" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterout', {number: true, decimals: 1})}°C</text>
+                      <text x="930" y="1570" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterout', {number: true, decimals: 1})} °C</text>
                       <text x="575" y="1605" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
                       <text x="930" y="1605" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_workingmode')?.state}</text>
                       <text x="575" y="1640" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
@@ -1019,7 +1019,7 @@ class QuattDashboardCard extends LitElement {
 
                   ${this.isDuoHeatpump()
                       ? svg`<g id="tooltipHp2DeltaTemperature" transform="translate(120, -108)">
-                                <rect x="420" y="1435" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                                <rect x="420" y="1435" width="400" height="235" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                                 <text x="435" y="1470" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
                                 <text x="790" y="1470" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterin', {number: true, decimals: 1})} °C</text>
                                 <text x="435" y="1505" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water out:</text>
