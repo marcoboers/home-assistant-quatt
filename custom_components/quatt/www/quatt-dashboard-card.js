@@ -844,7 +844,7 @@ class QuattDashboardCard extends LitElement {
 
               ${this.hasSolarPanels()
                   ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
-                            <rect x="1100" y="675" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                            <rect x="1100" y="675" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                             <text x="1105" y="690" font-size="14" font-family="Arial" fill="#999999">Solar</text>
                             <text id="temp.waterPipe" x="1170" y="708"
                                   text-anchor="middle"
@@ -862,7 +862,7 @@ class QuattDashboardCard extends LitElement {
               <!-- Temperature displays -->
               <g id="quatt.temperatures" class="quatt-show">
                   <g id="waterPipeTemperature" style="cursor: pointer;">
-                      <rect x="300" y="1275" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <rect x="300" y="1275" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="305" y="1290" font-size="14" font-family="Arial" fill="#999999">Pipe</text>
                       <text id="temp.waterPipe" x="370" y="1308"
                             text-anchor="middle"
@@ -874,7 +874,7 @@ class QuattDashboardCard extends LitElement {
                       </text>
                   </g>
                   <g id="roomTemperature" style="cursor: pointer;">
-                      <rect x="550" y="1200" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <rect x="550" y="1200" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="555" y="1215" font-size="14" font-family="Arial" fill="#999999">Room</text>
                       <text id="temp.room" x="620" y="1233"
                             text-anchor="middle"
@@ -887,7 +887,7 @@ class QuattDashboardCard extends LitElement {
                   </g>
                   ${this.hasAirco()
                     ? svg`<g id="aircoTemperature" style="cursor: pointer;">
-                          <rect x="350" y="875" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                          <rect x="350" y="875" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                           <text x="355" y="890" font-size="14" font-family="Arial" fill="#999999">Airco</text>
                           <text id="temp.room" x="420" y="908"
                                 text-anchor="middle"
@@ -901,7 +901,7 @@ class QuattDashboardCard extends LitElement {
                     : svg``
                   }
                   <g id="outsideTemperature" style="cursor: pointer;">
-                      <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <rect x="560" y="1545" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
                       <text id="temp.outside" x="630" y="1578"
                             text-anchor="middle"
@@ -913,7 +913,7 @@ class QuattDashboardCard extends LitElement {
                       </text>
                   </g>
                   <g id="hp1DeltaTemperature" style="cursor: pointer;">
-                      <rect x="560" y="1500" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                      <rect x="560" y="1500" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="565" y="1515" font-size="14" font-family="Arial" fill="#999999">HP1 Δ</text>
                       <text id="temp.hp1.delta" x="630" y="1533"
                             text-anchor="middle"
@@ -929,7 +929,7 @@ class QuattDashboardCard extends LitElement {
 
                   ${this.isDuoHeatpump()
                       ? svg`<g id="hp2DeltaTemperature" style="cursor: pointer;">
-                              <rect x="420" y="1435" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                              <rect x="420" y="1435" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                               <text x="425" y="1450" font-size="14" font-family="Arial" fill="#999999">HP2 Δ</text>
                               <text id="temp.hp2.delta" x="490" y="1468"
                                     text-anchor="middle"
