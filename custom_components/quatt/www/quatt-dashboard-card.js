@@ -442,13 +442,13 @@ class QuattDashboardCard extends LitElement {
                   <!-- Heat -->
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
                   <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${this.getSensorState('cic.total_power', { number: true, decimals: 2, scale: 1/1000 })} kW
+                      ${this.getSensorState('cic.total_power', {number: true, decimals: 2, scale: 1/1000})} kW
                   </text>
 
                   <!-- Electricity -->
                   <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
                   <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${this.getSensorState('cic.total_powerinput', { number: true, decimals: 2, scale: 1/1000 })} kW
+                      ${this.getSensorState('cic.total_powerinput', {number: true, decimals: 2, scale: 1/1000})} kW
                   </text>
 
                   <!-- Boiler -->
@@ -830,8 +830,7 @@ class QuattDashboardCard extends LitElement {
                           <text
                             x="${(() => this.isAllElectric() ? '340' : '547')()}"
                             y="${(() => this.isAllElectric() ? '1172' : '1080')()}"
-                            id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9"
-                          >
+                            id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff">
                               ${(() => this.isAllElectric()
                                   ? this.getSensorState('heat_battery.heat_battery_percentage', {number: true, decimals: 0})+' %'
                                   : this.getSensorState('other.hot_water_cylinder_temperature', {number: true, decimals: 0})+' °C'
@@ -852,7 +851,7 @@ class QuattDashboardCard extends LitElement {
                                   font-family="Arial, sans-serif"
                                   font-weight="bold"
                                   fill="#ffffff">
-                              ${this.getSensorState('other.solar_power', { number: true, decimals: this.getSensorState('other.solar_power', { attribute: 'unit_of_measurement' }) == 'kW' ? 3 : 0 })}
+                              ${this.getSensorState('other.solar_power', {number: true, decimals: this.getSensorState('other.solar_power', {attribute: 'unit_of_measurement'}) == 'kW' ? 3 : 0})}
                               ${this.getSensorState('other.solar_power', {attribute: 'unit_of_measurement'})}
                             </text>
                         </g>`
