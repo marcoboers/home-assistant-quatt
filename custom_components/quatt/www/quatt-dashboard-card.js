@@ -157,20 +157,20 @@ class QuattDashboardCard extends LitElement {
     }
 
     firstUpdated() {
-        const tank = this.shadowRoot.querySelector('#tankPercentage');
+        const tank = this.shadowRoot.querySelector('#tankInfo');
         const room = this.shadowRoot.querySelector('#roomTemperature');
         const ac = this.shadowRoot.querySelector('#aircoTemperature');
         const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
         const hp1Delta = this.shadowRoot.querySelector('#hp1DeltaTemperature');
         const hp2Delta = this.shadowRoot.querySelector('#hp2DeltaTemperature');
 
-        if (tank) {
+        if (tank && this.isAllElectric()) {
             tank.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipTankPercentage').classList.add('tooltip-show');
+                this.shadowRoot.querySelector('#tooltipTankInfo').classList.add('tooltip-show');
             });
 
             tank.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipTankPercentage').classList.remove('tooltip-show');
+                this.shadowRoot.querySelector('#tooltipTankInfo').classList.remove('tooltip-show');
             });
         }
         if (room) {
@@ -834,11 +834,11 @@ class QuattDashboardCard extends LitElement {
                             : svg`<rect x="508" y="990" width="79" height="165" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>`
                           }
 
-                          <!-- Percentage text -->
+                          <!-- Tank text -->
                           <text
                             x="${(() => this.isAllElectric() ? '340' : '547')()}"
                             y="${(() => this.isAllElectric() ? '1172' : '1080')()}"
-                            id="tankPercentage" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff">
+                            id="tankInfo" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff">
                               ${(() => this.isAllElectric()
                                   ? this.getSensorState('heat_battery.heat_battery_percentage', {number: true, decimals: 0})+' %'
                                   : this.getSensorState('other.hot_water_cylinder_temperature', {number: true, decimals: 0})+' °C'
@@ -967,19 +967,23 @@ class QuattDashboardCard extends LitElement {
                       : svg``
                   }
 
-                  <g id="tooltipTankPercentage" transform="translate(80, -108)">
-                      <rect x="290" y="1155" width="400" height="200" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
-                      <text x="305" y="1190" font-size="16" font-family="Arial, sans-serif" fill="#999999">Charging:</text>
-                      <text x="660" y="1190" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_charging')?.state}</text>
-                      <text x="305" y="1225" font-size="16" font-family="Arial, sans-serif" fill="#999999">Top temperature:</text>
-                      <text x="660" y="1225" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_top_temperature', {number: true, decimals: 0})} °C</text>
-                      <text x="305" y="1260" font-size="16" font-family="Arial, sans-serif" fill="#999999">Middle temperature:</text>
-                      <text x="660" y="1260" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_middle_temperature', {number: true, decimals: 0})} °C</text>
-                      <text x="305" y="1295" font-size="16" font-family="Arial, sans-serif" fill="#999999">Bottom temperature:</text>
-                      <text x="660" y="1295" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_bottom_temperature', {number: true, decimals: 0})} °C</text>
-                      <text x="305" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Shower minutes remaining:</text>
-                      <text x="660" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})}</text>
-                  </g>
+                  ${this.isAllElectric() ? svg`
+                    <g id="tooltipTankInfo" transform="translate(80, -108)">
+                        <rect x="290" y="1155" width="400" height="200" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                        <text x="305" y="1190" font-size="16" font-family="Arial, sans-serif" fill="#999999">Charging:</text>
+                        <text x="660" y="1190" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_charging')?.state}</text>
+                        <text x="305" y="1225" font-size="16" font-family="Arial, sans-serif" fill="#999999">Top temperature:</text>
+                        <text x="660" y="1225" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_top_temperature', {number: true, decimals: 0})} °C</text>
+                        <text x="305" y="1260" font-size="16" font-family="Arial, sans-serif" fill="#999999">Middle temperature:</text>
+                        <text x="660" y="1260" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_middle_temperature', {number: true, decimals: 0})} °C</text>
+                        <text x="305" y="1295" font-size="16" font-family="Arial, sans-serif" fill="#999999">Bottom temperature:</text>
+                        <text x="660" y="1295" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_bottom_temperature', {number: true, decimals: 0})} °C</text>
+                        <text x="305" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Shower minutes remaining:</text>
+                        <text x="660" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})}</text>
+                    </g>
+                    `
+                    : svg``
+                  }
                   <g id="tooltipWaterPipeTemperature" transform="translate(55, -68)">
                       <rect x="370" y="1295" width="400" height="95" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="385" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Flowrate:</text>
