@@ -1034,9 +1034,9 @@ class QuattDashboardCard extends LitElement {
                       <text x="575" y="1640" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
                       <text x="930" y="1640" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_cop')?.state}</text>
                       <text x="575" y="1675" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
-                      <text x="930" y="1675" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end"> ${this.getSensorState('hp1.hp1_powerinput', {number: true, decimals: 0})} W</text>
+                      <text x="930" y="1675" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end"> ${this.getSensorState('hp1.hp1_power', {number: true, decimals: 0})} W</text>
                       <text x="575" y="1710" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
-                      <text x="930" y="1710" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_power', {number: true, decimals: 0})} W</text>
+                      <text x="930" y="1710" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_powerinput', {number: true, decimals: 0})} W</text>
                   </g>
 
                   ${this.isDuoHeatpump()
@@ -1051,9 +1051,9 @@ class QuattDashboardCard extends LitElement {
                                 <text x="435" y="1575" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
                                 <text x="790" y="1575" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_cop')?.state}</text>
                                 <text x="435" y="1610" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
-                                <text x="790" y="1610" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput', {number: true, decimals: 0})} W</text>
+                                <text x="790" y="1610" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power', {number: true, decimals: 0})} W</text>
                                 <text x="435" y="1645" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
-                                <text x="790" y="1645" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power', {number: true, decimals: 0})} W</text>
+                                <text x="790" y="1645" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput', {number: true, decimals: 0})} W</text>
                           </g>`
                       : svg``
                   }
