@@ -56,7 +56,7 @@ The Quatt integration relies on DHCP requests made by the Commander In Chief (CI
 1. Click on `Submit` to confirm to automatically add the integration to Home Assistant
 1. Enjoy
 
-## Remote Mobile API (Optional - Beta)
+## Remote Mobile API (Optional)
 
 This integration supports the **Quatt Remote Mobile API** as an optional addition to the local CIC JSON API. The remote API provides access to additional sensors and controls beyond what's available through the local API.
 
