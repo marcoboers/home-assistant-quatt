@@ -56,7 +56,7 @@ The Quatt integration relies on DHCP requests made by the Commander In Chief (CI
 1. Click on `Submit` to confirm to automatically add the integration to Home Assistant
 1. Enjoy
 
-## Remote Mobile API (Optional - Beta)
+## Remote Mobile API (Optional)
 
 This integration supports the **Quatt Remote Mobile API** as an optional addition to the local CIC JSON API. The remote API provides access to additional sensors and controls beyond what's available through the local API.
 
@@ -116,21 +116,27 @@ To enable the remote API for your existing Quatt CIC:
 
 Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
 
-## Quatt Dashboard
+## Quatt Dashboard Card
 
-This integration includes a fully-featured **Quatt Dashboard** that replicates the dashboard from the official Quatt mobile app directly in your Home Assistant interface. This provides a comprehensive, at-a-glance view of your Quatt heat pump system status and performance.
+This integration includes a fully-featured **Quatt Dashboard Card** that replicates and enhances the dashboard from the official Quatt mobile app directly in your Home Assistant interface. This provides a comprehensive, at-a-glance view of your Quatt heat pump system status and performance.
 
-**Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app, which made this dashboard possible!**
+**Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app. The extracted images form the foundation of this card!**
 
 ### Features
 
 - **Complete system overview**: Visual representation of your entire Quatt system including heat pump(s), boiler, and heat battery
 - **Real-time status**: Live updates of temperatures, power consumption, and operating modes
 - **Universal support**: Works with all Quatt configurations:
-  - Hybrid setups (heat pump + boiler)
-  - All-Electric setups (with heat battery/heat charger)
-  - Quatt Mono (single heat pump)
-  - Quatt Duo (dual heat pumps)
+    - Hybrid setups (heat pump + boiler)
+    - All-Electric setups (with heat battery/heat charger)
+    - Quatt Mono (single heat pump)
+    - Quatt Duo (dual heat pumps)
+- **Additional features**:
+    - Airconditioning integration including heating and cooling animations
+    - Solar panel integration including animations
+    - Solar collector integration including animations
+    - Home battery integration
+    - Hot water tank integration including water temperature animations
 - **Responsive design**: Adapts to different screen sizes and devices
 - **Custom card implementation**: Uses a dedicated Lovelace custom card for optimal performance
 
@@ -151,20 +157,7 @@ To use the Quatt Dashboard, you need:
 
 ### Installation
 
-The Quatt Dashboard is now implemented as a custom Lovelace card, making it easy to add to any dashboard or view in your Home Assistant interface.
-
-#### Adding the Dashboard Card
-
-Simply add the following card to any Lovelace dashboard view:
-
-```yaml
-type: custom:quatt-dashboard-card
-```
-
-That's it! No additional configuration or settings are required. The card will automatically:
-- Detect your Quatt system configuration
-- Display the appropriate layout for your setup (Hybrid/All-Electric, Mono/Duo)
-- Fetch and display real-time data from your sensors
+The Quatt Dashboard is implemented as a custom Lovelace card which is installed automatically during installation of the integration, making it easy to add the card to any dashboard.
 
 ### Troubleshooting
 
@@ -198,6 +191,8 @@ All sensors from the local API feed are available. In addition, the following co
 - **Heat power**: Heat output of the boiler.
 
 ## Contributions are welcome!
+
+Special thanks to [@patrickvorgers](https://github.com/patrickvorgers) for maintaing this integration and enhancing the integration to its current level.
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
