@@ -799,27 +799,19 @@ class QuattDashboardCard extends LitElement {
                           <!-- Main water fill -->
                           ${this.isAllElectric()
                             ? svg`<rect x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
-                            : svg`<rect x="508" y="990" width="79" height="165"
-                                        fill="${(() => {switch (true) {
-                                              case ( 0 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#0066FF';
-                                              case (18 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#2461E4';
-                                              case (25 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#495CCA';
-                                              case (32 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#6D57AF';
-                                              case (39 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#925394';
-                                              case (46 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#B64E79';
-                                              case (53 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#DB495F';
-                                              case (60 >= (this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0}))):
-                                                  return '#FF4444';
-                                        }})()}"
-                                        opacity="0.5"
-                                        rx="28" filter="url(#waterDepth)"/>`
+                            : (() => {
+                                const t = this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0});
+                                const color =
+                                    (t <= 15) ? '#0066FF' :
+                                    (t <= 22) ? '#2461E4' :
+                                    (t <= 30) ? '#495CCA' :
+                                    (t <= 37) ? '#6D57AF' :
+                                    (t <= 45) ? '#925394' :
+                                    (t <= 52) ? '#B64E79' :
+                                    (t <= 60) ? '#DB495F' :
+                                                '#FF4444';
+                                return svg`<rect x="508" y="990" width="79" height="165" fill="${color}" opacity="0.5" rx="28" filter="url(#waterDepth)"/>`;
+                            })()
                           }
 
                           <!-- Glossy highlight overlay -->

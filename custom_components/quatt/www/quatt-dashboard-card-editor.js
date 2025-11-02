@@ -146,7 +146,7 @@ class QuattDashboardCardEditor extends LitElement {
                 { name: "thermostat_airco", selector: { entity: { domain: "climate" } } },
                 { name: "solar_power", selector: { entity: { domain: "sensor", device_class: "power" } } },
                 { name: "home_battery_soc", selector: { entity: { domain: "sensor" } } },
-                { name: "hot_water_cylinder_temperature", selector: { entity: { domain: "sensor", device_class: "power" } } },
+                { name: "hot_water_cylinder_temperature", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
                 { name: "has_solar_collector", selector: { boolean: {} } },
                 { name: "sun", selector: { entity: { domain: "sun" } } },
             ],
