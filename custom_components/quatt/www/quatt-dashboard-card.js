@@ -157,34 +157,76 @@ class QuattDashboardCard extends LitElement {
     }
 
     firstUpdated() {
+        const legendHeat = this.shadowRoot.querySelector('#legendHeatInfo');
+        const legendElectricity = this.shadowRoot.querySelector('#legendElectricityInfo');
+        const legendBoiler = this.shadowRoot.querySelector('#legendBoilerInfo');
         const tank = this.shadowRoot.querySelector('#tankInfo');
         const room = this.shadowRoot.querySelector('#roomTemperature');
         const ac = this.shadowRoot.querySelector('#aircoTemperature');
         const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
         const hp1Delta = this.shadowRoot.querySelector('#hp1DeltaTemperature');
         const hp2Delta = this.shadowRoot.querySelector('#hp2DeltaTemperature');
+        const solar = this.shadowRoot.querySelector('#solarPower');
+        const battery = this.shadowRoot.querySelector('#homeBatterySOC');
+        const outside = this.shadowRoot.querySelector('#outsideTemperature');
 
-        if (tank && this.isAllElectric()) {
-            tank.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipTankInfo').classList.add('tooltip-show');
+        if (legendHeat) {
+            legendHeat.addEventListener('click', () => {
+                const legendHeatEntity = this.config?.cic?.total_power;
+                if (legendHeatEntity) {
+                    this._openMoreInfo(legendHeatEntity);
+                }
             });
-
-            tank.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipTankInfo').classList.remove('tooltip-show');
+        }
+        if (legendElectricity) {
+            legendElectricity.addEventListener('click', () => {
+                const legendElectricityEntity = this.config?.cic?.total_powerinput;
+                if (legendElectricityEntity) {
+                    this._openMoreInfo(legendElectricityEntity);
+                }
+            });
+        }
+        if (legendBoiler) {
+            legendBoiler.addEventListener('click', () => {
+                const legendBoilerEntity = this.config?.boiler?.boiler_heating;
+                if (legendBoilerEntity) {
+                    this._openMoreInfo(legendBoilerEntity);
+                }
+            });
+        }
+        if (tank) {
+            if (this.isAllElectric()) {
+                tank.addEventListener('mouseenter', () => {
+                    this.shadowRoot.querySelector('#tooltipTankInfo').classList.add('tooltip-show');
+                });
+                tank.addEventListener('mouseleave', () => {
+                    this.shadowRoot.querySelector('#tooltipTankInfo').classList.remove('tooltip-show');
+                });
+            }
+            tank.addEventListener('click', () => {
+                const temperatureEntity = this.config?.other?.hot_water_cylinder_temperature;
+                if (temperatureEntity) {
+                    this._openMoreInfo(temperatureEntity);
+                }
             });
         }
         if (room) {
             room.addEventListener('mouseenter', () => {
                 this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.add('tooltip-show');
             });
-
             room.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.remove('tooltip-show');
             });
-
             room.addEventListener('click', () => {
                 const thermostatEntity = this.config?.other?.thermostat_room;
-
+                if (thermostatEntity) {
+                    this._openMoreInfo(thermostatEntity);
+                }
+            });
+        }
+        if (outside) {
+            outside.addEventListener('click', () => {
+                const thermostatEntity = this.config?.hp1?.hp1_temperatureoutside;
                 if (thermostatEntity) {
                     this._openMoreInfo(thermostatEntity);
                 }
@@ -194,14 +236,11 @@ class QuattDashboardCard extends LitElement {
             ac.addEventListener('mouseenter', () => {
                 this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.add('tooltip-show');
             });
-
             ac.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.remove('tooltip-show');
             });
-
             ac.addEventListener('click', () => {
                 const aircoEntity = this.config?.other?.thermostat_airco;
-
                 if (aircoEntity) {
                     this._openMoreInfo(aircoEntity);
                 }
@@ -211,27 +250,58 @@ class QuattDashboardCard extends LitElement {
             waterPipe.addEventListener('mouseenter', () => {
                 this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.add('tooltip-show');
             });
-
             waterPipe.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.remove('tooltip-show');
+            });
+            waterPipe.addEventListener('click', () => {
+                const waterPipeEntity = this.config?.flowmeter?.flowmeter_temperature;
+                if (waterPipeEntity) {
+                    this._openMoreInfo(waterPipeEntity);
+                }
             });
         }
         if (hp1Delta) {
             hp1Delta.addEventListener('mouseenter', () => {
                 this.shadowRoot.querySelector('#tooltipHp1DeltaTemperature').classList.add('tooltip-show');
             });
-
             hp1Delta.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipHp1DeltaTemperature').classList.remove('tooltip-show');
+            });
+            hp1Delta.addEventListener('click', () => {
+                const hp1DeltaEntity = this.config?.hp1?.hp1_waterdelta;
+                if (hp1DeltaEntity) {
+                    this._openMoreInfo(hp1DeltaEntity);
+                }
             });
         }
         if (hp2Delta) {
             hp2Delta.addEventListener('mouseenter', () => {
                 this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.add('tooltip-show');
             });
-
             hp2Delta.addEventListener('mouseleave', () => {
                 this.shadowRoot.querySelector('#tooltipHp2DeltaTemperature').classList.remove('tooltip-show');
+            });
+            hp2Delta.addEventListener('click', () => {
+                const hp2DeltaEntity = this.config?.hp2?.hp2_waterdelta;
+                if (hp2DeltaEntity) {
+                    this._openMoreInfo(hp2DeltaEntity);
+                }
+            });
+        }
+        if (solar) {
+            solar.addEventListener('click', () => {
+                const solarPowerEntity = this.config?.other?.solar_power;
+                if (solarPowerEntity) {
+                    this._openMoreInfo(solarPowerEntity);
+                }
+            });
+        }
+        if (battery) {
+            battery.addEventListener('click', () => {
+                const batterySOCEntity = this.config?.other?.home_battery_soc;
+                if (batterySOCEntity) {
+                    this._openMoreInfo(batterySOCEntity);
+                }
             });
         }
     }
@@ -448,14 +518,20 @@ class QuattDashboardCard extends LitElement {
                   <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">${this.config?.system_setup?.house_label}</text>
 
                   <!-- Heat -->
+                  <style>
+                      #legendHeatInfo { cursor: pointer; }
+                  </style>
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
-                  <text x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                  <text id="legendHeatInfo" x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                       ${this.getSensorState('cic.total_power', {number: true, decimals: 2, scale: 1/1000})} kW
                   </text>
 
                   <!-- Electricity -->
+                  <style>
+                      #legendElectricityInfo { cursor: pointer; }
+                  </style>
                   <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
-                  <text x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                  <text id="legendElectricityInfo" x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                       ${this.getSensorState('cic.total_powerinput', {number: true, decimals: 2, scale: 1/1000})} kW
                   </text>
 
@@ -468,7 +544,10 @@ class QuattDashboardCard extends LitElement {
                                                  <path d="M 80 595 Q 77 590, 77 585 Q 77 580, 80 577 Q 81 574, 80 571 Q 79 569, 80 567 Q 82 565, 83 567 Q 84 569, 83 571 Q 82 574, 83 577 Q 86 580, 86 585 Q 86 590, 83 595 Q 81.5 597, 80 595 Z" fill="#FF6B35" stroke="#FF4500" stroke-width="0.5"/>
                                                  <ellipse cx="81.5" cy="587" rx="2" ry="3" fill="#FFD700"/>
                                              </g>
-                                             <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                             <style>
+                                                 #legendBoilerInfo { cursor: pointer; }
+                                             </style>
+                                             <text id="legendBoilerInfo" x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                                                  ${this.getSensorState('boiler.boiler_heating')?.state || 'Off'}
                                              </text>`
                                   return svg`<g id="quatt.cic.boilerIcon.euro" class="quatt-show">
@@ -476,8 +555,11 @@ class QuattDashboardCard extends LitElement {
                                                 <path d="M 86 579 Q 82 577, 78 579 Q 74 581, 74 585 Q 74 589, 78 591 Q 82 593, 86 591" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
                                                 <line x1="72" y1="583" x2="84" y2="583" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
                                                 <line x1="72" y1="587" x2="84" y2="587" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
-                                            </g>
-                                             <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
+                                             </g>
+                                             <style>
+                                                 #legendBoilerInfo { cursor: pointer; }
+                                             </style>
+                                             <text id="legendBoilerInfo" x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
                                                  ${this.getSensorState('boiler.boiler_heating')?.state || 'Off'}
                                              </text>`
                           })()}`
@@ -825,8 +907,10 @@ class QuattDashboardCard extends LitElement {
                             ? svg`<rect x="305" y="1070" width="70" height="195" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>`
                             : svg`<rect x="508" y="990" width="79" height="165" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>`
                           }
-
                           <!-- Tank text -->
+                          <style>
+                              #tankInfo { cursor: pointer; }
+                          </style>
                           <text
                             x="${(() => this.isAllElectric() ? '340' : '547')()}"
                             y="${(() => this.isAllElectric() ? '1172' : '1080')()}"
@@ -842,7 +926,7 @@ class QuattDashboardCard extends LitElement {
               }
 
               ${this.hasSolarPanels()
-                  ? svg`<g id="solarPower" transform="translate(350, 230) rotate(-26.5, 545, 945)">
+                  ? svg`<g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
                             <rect x="1100" y="675" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                             <text x="1105" y="690" font-size="14" font-family="Arial" fill="#999999">Solar</text>
                             <text id="temp.solarPower" x="1170" y="708"
@@ -860,7 +944,7 @@ class QuattDashboardCard extends LitElement {
 
               <!-- Temperature displays -->
               <g id="quatt.temperatures" class="quatt-show">
-                  <g id="waterPipeTemperature">
+                  <g id="waterPipeTemperature" style="cursor: pointer;">
                       <rect x="300" y="1275" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="305" y="1290" font-size="14" font-family="Arial" fill="#999999">Pipe</text>
                       <text id="temp.waterPipe" x="370" y="1308"
@@ -900,7 +984,7 @@ class QuattDashboardCard extends LitElement {
                     : svg``
                   }
                   ${this.hasBattery()
-                    ? svg`<g id="homeBatterySOC">
+                    ? svg`<g id="homeBatterySOC" style="cursor: pointer;">
                           <rect x="930" y="740" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                           <text x="935" y="755" font-size="14" font-family="Arial" fill="#999999">Battery</text>
                           <text id="temp.homebatterysoc" x="1000" y="773"
@@ -914,7 +998,7 @@ class QuattDashboardCard extends LitElement {
                       </g>`
                     : svg``
                   }
-                  <g id="outsideTemperature">
+                  <g id="outsideTemperature" style="cursor: pointer;">
                       <rect x="560" y="1545" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
                       <text id="temp.outside" x="630" y="1578"
@@ -926,7 +1010,7 @@ class QuattDashboardCard extends LitElement {
                           ${this.getSensorState('hp1.hp1_temperatureoutside', {number: true, decimals: 1})} °C
                       </text>
                   </g>
-                  <g id="hp1DeltaTemperature">
+                  <g id="hp1DeltaTemperature" style="cursor: pointer;">
                       <rect x="560" y="1500" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                       <text x="565" y="1515" font-size="14" font-family="Arial" fill="#999999">HP1 Δ</text>
                       <text id="temp.hp1.delta" x="630" y="1533"
@@ -942,7 +1026,7 @@ class QuattDashboardCard extends LitElement {
                   </g>
 
                   ${this.isDuoHeatpump()
-                      ? svg`<g id="hp2DeltaTemperature">
+                      ? svg`<g id="hp2DeltaTemperature" style="cursor: pointer;">
                               <rect x="420" y="1435" width="140" height="40" fill="#1a1a1a" opacity="0.8" rx="5"/>
                               <text x="425" y="1450" font-size="14" font-family="Arial" fill="#999999">HP2 Δ</text>
                               <text id="temp.hp2.delta" x="490" y="1468"
@@ -1053,7 +1137,6 @@ class QuattDashboardCard extends LitElement {
                           </g>`
                       : svg``
                   }
-
               </g>
           </svg>
       </ha-card>
