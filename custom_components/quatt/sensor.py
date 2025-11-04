@@ -35,7 +35,12 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .entity import QuattFeatureFlags, QuattSensor, QuattSensorEntityDescription, QuattSystemSensor
+from .entity import (
+    QuattFeatureFlags,
+    QuattSensor,
+    QuattSensorEntityDescription,
+    QuattSystemSensor,
+)
 from .entity_setup import async_setup_entities
 
 

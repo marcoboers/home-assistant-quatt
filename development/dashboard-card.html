@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Hybrid V1 Duo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+        }
+
+        [id*="quatt."].quatt-show{
+            display: inline;
+        }
+        [id*="quatt."]{
+            display: none;
+        }
+        [id*="tooltip"].tooltip-show{
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        [id*="tooltip"]{
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @keyframes fogFlow {
+            0%   { stroke-dasharray: 0 200;  stroke-dashoffset: -64;  opacity: 0.60; }
+            40%  { stroke-dasharray: 45 200; stroke-dashoffset: -20;  opacity: 0.50; }
+            100% { stroke-dasharray: 45 200; stroke-dashoffset: 64; opacity: 0.10; }
+        }
+
+        @keyframes fogFlowReverse {
+            0%   { stroke-dasharray: 0 200;  stroke-dashoffset: 64;  opacity: 0.60; }
+            40%  { stroke-dasharray: 45 200; stroke-dashoffset: 20;  opacity: 0.50; }
+            100% { stroke-dasharray: 45 200; stroke-dashoffset: -64; opacity: 0.10; }
+        }
+
+        .fog-line {
+            animation-name: fogFlow;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            filter: blur(2px);
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-dasharray: 0 200;
+            stroke-dashoffset: 0;
+        }
+
+        .fog-line-reverse {
+            animation-name: fogFlowReverse;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            filter: blur(2px);
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-dasharray: 0 200;
+            stroke-dashoffset: 0;
+        }
+
+        @keyframes waterDrop {
+            0% {
+                opacity: 0.7;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+        }
+
+        .water-droplet {
+            animation: waterDrop 0.5s ease-in infinite;
+        }
+        .water-droplet:nth-child(2) { animation-delay: 0.2s; }
+        .water-droplet:nth-child(3) { animation-delay: 0.4s; }
+        .water-droplet:nth-child(4) { animation-delay: 0.6s; }
+        .water-droplet:nth-child(5) { animation-delay: 0.8s; }
+
+        @keyframes steamFlow {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0);
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-80px, 40px);
+            }
+        }
+
+        .steam-ring {
+            animation: steamFlow 2s ease-in-out infinite;
+        }
+        .steam-ring:nth-child(1) { animation-delay: 0s; }
+        .steam-ring:nth-child(2) { animation-delay: 0.4s; }
+        .steam-ring:nth-child(3) { animation-delay: 0.8s; }
+        .steam-ring:nth-child(4) { animation-delay: 1.2s; }
+        .steam-ring:nth-child(5) { animation-delay: 1.6s; }
+
+        @keyframes smokeRise {
+            0% {
+                opacity: 0.8;
+                transform: translate(0, 0) scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: translate(8px, -60px) scale(1.4);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(15px, -120px) scale(1.8);
+            }
+        }
+
+        .smoke-puff {
+            animation: smokeRise 4s ease-out infinite;
+            filter: blur(8px);
+        }
+        .smoke-puff:nth-child(1) { animation-delay: 0s; }
+        .smoke-puff:nth-child(2) { animation-delay: 0.8s; }
+        .smoke-puff:nth-child(3) { animation-delay: 1.6s; }
+        .smoke-puff:nth-child(4) { animation-delay: 2.4s; }
+        .smoke-puff:nth-child(5) { animation-delay: 3.2s; }
+
+        @keyframes heatRise {
+            0%   { stroke-dasharray: 0 200;  stroke-dashoffset: 0;   opacity: 0.70; }
+            40%  { stroke-dasharray: 45 200; stroke-dashoffset: -5;  opacity: 0.60; }
+            100% { stroke-dasharray: 45 200; stroke-dashoffset: -64; opacity: 0.06; }
+        }
+
+        .radiator-heat-line {
+            animation-name: heatRise;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            filter: blur(2px);
+            stroke: #ff8a00;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-dasharray: 0 200;
+            stroke-dashoffset: 0;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <svg viewBox="0 0 1920 1920" preserveAspectRatio="xMidYMid meet">
+        <image id="quatt.housechimney" href="../custom_components/quatt/www/src_assets_images_housechimney.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.househybridv2duo" href="../custom_components/quatt/www/src_assets_images_househybridv2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.househybridv2" href="../custom_components/quatt/www/src_assets_images_househybridv2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.househybridv1duo" href="../custom_components/quatt/www/src_assets_images_househybridv1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.househybridv1" href="../custom_components/quatt/www/src_assets_images_househybridv1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.houseallev2duo" href="../custom_components/quatt/www/src_assets_images_houseallev2duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.houseallev2" href="../custom_components/quatt/www/src_assets_images_houseallev2.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.houseallev1duo" class="quatt-show" href="../custom_components/quatt/www/src_assets_images_houseallev1duo.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.houseallev1" href="../custom_components/quatt/www/src_assets_images_houseallev1.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.houseairco" class="quatt-show" href="../custom_components/quatt/www/src_assets_images_houseairco.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.housesolarpanels" class="quatt-show" href="../custom_components/quatt/www/src_assets_images_housesolarpanels.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.housesolarcollector" href="../custom_components/quatt/www/src_assets_images_housesolarcollector.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+        <image id="quatt.houseboilercylinder" href="../custom_components/quatt/www/src_assets_images_houseboilercylinder.png" x="0" y="0" width="1920" height="1920" preserveAspectRatio="xMidYMid meet"/>
+
+        <defs>
+            <!-- Blur filter for smoke -->
+            <filter id="smokeBlur">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="8"/>
+            </filter>
+
+            <!-- Gradient definition for flowing water effect -->
+            <linearGradient id="waterGradientToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
+                    <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+            </linearGradient>
+            <linearGradient id="waterGradientToRight" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
+                    <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+            </linearGradient>
+            <linearGradient id="waterGradientUp" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
+                    <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+            </linearGradient>
+            <linearGradient id="waterGradientDown" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
+                    <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
+                    <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
+                    <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
+                </stop>
+            </linearGradient>
+
+            <filter id="softGlow" x="-200%" y="-200%" width="400%" height="400%">
+                <feGaussianBlur stdDeviation="8" result="b"/>
+                <feMerge>
+                    <feMergeNode in="b"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+            <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0" />
+                <stop offset="45%" stop-color="#ffffff" stop-opacity="0.9" />
+                <stop offset="55%" stop-color="#ffffff" stop-opacity="0.9" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+            </linearGradient>
+            <clipPath id="solarGlare">
+<!--                <polygon points="684 1001,744 1093,945 990,887 902" style=" fill: blue; stroke:black;"/>-->
+                <polygon points="1002 610,1110 762,1212 712,1103 560" style=" fill: blue; stroke:black;"/>
+                <polygon points="1117 553,1224 705,1315 657,1207 508" style=" fill: blue; stroke:black;"/>
+                <polygon points="1220 502,1327 650,1425 602,1317 453" style=" fill: blue; stroke:black;"/>
+                <polygon points="1331 446,1437 595,1528 547,1423 401" style=" fill: blue; stroke:black;"/>
+            </clipPath>
+
+            <clipPath id="outsidePipe">
+                <rect x="250" y="1245" width="181" height="100"></rect>
+                <rect x="555" y="1387" width="12" height="20"></rect>
+
+                <!-- If mono -->
+                <rect id="quatt.mono" x="431" y="1300" width="124" height="100"></rect>
+            </clipPath>
+            <clipPath id="bottomPipe">
+                <!-- If hybrid -->
+                <rect id="quatt.hybrid" x="250" y="1175" width="181" height="100"></rect>
+
+                <!-- If AllE -->
+                <rect id="quatt.alle1" class="quatt-show" x="250" y="1175" width="51" height="100"></rect>
+                <rect id="quatt.alle2" class="quatt-show" x="378" y="1100" width="151" height="125"></rect>
+            </clipPath>
+        </defs>
+
+        <g id="quatt.legend" class="quatt-show">
+            <rect x="50" y="300" width="300" height="330" fill="#1a1a1a" opacity="0.85" rx="20"/>
+
+            <!-- Title -->
+            <text x="70" y="345" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#ffffff">My house</text>
+
+            <!-- Heat -->
+            <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
+            <text id="legend.heatValue" x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">Off</text>
+
+            <!-- Electricity -->
+            <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
+            <text id="legend.electricityValue" x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0kW</text>
+
+            <!-- Boiler -->
+            <g id="quatt.legend.boiler" class="quatt-show">
+                <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Boiler</text>
+                <!-- Euro icon (shown when off) -->
+                <g id="quatt.legend.boilerIcon.euro" class="quatt-show">
+                    <circle cx="80" cy="585" r="11" fill="none" stroke="#FFA500" stroke-width="2"/>
+                    <path d="M 86 579 Q 82 577, 78 579 Q 74 581, 74 585 Q 74 589, 78 591 Q 82 593, 86 591" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="72" y1="583" x2="84" y2="583" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="72" y1="587" x2="84" y2="587" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                </g>
+                <!-- Flame icon (shown when on) -->
+                <g id="quatt.legend.boilerIcon.flame">
+                    <path d="M 80 595 Q 77 590, 77 585 Q 77 580, 80 577 Q 81 574, 80 571 Q 79 569, 80 567 Q 82 565, 83 567 Q 84 569, 83 571 Q 82 574, 83 577 Q 86 580, 86 585 Q 86 590, 83 595 Q 81.5 597, 80 595 Z" fill="#FF6B35" stroke="#FF4500" stroke-width="0.5"/>
+                    <ellipse cx="81.5" cy="587" rx="2" ry="3" fill="#FFD700"/>
+                </g>
+                <text id="legend.boilerValue" x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">Off</text>
+            </g>
+
+            <!-- Shower -->
+            <g id="quatt.legend.showerMinutes">
+                <text x="70" y="560" font-family="Arial, sans-serif" font-size="22" fill="#999999">Shower time</text>
+                <!-- Arrow down icon (shown when decreasing) -->
+                <g id="quatt.legend.showerIcon.down">
+                    <path d="M 80 577 L 80 593 M 80 593 L 74 587 M 80 593 L 86 587" fill="none" stroke="#FF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <!-- Arrow up icon (shown when increasing) -->
+                <g id="quatt.legend.showerIcon.up">
+                    <path d="M 80 593 L 80 577 M 80 577 L 74 583 M 80 577 L 86 583" fill="none" stroke="#44FF44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <text id="legend.showerMinutesValue" x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">0 min</text>
+            </g>
+        </g>
+
+        <g clip-path="url(#outsidePipe)">
+            <path id="quatt.outsidePipe" class="quatt-show" d="M 274 1253 L 567 1400" stroke="url(#waterGradientToLeft)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        </g>
+        <g clip-path="url(#bottomPipe)">
+            <path id="quatt.bottomPipe" class="quatt-show" d="M 275 1250 L 404 1185" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>
+
+            <!-- If AllE -->
+            <path id="quatt.alle.bottomPipe" class="quatt-show" d="M 405 1185 L 406 1117" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <path id="quatt.alle.radiatorPipe1" class="quatt-show" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <path id="quatt.alle.radiatorPipe2" class="quatt-show" d="M 435 1167 L 495 1139" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <g id="quatt.hp1Flow" class="quatt-show">
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 4.2s; animation-delay: 0s; stroke: #E8F4F8; stroke-width: 3;"
+                  d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 3.8s; animation-delay: -1.2s; stroke: #D4E8F0; stroke-width: 4;"
+                  d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 4.5s; animation-delay: -2.5s; stroke: #E0EDF5; stroke-width: 2.5;"
+                  d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 4.0s; animation-delay: -3.7s; stroke: #DCE9F2; stroke-width: 3;"
+                  d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+        </g>
+        <g id="quatt.hp2Flow">
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 4.3s; animation-delay: -0.5s; stroke: #E8F4F8; stroke-width: 3;"
+                  d="M 295 1350 Q 305 1343, 315 1350 Q 325 1357, 335 1350 Q 345 1343, 355 1350 Q 365 1357, 375 1350 Q 385 1343, 395 1350 Q 405 1357, 415 1350 Q 425 1343, 435 1350 Q 445 1357, 455 1350 Q 465 1343, 475 1350 Q 485 1357, 495 1350 Q 505 1343, 515 1350 Q 525 1357, 535 1350"/>
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 3.9s; animation-delay: -1.8s; stroke: #D4E8F0; stroke-width: 4;"
+                  d="M 305 1365 Q 315 1358, 325 1365 Q 335 1372, 345 1365 Q 355 1358, 365 1365 Q 375 1372, 385 1365 Q 395 1358, 405 1365 Q 415 1372, 425 1365 Q 435 1358, 445 1365 Q 455 1372, 465 1365 Q 475 1358, 485 1365 Q 495 1372, 505 1365 Q 515 1358, 525 1365 Q 535 1372, 545 1365"/>
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 4.6s; animation-delay: -3.1s; stroke: #E0EDF5; stroke-width: 2.5;"
+                  d="M 300 1380 Q 310 1373, 320 1380 Q 330 1387, 340 1380 Q 350 1373, 360 1380 Q 370 1387, 380 1380 Q 390 1373, 400 1380 Q 410 1387, 420 1380 Q 430 1373, 440 1380 Q 450 1387, 460 1380 Q 470 1373, 480 1380 Q 490 1387, 500 1380 Q 510 1373, 520 1380 Q 530 1387, 540 1380"/>
+            <path class="fog-line" pathLength="100"
+                  style="animation-duration: 4.1s; animation-delay: -2.2s; stroke: #DCE9F2; stroke-width: 3;"
+                  d="M 310 1395 Q 320 1388, 330 1395 Q 340 1402, 350 1395 Q 360 1388, 370 1395 Q 380 1402, 390 1395 Q 400 1388, 410 1395 Q 420 1402, 430 1395 Q 440 1388, 450 1395 Q 460 1402, 470 1395 Q 480 1388, 490 1395 Q 500 1402, 510 1395 Q 520 1388, 530 1395 Q 540 1402, 550 1395"/>
+        </g>
+
+                <g id="quatt.radiatorHeat" class="quatt-show" transform="translate(100,-40)">
+<!--        <g id="quatt.radiatorHeat" class="quatt-show">-->
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-12)"
+                  style="animation-duration:6.77s; animation-delay:-2.13s"
+                  d="M415 1186.1 C427 1176.1,403 1168.1,415 1158.1 C427 1148.1,403 1140.1,415 1130.1 C427 1120.1,403 1112.1,415 1102.1 C427 1092.1,403 1084.1,415 1074.1 C427 1064.1,403 1056.1,415 1046.1 C427 1036.1,403 1030.1,415 1025.1"/>
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-28)"
+                  style="animation-duration:7.09s; animation-delay:-5.04s"
+                  d="M425 1181.3 C437 1171.3,413 1163.3,425 1153.3 C437 1143.3,413 1135.3,425 1125.3 C437 1115.3,413 1107.3,425 1097.3 C437 1087.3,413 1079.3,425 1069.3 C437 1059.3,413 1051.3,425 1041.3 C437 1031.3,413 1025.3,425 1020.3"/>
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-40)"
+                  style="animation-duration:6.61s; animation-delay:-0.41s"
+                  d="M435 1176.4 C447 1166.4,423 1158.4,435 1148.4 C447 1138.4,423 1130.4,435 1120.4 C447 1110.4,423 1102.4,435 1092.4 C447 1082.4,423 1074.4,435 1064.4 C447 1054.4,423 1046.4,435 1036.4 C447 1026.4,423 1020.4,435 1015.4"/>
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-16)"
+                  style="animation-duration:7.21s; animation-delay:-3.57s"
+                  d="M445 1171.5 C457 1161.5,433 1153.5,445 1143.5 C457 1133.5,433 1125.5,445 1115.5 C457 1105.5,433 1097.5,445 1087.5 C457 1077.5,433 1069.5,445 1059.5 C457 1049.5,433 1041.5,445 1031.5 C457 1021.5,433 1015.5,445 1010.5"/>
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-32)"
+                  style="animation-duration:6.47s; animation-delay:-1.89s"
+                  d="M455 1161.8 C477 1151.8,453 1143.8,465 1133.8 C477 1123.8,453 1115.8,465 1105.8 C477 1095.8,453 1087.8,465 1077.8 C477 1067.8,453 1059.8,465 1049.8 C477 1039.8,453 1031.8,465 1021.8 C477 1011.8,453 1005.8,465 1000.8"/>
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-10)"
+                  style="animation-duration:6.93s; animation-delay:-6.28s"
+                  d="M465 1166.6 C467 1156.6,443 1148.6,455 1138.6 C467 1128.6,443 1120.6,455 1110.6 C467 1100.6,443 1092.6,455 1082.6 C467 1072.6,443 1064.6,455 1054.6 C467 1044.6,443 1036.6,455 1026.6 C467 1016.6,443 1010.6,455 1005.6"/>
+            <path class="radiator-heat-line" pathLength="100" transform="translate(0,-24)"
+                  style="animation-duration:7.37s; animation-delay:-4.46s"
+                  d="M474 1157.4 C486 1147.4,462 1139.4,474 1129.4 C486 1119.4,462 1111.4,474 1101.4 C486 1091.4,462 1083.4,474 1073.4 C486 1035.4,462 1027.4,474 1017.4 C486 1007.4,462 1002.4,474  997.4"/>
+        </g>
+
+        <g id="quatt.acFlow" transform="translate(380, 15)">
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 4.2s; animation-delay: 0s; stroke: #ff8a00; stroke-width: 3;"
+                  d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 3.8s; animation-delay: -1.2s; stroke: #ff8a00; stroke-width: 4;"
+                  d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 4.5s; animation-delay: -2.5s; stroke: #ff8a00; stroke-width: 2.5;"
+                  d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 4.0s; animation-delay: -3.7s; stroke: #ff8a00; stroke-width: 3;"
+                  d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+        </g>
+        <g id="quatt.acHeat" transform="translate(420, -70) rotate(67.5, 545, 945)">
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 4.2s; animation-delay: 0s; stroke: #DCE9F2; stroke-width: 3;"
+                  d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 3.8s; animation-delay: -1.2s; stroke: #DCE9F2; stroke-width: 4;"
+                  d="M 435 1430 Q 445 1423, 455 1430 Q 465 1437, 475 1430 Q 485 1423, 495 1430 Q 505 1437, 515 1430 Q 525 1423, 535 1430 Q 545 1437, 555 1430 Q 565 1423, 575 1430 Q 585 1437, 595 1430 Q 605 1423, 615 1430 Q 625 1437, 635 1430 Q 645 1423, 655 1430 Q 665 1437, 675 1430"/>
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 4.5s; animation-delay: -2.5s; stroke: #DCE9F2; stroke-width: 2.5;"
+                  d="M 430 1445 Q 440 1438, 450 1445 Q 460 1452, 470 1445 Q 480 1438, 490 1445 Q 500 1452, 510 1445 Q 520 1438, 530 1445 Q 540 1452, 550 1445 Q 560 1438, 570 1445 Q 580 1452, 590 1445 Q 600 1438, 610 1445 Q 620 1452, 630 1445 Q 640 1438, 650 1445 Q 660 1452, 670 1445"/>
+            <path class="fog-line-reverse" pathLength="100"
+                  style="animation-duration: 4.0s; animation-delay: -3.7s; stroke: #DCE9F2; stroke-width: 3;"
+                  d="M 440 1460 Q 450 1453, 460 1460 Q 470 1467, 480 1460 Q 490 1453, 500 1460 Q 510 1467, 520 1460 Q 530 1453, 540 1460 Q 550 1467, 560 1460 Q 570 1453, 580 1460 Q 590 1467, 600 1460 Q 610 1453, 620 1460 Q 630 1467, 640 1460 Q 650 1453, 660 1460 Q 670 1467, 680 1460"/>
+        </g>
+
+        <!-- If hybrid -->
+        <g id="quatt.chimneyPipe">
+            <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        </g>
+        <g id="quatt.chimneySmoke">
+            <ellipse cx="400" cy="675" rx="12" ry="15" fill="#6B6B6B" filter="url(#smokeBlur)">
+                <animate attributeName="cy" values="675;555;435" dur="4s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" repeatCount="indefinite"/>
+                <animate attributeName="rx" values="12;17;22" dur="4s" repeatCount="indefinite"/>
+                <animate attributeName="ry" values="15;21;27" dur="4s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="408" cy="670" rx="14" ry="16" fill="#7A7A7A" filter="url(#smokeBlur)">
+                <animate attributeName="cy" values="670;550;430" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                <animate attributeName="rx" values="14;19;24" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+                <animate attributeName="ry" values="16;22;28" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="395" cy="680" rx="13" ry="14" fill="#656565" filter="url(#smokeBlur)">
+                <animate attributeName="cy" values="680;560;440" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                <animate attributeName="rx" values="13;18;23" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+                <animate attributeName="ry" values="14;20;26" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="403" cy="673" rx="15" ry="17" fill="#707070" filter="url(#smokeBlur)">
+                <animate attributeName="cy" values="673;553;433" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                <animate attributeName="rx" values="15;20;25" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+                <animate attributeName="ry" values="17;23;29" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="397" cy="677" rx="11" ry="13" fill="#6F6F6F" filter="url(#smokeBlur)">
+                <animate attributeName="cy" values="677;557;437" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                <animate attributeName="rx" values="11;16;21" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+                <animate attributeName="ry" values="13;19;25" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+            </ellipse>
+        </g>
+
+        <!-- If AllE -->
+        <g id="quatt.waterPipe">
+            <path d="M 421 1119 L 422 1186" stroke="url(#waterGradientDown)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        </g>
+        <g id="quatt.shower">
+            <g id="showerWater" transform="translate(620, 880)">
+                <ellipse class="water-droplet" cx="20" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
+                <ellipse class="water-droplet" cx="35" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
+                <ellipse class="water-droplet" cx="50" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
+                <ellipse class="water-droplet" cx="65" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"/>
+                <ellipse class="water-droplet" cx="80" cy="0" rx="3" ry="6" fill="#4DB8FF" opacity="0.7"/>
+            </g>
+        </g>
+        <g id="quatt.boilerSteam">
+            <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
+            <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
+            <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
+            <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#D4E8F0" stroke-width="2" opacity="0"/>
+            <circle class="steam-ring" cx="400" cy="993" r="8" fill="none" stroke="#E8F4F8" stroke-width="2" opacity="0"/>
+        </g>
+
+        <g id="quatt.waterTankIndicator" class="quatt-show">
+            <defs>
+                <linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                    <stop id="gradientStop2" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                    <stop id="gradientStop3" offset="0%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                    <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                </linearGradient>
+
+                <!-- Inner shadow for depth -->
+                <filter id="waterDepth" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                    <feOffset dx="0" dy="2" result="offsetblur"/>
+                    <feComponentTransfer>
+                        <feFuncA type="linear" slope="0.3"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                        <feMergeNode/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+
+                <!-- Glossy highlight effect -->
+                <linearGradient id="waterGloss" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0"/>
+                    <stop offset="30%" style="stop-color:#ffffff;stop-opacity:0.15"/>
+                    <stop offset="70%" style="stop-color:#ffffff;stop-opacity:0.15"/>
+                    <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+                </linearGradient>
+            </defs>
+
+            <!-- Main water fill -->
+                        <rect id="tankWaterLevel" x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>
+<!--            <rect id="tankWaterLevel" x="508" y="990" width="79" height="165" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"></rect>-->
+
+            <!-- Glossy highlight overlay -->
+                        <rect x="310" y="1075" width="25" height="180" fill="url(#waterGloss)" rx="20" opacity="0.6"/>
+<!--            <rect x="513" y="995" width="28" height="150" fill="url(#waterGloss)" rx="20" opacity="0.6"/>-->
+
+            <!-- Subtle shine on edges -->
+                        <rect x="305" y="1070" width="70" height="195" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>
+<!--            <rect x="508" y="990" width="79" height="165" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" rx="28"/>-->
+
+            <!-- Percentage text -->
+                        <text x="340" y="1172" id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9">
+                            0%
+                        </text>
+<!--            <text x="547" y="1080" id="tankPercentage" style="cursor: pointer;" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="0.5" opacity="0.9">-->
+<!--                0%-->
+<!--            </text>-->
+        </g>
+
+        <!-- Temperature displays -->
+        <g id="quatt.temperatures" class="quatt-show">
+            <g id="waterPipeTemperature" style="cursor: pointer;">
+                <rect x="300" y="1275" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="305" y="1290" font-size="14" font-family="Arial" fill="#999999">Pipe</text>
+                <text id="temp.waterPipe" x="370" y="1308"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#ffffff">--°C</text>
+            </g>
+            <g id="roomTemperature" style="cursor: pointer;">
+                <rect x="550" y="1200" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="555" y="1215" font-size="14" font-family="Arial" fill="#999999">Room</text>
+                <text id="temp.room" x="620" y="1233"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#ffffff">--°C</text>
+            </g>
+            <g id="aircoTemperature" style="cursor: pointer;">
+                <rect x="350" y="875" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="355" y="890" font-size="14" font-family="Arial" fill="#999999">Airco</text>
+                <text id="temp.room" x="420" y="908"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#ffffff">--°C</text>
+            </g>
+            <g id="outsideTemperature" style="cursor: pointer;">
+                <rect x="560" y="1545" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="565" y="1560" font-size="14" font-family="Arial" fill="#999999">Outside</text>
+                <text id="temp.outside" x="630" y="1578"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#E8F4F8">--°C</text>
+            </g>
+            <g id="hp1DeltaTemperature" style="cursor: pointer;">
+                <rect x="560" y="1500" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="565" y="1515" font-size="14" font-family="Arial" fill="#999999">HP1 Δ</text>
+                <text id="temp.hp1.delta" x="630" y="1533"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#E8F4F8">--°C</text>
+            </g>
+            <g id="hp2DeltaTemperature" style="cursor: pointer;">
+                <rect x="420" y="1435" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+                <text x="425" y="1450" font-size="14" font-family="Arial" fill="#999999">HP2 Δ</text>
+                <text id="temp.hp2.delta" x="490" y="1468"
+                      text-anchor="middle"
+                      font-size="18"
+                      font-family="Arial, sans-serif"
+                      font-weight="bold"
+                      fill="#E8F4F8">--°C</text>
+            </g>
+
+
+            <g id="tooltipTankPercentage" transform="translate(80, -108)">
+                <rect x="290" y="1155" width="400" height="230" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                <text x="305" y="1190" font-size="16" font-family="Arial, sans-serif" fill="#999999">Charging:</text>
+                <text x="660" y="1190" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="305" y="1225" font-size="16" font-family="Arial, sans-serif" fill="#999999">Top temperature:</text>
+                <text x="660" y="1225" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="305" y="1260" font-size="16" font-family="Arial, sans-serif" fill="#999999">Middle temperature:</text>
+                <text x="660" y="1260" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="305" y="1295" font-size="16" font-family="Arial, sans-serif" fill="#999999">Bottom temperature:</text>
+                <text x="660" y="1295" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="305" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Shower minutes remaining:</text>
+                <text x="660" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+            </g>
+            <g id="tooltipWaterPipeTemperature" transform="translate(55, -68)">
+                <rect x="370" y="1295" width="400" height="110" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                <text x="385" y="1330" font-size="16" font-family="Arial, sans-serif" fill="#999999">Flowrate:</text>
+                <text x="740" y="1330" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="385" y="1365" font-size="16" font-family="Arial, sans-serif" fill="#999999">System pressure:</text>
+                <text x="740" y="1365" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+            </g>
+            <g id="tooltipRoomTemperature" transform="translate(120, -108)">
+                <rect x="550" y="1200" width="400" height="180" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                <text x="565" y="1235" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room temperature:</text>
+                <text x="920" y="1235" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="565" y="1270" font-size="16" font-family="Arial, sans-serif" fill="#999999">Room setpoint:</text>
+                <text x="920" y="1270" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="565" y="1305" font-size="16" font-family="Arial, sans-serif" fill="#999999">Control setpoint:</text>
+                <text x="920" y="1305" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="565" y="1340" font-size="16" font-family="Arial, sans-serif" fill="#999999">Heating:</text>
+                <text x="920" y="1340" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+            </g>
+            <g id="tooltipHp1DeltaTemperature" transform="translate(120, -108)">
+                <rect x="560" y="1500" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                <text x="575" y="1535" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
+                <text x="930" y="1535" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="575" y="1570" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water out:</text>
+                <text x="930" y="1570" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="575" y="1605" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
+                <text x="930" y="1605" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="575" y="1640" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
+                <text x="930" y="1640" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="575" y="1675" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
+                <text x="930" y="1675" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="575" y="1710" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
+                <text x="930" y="1710" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+            </g>
+            <g id="tooltipHp2DeltaTemperature" transform="translate(120, -108)">
+                <rect x="420" y="1435" width="400" height="260" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
+                <text x="435" y="1470" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water in:</text>
+                <text x="790" y="1470" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="435" y="1505" font-size="16" font-family="Arial, sans-serif" fill="#999999">Temperature water out:</text>
+                <text x="790" y="1505" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="435" y="1540" font-size="16" font-family="Arial, sans-serif" fill="#999999">Working mode:</text>
+                <text x="790" y="1540" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="435" y="1575" font-size="16" font-family="Arial, sans-serif" fill="#999999">COP:</text>
+                <text x="790" y="1575" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="435" y="1610" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power:</text>
+                <text x="790" y="1610" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+                <text x="435" y="1645" font-size="16" font-family="Arial, sans-serif" fill="#999999">Power input:</text>
+                <text x="790" y="1645" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">--</text>
+            </g>
+        </g>
+
+        <g id="solarPower" style="cursor: pointer;" transform="translate(350, 230) rotate(-26.5, 545, 945)">
+            <rect x="1100" y="675" width="140" height="35" fill="#1a1a1a" opacity="0.8" rx="5"/>
+            <text x="1105" y="690" font-size="14" font-family="Arial" fill="#999999">Solar</text>
+            <text id="temp.waterPipe" x="1170" y="708"
+                  text-anchor="middle"
+                  font-size="18"
+                  font-family="Arial, sans-serif"
+                  font-weight="bold"
+                  fill="#ffffff">0kWh</text>
+        </g>
+
+        <g clip-path="url(#solarGlare)" filter="url(#softGlow)">
+            <rect x="500" y="220" width="1200" height="900" fill="#7ad6ff" opacity="0.15">
+                <animate attributeName="opacity" values="0.08;0.18;0.10;0.18;0.08" dur="6s" repeatCount="indefinite"></animate>
+            </rect>
+            <rect id="sweepBar" x="100" y="0" width="300" height="1400" fill="url(#sweep)" opacity="0.6">
+                <animateTransform attributeName="transform" type="translate" from="100 0" to="1500 0" dur="5.5s" repeatCount="indefinite"></animateTransform>
+            </rect>
+        </g>
+    </svg>
+
+</div>
+
+<script>
+    // Function to update water tank fill level
+    function setTankFillLevel(percentage) {
+        // Clamp percentage between 0 and 100
+        percentage = Math.max(0, Math.min(100, percentage));
+
+        const blue = '#0066FF';
+        const red = '#FF4444';
+        const transitionWidth = 25; // 10% transition zone
+
+        // Calculate the gradient stop positions
+        // The transition happens at the percentage point
+        const centerPoint = percentage;
+        const startTransition = Math.max(0, centerPoint - transitionWidth / 2);
+        const endTransition = Math.min(100, centerPoint + transitionWidth / 2);
+
+        // Update gradient stops
+        const gradientStop1 = document.getElementById('gradientStop1');
+        const gradientStop2 = document.getElementById('gradientStop2');
+        const gradientStop3 = document.getElementById('gradientStop3');
+        const gradientStop4 = document.getElementById('gradientStop4');
+
+        // From bottom (0%) to start of transition: blue
+        gradientStop1.setAttribute('offset', '0%');
+        gradientStop1.setAttribute('style', `stop-color:${red};stop-opacity:0.5`);
+
+        // Start of transition: blue
+        gradientStop2.setAttribute('offset', `${startTransition}%`);
+        gradientStop2.setAttribute('style', `stop-color:${red};stop-opacity:0.5`);
+
+        // End of transition: red
+        gradientStop3.setAttribute('offset', `${endTransition}%`);
+        gradientStop3.setAttribute('style', `stop-color:${blue};stop-opacity:0.5`);
+
+        // From end of transition to top (100%): red
+        gradientStop4.setAttribute('offset', '100%');
+        gradientStop4.setAttribute('style', `stop-color:${blue};stop-opacity:0.5`);
+
+        // Update percentage text
+        const percentText = document.getElementById('tankPercentage');
+        percentText.textContent = Math.round(percentage) + '%';
+    }
+
+    setTankFillLevel(73);
+
+    const tank = document.getElementById('tankPercentage');
+    const room = document.getElementById('roomTemperature');
+    const ac = document.getElementById('aircoTemperature');
+    const outside = document.getElementById('outsideTemperature');
+    const waterPipe = document.getElementById('waterPipeTemperature');
+    const hp1Delta = document.getElementById('hp1DeltaTemperature');
+    const hp2Delta = document.getElementById('hp2DeltaTemperature');
+
+    if (tank) {
+        tank.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipTankPercentage').classList.add('tooltip-show');
+        });
+
+        tank.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipTankPercentage').classList.remove('tooltip-show');
+        });
+    }
+    if (room) {
+        room.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipRoomTemperature').classList.add('tooltip-show');
+        });
+
+        room.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipRoomTemperature').classList.remove('tooltip-show');
+        });
+    }
+    if (ac) {
+        room.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipAircoTemperature').classList.add('tooltip-show');
+        });
+
+        room.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipAircoTemperature').classList.remove('tooltip-show');
+        });
+    }
+    if (outside) {
+        outside.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipOutsideTemperature').classList.add('tooltip-show');
+        });
+
+        outside.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipOutsideTemperature').classList.remove('tooltip-show');
+        });
+    }
+    if (waterPipe) {
+        waterPipe.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipWaterPipeTemperature').classList.add('tooltip-show');
+        });
+
+        waterPipe.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipWaterPipeTemperature').classList.remove('tooltip-show');
+        });
+    }
+    if (hp1Delta) {
+        hp1Delta.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipHp1DeltaTemperature').classList.add('tooltip-show');
+        });
+
+        hp1Delta.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipHp1DeltaTemperature').classList.remove('tooltip-show');
+        });
+    }
+
+    if (hp2Delta) {
+        hp2Delta.addEventListener('mouseenter', () => {
+            document.getElementById('tooltipHp2DeltaTemperature').classList.add('tooltip-show');
+        });
+
+        hp2Delta.addEventListener('mouseleave', () => {
+            document.getElementById('tooltipHp2DeltaTemperature').classList.remove('tooltip-show');
+        });
+    }
+</script>
+
+</body>
+</html>

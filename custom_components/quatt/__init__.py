@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant
@@ -18,6 +20,7 @@ from homeassistant.helpers.aiohttp_client import (
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.storage import Store
+from homeassistant.loader import async_get_integration
 
 from .api import (
     QuattApiClientAuthenticationError,
@@ -27,6 +30,8 @@ from .api import (
 from .api_local import QuattLocalApiClient
 from .api_remote import QuattRemoteApiClient
 from .const import (
+    CARD_FILE,
+    CARD_MOUNT,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     CONF_REMOTE_CIC,
@@ -48,6 +53,27 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.SWITCH,
 ]
+
+
+async def async_setup(hass: HomeAssistant, _config):
+    """Set up this integration."""
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                CARD_MOUNT,
+                hass.config.path("custom_components/quatt/www"),
+                cache_headers=True,
+            )
+        ]
+    )
+
+    # Determine the version of the integration
+    integ = await async_get_integration(hass, DOMAIN)
+    version = integ.version or "0"
+
+    # Register the frontend card
+    add_extra_js_url(hass, f"{CARD_MOUNT}/{CARD_FILE}?v={version}")
+    return True
 
 
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry

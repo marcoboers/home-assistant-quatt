@@ -116,6 +116,55 @@ To enable the remote API for your existing Quatt CIC:
 
 Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
 
+## Quatt Dashboard Card
+
+This integration includes a fully-featured **Quatt Dashboard Card** that replicates and enhances the dashboard from the official Quatt mobile app directly in your Home Assistant interface. This provides a comprehensive, at-a-glance view of your Quatt heat pump system status and performance.
+
+**Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app. The extracted images form the foundation of this card!**
+
+### Features
+
+- **Complete system overview**: Visual representation of your entire Quatt system including heat pump(s), boiler, and heat battery
+- **Real-time status**: Live updates of temperatures, power consumption, and operating modes
+- **Universal support**: Works with all Quatt configurations:
+    - Hybrid setups (heat pump + boiler)
+    - All-Electric setups (with heat battery/heat charger)
+    - Quatt Mono (single heat pump)
+    - Quatt Duo (dual heat pumps)
+- **Additional features**:
+    - Airconditioning integration including heating and cooling animations
+    - Solar panel integration including animations
+    - Solar collector integration including animations
+    - Home battery integration
+    - Hot water tank integration including water temperature animations
+- **Responsive design**: Adapts to different screen sizes and devices
+- **Custom card implementation**: Uses a dedicated Lovelace custom card for optimal performance
+
+### Prerequisites
+
+To use the Quatt Dashboard, you need:
+
+1. **Remote API configured**: The dashboard requires the Remote Mobile API to be set up (see [Remote Mobile API](#remote-mobile-api-optional---beta) section above)
+2. **Required sensors enabled**: Two sensors from the remote API must be manually enabled:
+   - `OduType` (ODU Type)
+   - `Number of heatpumps`
+
+   These sensors are disabled by default. To enable them:
+   - Go to `Settings` → `Devices & services` → `Integrations` → `Quatt`
+   - Click on your CIC device
+   - Find the `OduType` and `Number of heatpumps` sensors
+   - Click on each sensor and enable it
+
+### Installation
+
+The Quatt Dashboard is implemented as a custom Lovelace card which is installed automatically during installation of the integration, making it easy to add the card to any dashboard.
+
+### Troubleshooting
+
+- **Card not found**: Ensure Home Assistant has loaded the integration properly. Try restarting Home Assistant
+- **Incomplete data**: Make sure both `OduType` and `Number of heatpumps` sensors are enabled
+- **No data showing**: Confirm the Remote API is configured and working (check the Remote API sensors)
+
 ## Sensors
 
 All sensors from the local API feed are available. In addition, the following computed sensors are provided:
@@ -142,6 +191,8 @@ All sensors from the local API feed are available. In addition, the following co
 - **Heat power**: Heat output of the boiler.
 
 ## Contributions are welcome!
+
+Special thanks to [@patrickvorgers](https://github.com/patrickvorgers) for maintaing this integration and enhancing the integration to its current level.
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 

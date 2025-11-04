@@ -27,3 +27,5 @@ tts
 scenes.yaml
 scripts.yaml
 secrets.yaml
+/.vs
+/custom_components/quatt/www/dev
