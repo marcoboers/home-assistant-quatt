@@ -122,6 +122,8 @@ This integration includes a fully-featured **Quatt Dashboard Card** that replica
 
 **Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app. The extracted images form the foundation of this card!**
 
+<img width="930" height="732" alt="Quatt overview" src="https://github.com/user-attachments/assets/2dc22c2d-21fe-4c5a-a181-08a596e98e42" />
+
 ### Features
 
 - **Complete system overview**: Visual representation of your entire Quatt system including heat pump(s), boiler, and heat battery
