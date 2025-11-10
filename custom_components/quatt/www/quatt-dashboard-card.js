@@ -849,8 +849,8 @@ class QuattDashboardCard extends LitElement {
                               ${this.isAllElectric()
                                 ? svg`<linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                       <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop2" offset="${Math.max(0, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) - 12.5)} %" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop3" offset="${Math.min(100, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) + 12.5)} %" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                      <stop id="gradientStop2" offset="${Math.max(0, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                      <stop id="gradientStop3" offset="${Math.min(100, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                       <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                     </linearGradient>`
                                 : svg``
