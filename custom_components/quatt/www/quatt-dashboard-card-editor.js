@@ -148,6 +148,7 @@ class QuattDashboardCardEditor extends LitElement {
                 { name: "solar_power", selector: { entity: { domain: "sensor", device_class: "power" } } },
                 { name: "home_battery_soc", selector: { entity: { domain: "sensor" } } },
                 { name: "hot_water_cylinder_temperature", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
+                { name: "outside_temperature", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
                 { name: "has_solar_collector", selector: { boolean: {} } },
                 {
                     name: "heatpump_metric",
@@ -275,6 +276,7 @@ class QuattDashboardCardEditor extends LitElement {
             solar_power: "Solar current production",
             home_battery_soc: "Home battery state of charge",
             hot_water_cylinder_temperature: "Hot water cylinder temperature",
+            outside_temperature: "Outside temperature",
             has_solar_collector: "Solar collector",
             heatpump_metric: "Heat pump metric to display",
         };
@@ -347,6 +349,7 @@ class QuattDashboardCardEditor extends LitElement {
             solar_power: "Provided by another integration",
             home_battery_soc: "Provided by another integration",
             hot_water_cylinder_temperature: "Provided by another integration",
+            outside_temperature: "Provided by another integration",
             has_solar_collector: "Provided by another integration",
             heatpump_metric: "User selection",
         };

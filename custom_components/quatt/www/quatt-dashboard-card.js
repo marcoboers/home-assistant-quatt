@@ -194,15 +194,21 @@ class QuattDashboardCard extends LitElement {
             return this.supervisoryControlModeDescription(workingMode);
 
         if (metric === 'cop') {
-            return this.getSensorState(`${heatpumpID}.${heatpumpID}_cop`, {number: true, decimals: 2});
+            return this.getSensorState(`${heatpumpID}.${heatpumpID}_cop`, { number: true, decimals: 2 });
         }
         if (metric === 'power') {
-            return this.getSensorState(`${heatpumpID}.${heatpumpID}_power`, {number: true, decimals: 2, scale: 1/1000}) + ' kW';
+            return this.getSensorState(`${heatpumpID}.${heatpumpID}_power`, { number: true, decimals: 2, scale: 1 / 1000 }) + ' kW';
         }
         if (metric === 'powerinput') {
-            return this.getSensorState(`${heatpumpID}.${heatpumpID}_powerinput`, {number: true, decimals: 2, scale: 1/1000}) + ' kW';
+            return this.getSensorState(`${heatpumpID}.${heatpumpID}_powerinput`, { number: true, decimals: 2, scale: 1 / 1000 }) + ' kW';
         }
-        return this.getSensorState(`${heatpumpID}.${heatpumpID}_waterdelta`, {number: true, decimals: 1}) + ' °C';
+        return this.getSensorState(`${heatpumpID}.${heatpumpID}_waterdelta`, { number: true, decimals: 1 }) + ' °C';
+    }
+
+    getOutsideTemperature() {
+        return this.config?.other?.outside_temperature
+            ? this.getSensorState('other.outside_temperature', { number: true, decimals: 1 })
+            : this.getSensorState('hp1.hp1_temperatureoutside', { number: true, decimals: 1 });
     }
 
     firstUpdated() {
@@ -275,9 +281,10 @@ class QuattDashboardCard extends LitElement {
         }
         if (outside) {
             outside.addEventListener('click', () => {
-                const thermostatEntity = this.config?.hp1?.hp1_temperatureoutside;
-                if (thermostatEntity) {
-                    this._openMoreInfo(thermostatEntity);
+                const temperatureEntity =
+                    this.config?.other?.outside_temperature || this.config?.hp1?.hp1_temperatureoutside;
+                if (temperatureEntity) {
+                    this._openMoreInfo(temperatureEntity);
                 }
             });
         }
@@ -578,7 +585,7 @@ class QuattDashboardCard extends LitElement {
                   </style>
                   <text x="70" y="400" font-family="Arial, sans-serif" font-size="22" fill="#999999">Heat</text>
                   <text id="legendHeatInfo" x="70" y="435" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${this.getSensorState('cic.total_power', {number: true, decimals: 2, scale: 1/1000})} kW
+                      ${this.getSensorState('cic.total_power', { number: true, decimals: 2, scale: 1 / 1000 })} kW
                   </text>
 
                   <!-- Electricity -->
@@ -587,7 +594,7 @@ class QuattDashboardCard extends LitElement {
                   </style>
                   <text x="70" y="480" font-family="Arial, sans-serif" font-size="22" fill="#999999">Electricity</text>
                   <text id="legendElectricityInfo" x="70" y="515" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                      ${this.getSensorState('cic.total_powerinput', {number: true, decimals: 2, scale: 1/1000})} kW
+                      ${this.getSensorState('cic.total_powerinput', { number: true, decimals: 2, scale: 1 / 1000 })} kW
                   </text>
 
                   <!-- Boiler -->
@@ -630,18 +637,18 @@ class QuattDashboardCard extends LitElement {
                                                  <path d="M 80 577 L 80 593 M 80 593 L 74 587 M 80 593 L 86 587" fill="none" stroke="#FF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                                              </g>
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})} min
+                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', { number: true, decimals: 0 })} min
                                              </text>`
                                 if (this.getSensorState('heat_battery.heat_battery_charging')?.state == 'on')
                                   return svg`<g id="quatt.cic.showerIcon.up">
                                                 <path d="M 80 593 L 80 577 M 80 577 L 74 583 M 80 577 L 86 583" fill="none" stroke="#44FF44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                                              </g>
                                              <text x="100" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})} min
+                                                 ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', { number: true, decimals: 0 })} min
                                              </text>`
 
                                 return svg`<text x="70" y="595" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">
-                                               ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})} min
+                                               ${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', { number: true, decimals: 0 })} min
                                            </text>`
                             })()}`
                       : svg``
@@ -904,8 +911,8 @@ class QuattDashboardCard extends LitElement {
                               ${this.isAllElectric()
                                 ? svg`<linearGradient id="tankWaterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                       <stop id="gradientStop1" offset="0%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop2" offset="${Math.max(0, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
-                                      <stop id="gradientStop3" offset="${Math.min(100, this.getSensorState('heat_battery.heat_battery_percentage', {number: true, asString: false, decimals: 1, fallback: 0}) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
+                                      <stop id="gradientStop2" offset="${Math.max(0, this.getSensorState('heat_battery.heat_battery_percentage', { number: true, asString: false, decimals: 1, fallback: 0 }) - 12.5)}%" style="stop-color:#FF4444;stop-opacity:0.5"/>
+                                      <stop id="gradientStop3" offset="${Math.min(100, this.getSensorState('heat_battery.heat_battery_percentage', { number: true, asString: false, decimals: 1, fallback: 0 }) + 12.5)}%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                       <stop id="gradientStop4" offset="100%" style="stop-color:#0066FF;stop-opacity:0.5"/>
                                     </linearGradient>`
                                 : svg``
@@ -937,7 +944,7 @@ class QuattDashboardCard extends LitElement {
                           ${this.isAllElectric()
                             ? svg`<rect x="305" y="1070" width="70" height="195" fill="url(#tankWaterGradient)" rx="28" filter="url(#waterDepth)"/>`
                             : (() => {
-                                const t = this.getSensorState('other.hot_water_cylinder_temperature', {number: true, asString: false, fallback: 0});
+                                const t = this.getSensorState('other.hot_water_cylinder_temperature', { number: true, asString: false, fallback: 0 });
                                 const color =
                                     (t <= 15) ? '#0066FF' :
                                     (t <= 22) ? '#2461E4' :
@@ -971,8 +978,8 @@ class QuattDashboardCard extends LitElement {
                             y="${(() => this.isAllElectric() ? '1172' : '1080')()}"
                             id="tankInfo" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff">
                               ${(() => this.isAllElectric()
-                                  ? this.getSensorState('heat_battery.heat_battery_percentage', {number: true, decimals: 0})+' %'
-                                  : this.getSensorState('other.hot_water_cylinder_temperature', {number: true, decimals: 0})+' °C'
+                                    ? this.getSensorState('heat_battery.heat_battery_percentage', { number: true, decimals: 0 })+' %'
+                                    : this.getSensorState('other.hot_water_cylinder_temperature', { number: true, decimals: 0 })+' °C'
                                 )()
                               }
                           </text>
@@ -990,8 +997,8 @@ class QuattDashboardCard extends LitElement {
                                   font-family="Arial, sans-serif"
                                   font-weight="bold"
                                   fill="#ffffff">
-                              ${this.getSensorState('other.solar_power', {number: true, decimals: this.getSensorState('other.solar_power', {attribute: 'unit_of_measurement'}) == 'kW' ? 3 : 0})}
-                              ${this.getSensorState('other.solar_power', {attribute: 'unit_of_measurement'})}
+                              ${this.getSensorState('other.solar_power', { number: true, decimals: this.getSensorState('other.solar_power', { attribute: 'unit_of_measurement' }) == 'kW' ? 3 : 0 })}
+                              ${this.getSensorState('other.solar_power', { attribute: 'unit_of_measurement' })}
                             </text>
                         </g>`
                   : svg``
@@ -1008,7 +1015,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${this.getSensorState('flowmeter.flowmeter_temperature', {number: true, decimals: 1})} °C
+                          ${this.getSensorState('flowmeter.flowmeter_temperature', { number: true, decimals: 1 })} °C
                       </text>
                   </g>
                   <g id="roomTemperature" style="cursor: pointer;">
@@ -1020,7 +1027,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${this.getSensorState('thermostat.thermostat_room_temperature', {number: true, decimals: 1})} °C
+                          ${this.getSensorState('thermostat.thermostat_room_temperature', { number: true, decimals: 1 })} °C
                       </text>
                   </g>
                   ${this.hasAirco()
@@ -1033,7 +1040,7 @@ class QuattDashboardCard extends LitElement {
                                 font-family="Arial, sans-serif"
                                 font-weight="bold"
                                 fill="#ffffff">
-                              ${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'current_temperature'})} °C
+                              ${this.getSensorState('other.thermostat_airco', { number: true, decimals: 1, attribute: 'current_temperature' })} °C
                           </text>
                       </g>`
                     : svg``
@@ -1048,7 +1055,7 @@ class QuattDashboardCard extends LitElement {
                                 font-family="Arial, sans-serif"
                                 font-weight="bold"
                                 fill="#ffffff">
-                              ${this.getSensorState('other.home_battery_soc', {number: true, decimals: 0})} %
+                              ${this.getSensorState('other.home_battery_soc', { number: true, decimals: 0 })} %
                           </text>
                       </g>`
                     : svg``
@@ -1062,7 +1069,7 @@ class QuattDashboardCard extends LitElement {
                             font-family="Arial, sans-serif"
                             font-weight="bold"
                             fill="#ffffff">
-                          ${this.getSensorState('hp1.hp1_temperatureoutside', {number: true, decimals: 1})} °C
+                          ${this.getOutsideTemperature()} °C
                       </text>
                   </g>
                   <g id="hp1Metric" style="cursor: pointer;">
@@ -1100,13 +1107,13 @@ class QuattDashboardCard extends LitElement {
                         <text x="305" y="1190" font-size="20" font-family="Arial, sans-serif" fill="#999999">Charging</text>
                         <text x="660" y="1190" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_charging')?.state}</text>
                         <text x="305" y="1225" font-size="20" font-family="Arial, sans-serif" fill="#999999">Top temperature</text>
-                        <text x="660" y="1225" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_top_temperature', {number: true, decimals: 0})} °C</text>
+                        <text x="660" y="1225" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_top_temperature', { number: true, decimals: 0 })} °C</text>
                         <text x="305" y="1260" font-size="20" font-family="Arial, sans-serif" fill="#999999">Middle temperature</text>
-                        <text x="660" y="1260" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_middle_temperature', {number: true, decimals: 0})} °C</text>
+                        <text x="660" y="1260" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_middle_temperature', { number: true, decimals: 0 })} °C</text>
                         <text x="305" y="1295" font-size="20" font-family="Arial, sans-serif" fill="#999999">Bottom temperature</text>
-                        <text x="660" y="1295" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_bottom_temperature', {number: true, decimals: 0})} °C</text>
+                        <text x="660" y="1295" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_bottom_temperature', { number: true, decimals: 0 })} °C</text>
                         <text x="305" y="1330" font-size="20" font-family="Arial, sans-serif" fill="#999999">Shower minutes remaining</text>
-                        <text x="660" y="1330" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', {number: true, decimals: 0})}</text>
+                        <text x="660" y="1330" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('heat_battery.heat_battery_shower_minutes_remaining', { number: true, decimals: 0 })}</text>
                     </g>
                     `
                     : svg``
@@ -1114,18 +1121,18 @@ class QuattDashboardCard extends LitElement {
                   <g id="tooltipWaterPipeTemperature" transform="translate(55, -68)">
                       <rect x="370" y="1295" width="385" height="95" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="385" y="1330" font-size="20" font-family="Arial, sans-serif" fill="#999999">Flowrate</text>
-                      <text x="740" y="1330" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('flowmeter.flowmeter_flowrate', {number: true, decimals: 1})} L/h</text>
+                      <text x="740" y="1330" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('flowmeter.flowmeter_flowrate', { number: true, decimals: 1 })} L/h</text>
                       ${this.isAllElectric() ? svg`
                             <text x="385" y="1365" font-size="20" font-family="Arial, sans-serif" fill="#999999">System pressure</text>
                             <text x="740" y="1365" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">
-                                ${this.getSensorState('cic.heat_charger_heating_system_pressure', {number: true, decimals: 2})} bar
+                                ${this.getSensorState('cic.heat_charger_heating_system_pressure', { number: true, decimals: 2 })} bar
                             </text>
                             `
                         : (this.isBoilerOpentherm()
                             ? svg`
                                 <text x="385" y="1365" font-size="20" font-family="Arial, sans-serif" fill="#999999">Water pressure</text>
                                 <text x="740" y="1365" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">
-                                    ${this.getSensorState('boiler.boiler_water_pressure', {number: true, decimals: 2})} bar
+                                    ${this.getSensorState('boiler.boiler_water_pressure', { number: true, decimals: 2 })} bar
                                 </text>
                                 `
                             : svg``)
@@ -1134,11 +1141,11 @@ class QuattDashboardCard extends LitElement {
                   <g id="tooltipRoomTemperature" transform="translate(120, -108)">
                       <rect x="550" y="1200" width="385" height="165" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                       <text x="565" y="1235" font-size="20" font-family="Arial, sans-serif" fill="#999999">Room temperature</text>
-                      <text x="920" y="1235" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_temperature', {number: true, decimals: 1})} °C</text>
+                      <text x="920" y="1235" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_temperature', { number: true, decimals: 1 })} °C</text>
                       <text x="565" y="1270" font-size="20" font-family="Arial, sans-serif" fill="#999999">Room setpoint</text>
-                      <text x="920" y="1270" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_setpoint', {number: true, decimals: 1})} °C</text>
+                      <text x="920" y="1270" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_room_setpoint', { number: true, decimals: 1 })} °C</text>
                       <text x="565" y="1305" font-size="20" font-family="Arial, sans-serif" fill="#999999">Control setpoint</text>
-                      <text x="920" y="1305" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_control_setpoint', {number: true, decimals: 1})} °C</text>
+                      <text x="920" y="1305" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_control_setpoint', { number: true, decimals: 1 })} °C</text>
                       <text x="565" y="1340" font-size="20" font-family="Arial, sans-serif" fill="#999999">Heating</text>
                       <text x="920" y="1340" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('thermostat.thermostat_heating')?.state}</text>
                   </g>
@@ -1146,9 +1153,9 @@ class QuattDashboardCard extends LitElement {
                     ? svg`<g id="tooltipAircoTemperature" transform="translate(120, -108)">
                               <rect x="350" y="875" width="385" height="130" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                               <text x="365" y="910" font-size="20" font-family="Arial, sans-serif" fill="#999999">Room temperature</text>
-                              <text x="720" y="910" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'current_temperature'})} °C</text>
+                              <text x="720" y="910" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', { number: true, decimals: 1, attribute: 'current_temperature' })} °C</text>
                               <text x="365" y="945" font-size="20" font-family="Arial, sans-serif" fill="#999999">Room setpoint</text>
-                              <text x="720" y="945" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', {number: true, decimals: 1, attribute: 'temperature'})} °C</text>
+                              <text x="720" y="945" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco', { number: true, decimals: 1, attribute: 'temperature' })} °C</text>
                               <text x="365" y="980" font-size="20" font-family="Arial, sans-serif" fill="#999999">Mode</text>
                               <text x="720" y="980" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('other.thermostat_airco')?.state}</text>
                           </g>`
@@ -1159,17 +1166,17 @@ class QuattDashboardCard extends LitElement {
                       <text x="575" y="1535" font-size="20" font-family="Arial, sans-serif" fill="#999999">Working mode</text>
                       <text x="930" y="1535" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.supervisoryControlModeDescription(this.getSensorState('hp1.hp1_workingmode')?.state)}</text>
                       <text x="575" y="1570" font-size="20" font-family="Arial, sans-serif" fill="#999999">Temperature water in</text>
-                      <text x="930" y="1570" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterin', {number: true, decimals: 1})} °C</text>
+                      <text x="930" y="1570" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterin', { number: true, decimals: 1 })} °C</text>
                       <text x="575" y="1605" font-size="20" font-family="Arial, sans-serif" fill="#999999">Temperature water out</text>
-                      <text x="930" y="1605" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterout', {number: true, decimals: 1})} °C</text>
+                      <text x="930" y="1605" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterout', { number: true, decimals: 1 })} °C</text>
                       <text x="575" y="1640" font-size="20" font-family="Arial, sans-serif" fill="#999999">ΔT</text>
-                      <text x="930" y="1640" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_waterdelta', {number: true, decimals: 1})} °C</text>
+                      <text x="930" y="1640" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_waterdelta', { number: true, decimals: 1 })} °C</text>
                       <text x="575" y="1675" font-size="20" font-family="Arial, sans-serif" fill="#999999">COP</text>
                       <text x="930" y="1675" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_cop')?.state}</text>
                       <text x="575" y="1710" font-size="20" font-family="Arial, sans-serif" fill="#999999">Power</text>
-                      <text x="930" y="1710" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end"> ${this.getSensorState('hp1.hp1_power', {number: true, decimals: 0})} W</text>
+                      <text x="930" y="1710" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end"> ${this.getSensorState('hp1.hp1_power', { number: true, decimals: 0 })} W</text>
                       <text x="575" y="1745" font-size="20" font-family="Arial, sans-serif" fill="#999999">Power input</text>
-                      <text x="930" y="1745" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_powerinput', {number: true, decimals: 0})} W</text>
+                      <text x="930" y="1745" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_powerinput', { number: true, decimals: 0 })} W</text>
                   </g>
 
                   ${this.isDuoHeatpump()
@@ -1178,17 +1185,17 @@ class QuattDashboardCard extends LitElement {
                                 <text x="435" y="1470" font-size="20" font-family="Arial, sans-serif" fill="#999999">Working mode</text>
                                 <text x="790" y="1470" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.supervisoryControlModeDescription(this.getSensorState('hp2.hp2_workingmode')?.state)}</text>
                                 <text x="435" y="1505" font-size="20" font-family="Arial, sans-serif" fill="#999999">Temperature water in</text>
-                                <text x="790" y="1505" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterin', {number: true, decimals: 1})} °C</text>
+                                <text x="790" y="1505" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterin', { number: true, decimals: 1 })} °C</text>
                                 <text x="435" y="1540" font-size="20" font-family="Arial, sans-serif" fill="#999999">Temperature water out</text>
-                                <text x="790" y="1540" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterout', {number: true, decimals: 1})} °C</text>
+                                <text x="790" y="1540" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterout', { number: true, decimals: 1 })} °C</text>
                                 <text x="435" y="1575" font-size="20" font-family="Arial, sans-serif" fill="#999999">ΔT</text>
-                                <text x="790" y="1575" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_waterdelta', {number: true, decimals: 1})} °C</text>
+                                <text x="790" y="1575" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_waterdelta', { number: true, decimals: 1 })} °C</text>
                                 <text x="435" y="1610" font-size="20" font-family="Arial, sans-serif" fill="#999999">COP</text>
                                 <text x="790" y="1610" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_cop')?.state}</text>
                                 <text x="435" y="1645" font-size="20" font-family="Arial, sans-serif" fill="#999999">Power</text>
-                                <text x="790" y="1645" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power', {number: true, decimals: 0})} W</text>
+                                <text x="790" y="1645" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power', { number: true, decimals: 0 })} W</text>
                                 <text x="435" y="1680" font-size="20" font-family="Arial, sans-serif" fill="#999999">Power input</text>
-                                <text x="790" y="1680" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput', {number: true, decimals: 0})} W</text>
+                                <text x="790" y="1680" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_powerinput', { number: true, decimals: 0 })} W</text>
                           </g>`
                       : svg``
                   }
