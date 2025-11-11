@@ -144,11 +144,25 @@ class QuattDashboardCardEditor extends LitElement {
             schema: [
                 { name: "thermostat_room", selector: { entity: { domain: "climate" } } },
                 { name: "thermostat_airco", selector: { entity: { domain: "climate" } } },
+                { name: "sun", selector: { entity: { domain: "sun" } } },
                 { name: "solar_power", selector: { entity: { domain: "sensor", device_class: "power" } } },
                 { name: "home_battery_soc", selector: { entity: { domain: "sensor" } } },
                 { name: "hot_water_cylinder_temperature", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
                 { name: "has_solar_collector", selector: { boolean: {} } },
-                { name: "sun", selector: { entity: { domain: "sun" } } },
+                {
+                    name: "heatpump_metric",
+                    selector: {
+                        select: {
+                            mode: "dropdown",
+                            options: [
+                                { value: "delta",      label: "ΔT" },
+                                { value: "cop",        label: "COP" },
+                                { value: "power",      label: "Power" },
+                                { value: "powerinput", label: "Power input" },
+                            ],
+                        },
+                    },
+                },
             ],
         };
 
@@ -257,11 +271,12 @@ class QuattDashboardCardEditor extends LitElement {
             // Other
             thermostat_room: "Thermostat room",
             thermostat_airco: "Thermostat airco",
+            sun: "Sun",
             solar_power: "Solar current production",
             home_battery_soc: "Home battery state of charge",
             hot_water_cylinder_temperature: "Hot water cylinder temperature",
             has_solar_collector: "Solar collector",
-            sun: "Sun",
+            heatpump_metric: "Heat pump metric to display",
         };
         return map[name] ?? name;
     };
@@ -328,11 +343,12 @@ class QuattDashboardCardEditor extends LitElement {
             // Other
             thermostat_room: "Provided by another integration",
             thermostat_airco: "Provided by another integration",
+            sun: "Provided by Home Assistant",
             solar_power: "Provided by another integration",
             home_battery_soc: "Provided by another integration",
             hot_water_cylinder_temperature: "Provided by another integration",
             has_solar_collector: "Provided by another integration",
-            sun: "Provided by Home Assistant",
+            heatpump_metric: "User selection",
         };
         return map[name];
   };
