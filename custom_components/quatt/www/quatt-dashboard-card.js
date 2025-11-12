@@ -1125,7 +1125,7 @@ class QuattDashboardCard extends LitElement {
                       ${this.isAllElectric() ? svg`
                             <text x="385" y="1365" font-size="20" font-family="Arial, sans-serif" fill="#999999">System pressure</text>
                             <text x="740" y="1365" font-size="20" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="end">
-                                ${this.getSensorState('cic.heat_charger_heating_system_pressure', { number: true, decimals: 2 })} bar
+                                ${this.getSensorState('heat_charger.heat_charger_heating_system_pressure', { number: true, decimals: 2 })} bar
                             </text>
                             `
                         : (this.isBoilerOpentherm()
