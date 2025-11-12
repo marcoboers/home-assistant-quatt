@@ -58,6 +58,7 @@ DEVICE_HEAT_CHARGER_ID = "heat_charger"
 DEVICE_HEATPUMP_1_ID = "heatpump_1"
 DEVICE_HEATPUMP_2_ID = "heatpump_2"
 DEVICE_THERMOSTAT_ID = "thermostat"
+DEVICE_INSIGHTS_ID = "insights"
 
 DEVICE_LIST = [
     {"name": "Boiler", "id": DEVICE_BOILER_ID},
@@ -68,6 +69,7 @@ DEVICE_LIST = [
     {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID},
     {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID},
     {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID},
+    {"name": "Insights", "id": DEVICE_INSIGHTS_ID},
 ]
 
 
