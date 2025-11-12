@@ -39,6 +39,15 @@ SWITCHES = {
             ),
             quatt_entity_class=QuattSettingSwitch,
         ),
+        QuattSwitchEntityDescription(
+            key="avoidNighttimeCharging.allEAvoidNighttimeCharging",
+            name="Avoid nighttime charging",
+            icon="mdi:weather-night",
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
+            ),
+            quatt_entity_class=QuattSettingSwitch,
+        ),
     ],
     DEVICE_HEAT_BATTERY_ID: [],
     DEVICE_HEAT_CHARGER_ID: [],

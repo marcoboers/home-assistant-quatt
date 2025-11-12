@@ -96,14 +96,6 @@ BINARY_SENSORS = {
             ),
         ),
         QuattBinarySensorEntityDescription(
-            name="Avoid nighttime charging",
-            key="avoidNighttimeCharging",
-            icon="mdi:weather-night",
-            quatt_features=QuattFeatureFlags(
-                mobile_api=True,
-            ),
-        ),
-        QuattBinarySensorEntityDescription(
             name="HP1 connected",
             key="isHp1Connected",
             icon="mdi:connection",

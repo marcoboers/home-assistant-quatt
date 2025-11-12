@@ -336,10 +336,20 @@ class QuattSettingSwitch(QuattSwitch):
 
     async def _perform_api_update(self, state: bool) -> bool:
         """Perform boolean setting update."""
-        # Send the setting to the API
-        settings = {
-            self.entity_description.key: state,
-        }
+        # Convert dot notation to nested object structure
+        key_parts = self.entity_description.key.split(".")
+
+        # Build nested dictionary from dot notation
+        settings = {}
+        current = settings
+        for i, part in enumerate(key_parts):
+            if i == len(key_parts) - 1:
+                # Last part - set the actual value
+                current[part] = state
+            else:
+                # Intermediate part - create nested dict
+                current[part] = {}
+                current = current[part]
 
         _LOGGER.debug("Updating CIC setting: %s", settings)
         return await self.coordinator.client.update_cic_settings(settings)
