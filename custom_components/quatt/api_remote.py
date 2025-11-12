@@ -571,6 +571,57 @@ class QuattRemoteApiClient(QuattApiClient):
             return cic_data.get("result", {})
         return None
 
+    async def get_insights(
+        self, retry_on_403: bool = True
+    ) -> dict[str, Any] | None:
+        """Get insights data from installation.
+
+        Returns:
+            Dictionary with insights data or None if failed
+
+        """
+        if not self._id_token or not self._installation_id:
+            _LOGGER.error("Cannot get insights: not authenticated or no installation ID")
+            return None
+
+        headers = {"Authorization": f"Bearer {self._id_token}"}
+        url = f"{QUATT_API_BASE_URL}/me/installation/{self._installation_id}/insights?from=2024-01-01&timeframe=all&advancedInsights=true"
+
+        try:
+            async with self._session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get("result", {})
+
+                # Handle 401 Unauthorized or 403 Forbidden - token might be expired
+                if response.status in (401, 403) and retry_on_403:
+                    _LOGGER.debug(
+                        "Got %s while getting insights, attempting to refresh token",
+                        response.status,
+                    )
+                    if await self.refresh_token():
+                        await self._save_tokens()
+                        # Retry once with new token (prevent infinite loop with retry_on_403=False)
+                        return await self.get_insights(retry_on_403=False)
+                    _LOGGER.error("Token refresh failed after %s", response.status)
+                    return None
+
+                _LOGGER.error(
+                    "Get insights failed with status %s: %s",
+                    response.status,
+                    await response.text(),
+                )
+                return None
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Get insights error - network error: %s", err)
+            return None
+        except TimeoutError as err:
+            _LOGGER.error("Get insights error - timeout: %s", err)
+            return None
+        except json.JSONDecodeError as err:
+            _LOGGER.error("Get insights error - invalid JSON response: %s", err)
+            return None
+
     async def update_cic_settings(self, settings: dict[str, Any]) -> bool:
         """Update CIC device settings.
 
