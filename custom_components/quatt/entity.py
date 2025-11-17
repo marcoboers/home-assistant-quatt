@@ -17,13 +17,14 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
 from .const import (
     ALL_ELECTRIC_SYSTEM,
     ATTRIBUTION,
+    DEVICE_INSIGHTS_ID,
     DOMAIN,
     DUO_HEATPUMP_SYSTEM,
     NAME,
@@ -61,6 +62,10 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         self._device_name = device_name
         self._device_id = device_id
         self._attr_unique_id = f"{self._hub_id}:{device_id}:{sensor_key}"
+
+        # Determine if this is a service device (insights)
+        is_service_device = device_id == DEVICE_INSIGHTS_ID
+
         self._attr_device_info = DeviceInfo(
             identifiers={
                 (
@@ -72,6 +77,7 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
             name=device_name,
             manufacturer=NAME,
             model="—",
+            entry_type=DeviceEntryType.SERVICE if is_service_device else None,
         )
 
 

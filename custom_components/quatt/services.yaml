@@ -1,0 +1,30 @@
+get_insights:
+  name: Get insights
+  description: Retrieves insights data for a specific time period from the Quatt installation. The end date is automatically calculated based on the from_date and timeframe.
+  fields:
+    from_date:
+      name: From date
+      description: Start date for insights data in ISO format (YYYY-MM-DD).
+      example: "2024-01-01"
+      default: "2024-01-01"
+      selector:
+        text:
+    timeframe:
+      name: Timeframe
+      description: The timeframe granularity for the insights data. The API automatically calculates the end date based on the from_date and this timeframe.
+      default: "all"
+      example: "all"
+      selector:
+        select:
+          options:
+            - "all"
+            - "day"
+            - "week"
+            - "month"
+            - "year"
+    advanced_insights:
+      name: Advanced insights
+      description: Whether to include advanced insights data.
+      default: true
+      selector:
+        boolean:

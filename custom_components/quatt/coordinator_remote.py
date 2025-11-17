@@ -15,26 +15,6 @@ class QuattRemoteDataUpdateCoordinator(QuattDataUpdateCoordinator):
 
     config_entry: ConfigEntry
 
-    async def _async_update_data(self):
-        """Update data via the client, including insights data."""
-        # Get the main CIC data
-        data = await super()._async_update_data()
-
-        # If we have data and this is a remote client, fetch insights
-        if data and hasattr(self.client, "get_insights"):
-            insights_data = await self.client.get_insights()
-            if insights_data:
-                # Add insights data to the coordinator data
-                if "result" in data:
-                    data["result"]["insights"] = insights_data
-                else:
-                    data["insights"] = insights_data
-                LOGGER.debug("Insights data fetched and added to coordinator data")
-            else:
-                LOGGER.debug("No insights data available")
-
-        return data
-
     def get_value(self, value_path: str, default: Any | None = None) -> Any:
         """Retrieve a value by dot notation from the remote API response.
 
