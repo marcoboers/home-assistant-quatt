@@ -17,18 +17,18 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.helpers.device_registry import DeviceInfo, DeviceEntryType
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
 from .const import (
     ALL_ELECTRIC_SYSTEM,
     ATTRIBUTION,
-    DEVICE_INSIGHTS_ID,
     DOMAIN,
     DUO_HEATPUMP_SYSTEM,
     NAME,
     OPENTHERM_SYSTEM,
+    QuattDeviceKind,
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .coordinator_remote import QuattRemoteDataUpdateCoordinator
@@ -48,7 +48,7 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         device_id: str,
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
-        attach_to_hub: bool,
+        device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
@@ -63,8 +63,8 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         self._device_id = device_id
         self._attr_unique_id = f"{self._hub_id}:{device_id}:{sensor_key}"
 
-        # Determine if this is a service device (insights)
-        is_service_device = device_id == DEVICE_INSIGHTS_ID
+        attach_to_hub = device_kind == QuattDeviceKind.HUB
+        is_service_device = device_kind == QuattDeviceKind.SERVICE
 
         self._attr_device_info = DeviceInfo(
             identifiers={
@@ -91,10 +91,10 @@ class QuattSensor(QuattEntity, SensorEntity):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattSensorEntityDescription,
-        attach_to_hub: bool,
+        device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
         self.entity_description = entity_description
 
     @property
@@ -139,10 +139,10 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattBinarySensorEntityDescription,
-        attach_to_hub: bool,
+        device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the binary_sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
         self.entity_description = entity_description
 
     @property
@@ -166,10 +166,10 @@ class QuattSelect(QuattEntity, SelectEntity):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattSelectEntityDescription,
-        attach_to_hub: bool,
+        device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the select class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
         self.entity_description = entity_description
 
     @property
@@ -268,10 +268,10 @@ class QuattSwitch(QuattEntity, SwitchEntity):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         entity_description: QuattSwitchEntityDescription,
-        attach_to_hub: bool,
+        device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the switch class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, attach_to_hub)
+        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
         self.entity_description = entity_description
 
     @property
