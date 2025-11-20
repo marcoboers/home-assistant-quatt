@@ -299,7 +299,7 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
                 SupervisoryControlMode.HEATING_HEATPUMP_ONLY,
                 SupervisoryControlMode.HEATING_HEATPUMP_PLUS_BOILER,
             ]
-            and power_output == 0
+            and power_output < -1
             and water_delta < -1
         )
 
