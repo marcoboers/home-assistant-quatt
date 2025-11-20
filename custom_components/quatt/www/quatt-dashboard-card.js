@@ -514,7 +514,10 @@ class QuattDashboardCard extends LitElement {
 
                   <clipPath id="outsidePipe">
                       <rect x="250" y="1245" width="181" height="100"></rect>
-                      <rect x="555" y="1387" width="12" height="20"></rect>
+                      ${this.getSensorState('hp1.hp1_workingmode')?.state >= 1
+                          ? svg`<rect x="555" y="1387" width="12" height="20"></rect>`
+                          : svg``
+                      }
 
                       ${this.isMonoHeatpump()
                           ? svg`<rect id="quatt.mono" x="431" y="1300" width="124" height="100"></rect>` : svg``
