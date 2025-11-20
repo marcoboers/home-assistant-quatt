@@ -514,7 +514,10 @@ class QuattDashboardCard extends LitElement {
 
                   <clipPath id="outsidePipe">
                       <rect x="250" y="1245" width="181" height="100"></rect>
-                      <rect x="555" y="1387" width="12" height="20"></rect>
+                      ${this.getSensorState('hp1.hp1_workingmode')?.state >= 1
+                          ? svg`<rect x="555" y="1387" width="12" height="20"></rect>`
+                          : svg``
+                      }
 
                       ${this.isMonoHeatpump()
                           ? svg`<rect id="quatt.mono" x="431" y="1300" width="124" height="100"></rect>` : svg``
@@ -840,6 +843,7 @@ class QuattDashboardCard extends LitElement {
                 && this.getSensorState('boiler.boiler_heating')?.state == 'on'
                   ? svg`<g id="quatt.chimneyPipe">
                           <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                          <path d="M 317 1123 L 318 1225" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
                       </g>
                       <g id="quatt.chimneySmoke">
                           <ellipse cx="400" cy="675" rx="12" ry="15" fill="#6B6B6B" filter="url(#smokeBlur)">
