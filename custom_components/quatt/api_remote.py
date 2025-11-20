@@ -567,9 +567,95 @@ class QuattRemoteApiClient(QuattApiClient):
         """Get data from the remote API (compatible with local client interface)."""
         # Get CIC data from remote API
         cic_data = await self.get_cic_data()
-        if cic_data:
-            return cic_data.get("result", {})
-        return None
+        if not cic_data:
+            return None
+
+        result = cic_data.get("result", {})
+
+        # Fetch insights data and merge it into the result
+        if self._installation_id:
+            insights_data = await self.get_insights()
+            if insights_data:
+                result["insights"] = insights_data
+                _LOGGER.debug("Insights data fetched and merged into CIC data")
+            else:
+                _LOGGER.debug("No insights data available")
+        else:
+            _LOGGER.debug("No installation ID available, skipping insights fetch")
+
+        return result
+
+    async def get_insights(
+        self,
+        from_date: str = "2024-01-01",
+        timeframe: str = "all",
+        advanced_insights: bool = True,
+        retry_on_403: bool = True,
+    ) -> dict[str, Any] | None:
+        """Get insights data from installation.
+
+        Args:
+            from_date: Start date in ISO format (e.g., "2024-01-01"). Defaults to "2024-01-01"
+            timeframe: Timeframe for insights ("all", "day", "week", "month", "year"). Defaults to "all".
+                      The API automatically calculates the end date based on from_date and timeframe.
+            advanced_insights: Whether to include advanced insights. Defaults to True
+            retry_on_403: Whether to retry on 403 errors. Defaults to True
+
+        Returns:
+            Dictionary with insights data or None if failed
+
+        """
+        if not self._id_token or not self._installation_id:
+            _LOGGER.error("Cannot get insights: not authenticated or no installation ID")
+            return None
+
+        # Build query parameters
+        params = {
+            "from": from_date,
+            "timeframe": timeframe,
+            "advancedInsights": str(advanced_insights).lower(),
+        }
+
+        # Build URL with query parameters
+        query_string = "&".join(f"{k}={v}" for k, v in params.items())
+        url = f"{QUATT_API_BASE_URL}/me/installation/{self._installation_id}/insights?{query_string}"
+
+        headers = {"Authorization": f"Bearer {self._id_token}"}
+
+        try:
+            async with self._session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get("result", {})
+
+                # Handle 401 Unauthorized or 403 Forbidden - token might be expired
+                if response.status in (401, 403) and retry_on_403:
+                    _LOGGER.debug(
+                        "Got %s while getting insights, attempting to refresh token",
+                        response.status,
+                    )
+                    if await self.refresh_token():
+                        await self._save_tokens()
+                        # Retry once with new token (prevent infinite loop with retry_on_403=False)
+                        return await self.get_insights(retry_on_403=False)
+                    _LOGGER.error("Token refresh failed after %s", response.status)
+                    return None
+
+                _LOGGER.error(
+                    "Get insights failed with status %s: %s",
+                    response.status,
+                    await response.text(),
+                )
+                return None
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Get insights error - network error: %s", err)
+            return None
+        except TimeoutError as err:
+            _LOGGER.error("Get insights error - timeout: %s", err)
+            return None
+        except json.JSONDecodeError as err:
+            _LOGGER.error("Get insights error - invalid JSON response: %s", err)
+            return None
 
     async def update_cic_settings(self, settings: dict[str, Any]) -> bool:
         """Update CIC device settings.

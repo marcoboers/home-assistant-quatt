@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 
-from .const import DEVICE_CIC_ID, DEVICE_LIST, DOMAIN
+from .const import DEVICE_LIST, DOMAIN, QuattDeviceKind
 from .coordinator import QuattDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -106,8 +106,10 @@ async def async_setup_entities(
 
     # Create sensor entities based on the filtered sensor keys
     device_name_map = {d["id"]: d["name"] for d in DEVICE_LIST}
+    device_kind_map = {d["id"]: d["kind"] for d in DEVICE_LIST}
     sensors: list = []
     for device_id, sensor_descriptions in entity_descriptions.items():
+        device_kind = device_kind_map.get(device_id, QuattDeviceKind.DEVICE)
         for sensor_description in sensor_descriptions:
             # Skip sensors that are not selected based on the installation type
             if sensor_description.key not in sensor_keys:
@@ -124,7 +126,7 @@ async def async_setup_entities(
                     sensor_key=sensor_description.key,
                     coordinator=coordinator,
                     entity_description=sensor_description,
-                    attach_to_hub=(device_id == DEVICE_CIC_ID),
+                    device_kind=device_kind,
                 )
             )
 

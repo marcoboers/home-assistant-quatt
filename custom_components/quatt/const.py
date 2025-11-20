@@ -1,6 +1,6 @@
 """Constants for quatt."""
 
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from logging import Logger, getLogger
 from typing import Final
 
@@ -58,16 +58,27 @@ DEVICE_HEAT_CHARGER_ID = "heat_charger"
 DEVICE_HEATPUMP_1_ID = "heatpump_1"
 DEVICE_HEATPUMP_2_ID = "heatpump_2"
 DEVICE_THERMOSTAT_ID = "thermostat"
+DEVICE_INSIGHTS_ID = "insights"
+
+
+class QuattDeviceKind(StrEnum):
+    """Enumerates the device types for the Quatt system."""
+
+    HUB = "hub"
+    DEVICE = "device"
+    SERVICE = "service"
+
 
 DEVICE_LIST = [
-    {"name": "Boiler", "id": DEVICE_BOILER_ID},
-    {"name": "CIC", "id": DEVICE_CIC_ID},
-    {"name": "Flowmeter", "id": DEVICE_FLOWMETER_ID},
-    {"name": "Heat battery", "id": DEVICE_HEAT_BATTERY_ID},
-    {"name": "Heat charger", "id": DEVICE_HEAT_CHARGER_ID},
-    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID},
-    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID},
-    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID},
+    {"name": "Boiler", "id": DEVICE_BOILER_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "CIC", "id": DEVICE_CIC_ID, "kind": QuattDeviceKind.HUB},
+    {"name": "Flowmeter", "id": DEVICE_FLOWMETER_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Heat battery", "id": DEVICE_HEAT_BATTERY_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Heat charger", "id": DEVICE_HEAT_CHARGER_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Insights", "id": DEVICE_INSIGHTS_ID, "kind": QuattDeviceKind.SERVICE},
 ]
 
 

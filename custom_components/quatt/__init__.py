@@ -12,7 +12,7 @@ from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
     async_get_clientsession,
@@ -151,6 +151,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # On update of the options reload the entry which reloads the coordinator
     entry.async_on_unload(entry.add_update_listener(update_listener))
+
+    # Register services (only once, not per config entry)
+    if not hass.services.has_service(DOMAIN, "get_insights"):
+        async def handle_get_insights(call: ServiceCall) -> ServiceResponse:
+            """Handle the get_insights service call."""
+            from_date = call.data.get("from_date")
+            timeframe = call.data.get("timeframe", "all")
+            advanced_insights = call.data.get("advanced_insights", True)
+
+            # Find a remote coordinator to use for the service call
+            remote_coordinator = None
+            for coordinators_dict in hass.data[DOMAIN].values():
+                if coordinators_dict.get("remote"):
+                    remote_coordinator = coordinators_dict["remote"]
+                    break
+
+            if not remote_coordinator:
+                LOGGER.error("No remote coordinator available for insights service")
+                return {"error": "No remote connection available. Please configure remote API access."}
+
+            # Get insights data
+            insights_data = await remote_coordinator.client.get_insights(
+                from_date=from_date,
+                timeframe=timeframe,
+                advanced_insights=advanced_insights,
+            )
+
+            if insights_data:
+                return insights_data
+            return {"error": "Failed to fetch insights data"}
+
+        hass.services.async_register(
+            DOMAIN,
+            "get_insights",
+            handle_get_insights,
+            supports_response=SupportsResponse.ONLY,
+        )
 
     return True
 
