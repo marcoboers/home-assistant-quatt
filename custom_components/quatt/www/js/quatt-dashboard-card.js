@@ -8,9 +8,18 @@ import {
 class QuattDashboardCard extends LitElement {
     // Determine the base url and version of this card <script src=".../quatt-dashboard-card.js?v=...">
     static _getBaseUrlAndVersion() {
-        // e.g. /quatt-dashboard-card/quatt-dashboard-card.js?v=1.2.3
+        // e.g. /quatt-dashboard-card/js/quatt-dashboard-card.js?v=1.2.3
         const url = new URL(import.meta.url);
-        const base = url.pathname.slice(0, url.pathname.lastIndexOf("/"));
+
+        // Directory of the js-file: /quatt-dashboard-card/js
+        const jsDir = url.pathname.slice(0, url.pathname.lastIndexOf("/"));
+
+        // Go up one segment to get the base: /quatt-dashboard-card
+        let base = jsDir;
+        if (base.endsWith("/js")) {
+            base = base.slice(0, -"/js".length) || "/";
+        }
+
         const version = url.searchParams.get("v") || "0";
         return { base, version };
     }
@@ -1227,7 +1236,7 @@ class QuattDashboardCard extends LitElement {
     static async getConfigElement() {
         const { base, version } = QuattDashboardCard._getBaseUrlAndVersion();
         // Lazy load the editor and include version for cache busting
-        await import(`${base}/quatt-dashboard-card-editor.js?v=${version}`);
+        await import(`${base}/js/quatt-dashboard-card-editor.js?v=${version}`);
         return document.createElement("quatt-dashboard-card-editor");
     }
 
