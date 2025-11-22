@@ -12,7 +12,12 @@ from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, Platform
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
     async_get_clientsession,
@@ -57,6 +62,8 @@ PLATFORMS: list[Platform] = [
 
 async def async_setup(hass: HomeAssistant, _config):
     """Set up this integration."""
+
+    # Generic mount with cache enabled
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
@@ -66,13 +73,24 @@ async def async_setup(hass: HomeAssistant, _config):
             )
         ]
     )
+    # More specific mount for JS with cache disabled
+    # This ensures that updated JS files are always loaded (companion app)
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                f"{CARD_MOUNT}/js",
+                hass.config.path("custom_components/quatt/www/js"),
+                cache_headers=False,
+            )
+        ]
+    )
 
     # Determine the version of the integration
-    integ = await async_get_integration(hass, DOMAIN)
-    version = integ.version or "0"
+    integration = await async_get_integration(hass, DOMAIN)
+    version = integration.version or "0"
 
     # Register the frontend card
-    add_extra_js_url(hass, f"{CARD_MOUNT}/{CARD_FILE}?v={version}")
+    add_extra_js_url(hass, f"{CARD_MOUNT}/js/{CARD_FILE}?v={version}")
     return True
 
 
@@ -154,6 +172,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Register services (only once, not per config entry)
     if not hass.services.has_service(DOMAIN, "get_insights"):
+
         async def handle_get_insights(call: ServiceCall) -> ServiceResponse:
             """Handle the get_insights service call."""
             from_date = call.data.get("from_date")
@@ -169,7 +188,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             if not remote_coordinator:
                 LOGGER.error("No remote coordinator available for insights service")
-                return {"error": "No remote connection available. Please configure remote API access."}
+                return {
+                    "error": "No remote connection available. Please configure remote API access."
+                }
 
             # Get insights data
             insights_data = await remote_coordinator.client.get_insights(
