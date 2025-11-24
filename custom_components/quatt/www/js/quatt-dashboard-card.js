@@ -24,11 +24,28 @@ class QuattDashboardCard extends LitElement {
         return { base, version };
     }
 
-   constructor() {
+    constructor() {
         super();
         const { base, version } = QuattDashboardCard._getBaseUrlAndVersion();
         this._BASE_URL = base;
         this._VERSION = version;
+
+        // Touch detection
+        this._isTouch =
+            (window.matchMedia && window.matchMedia("(pointer:coarse)").matches) ||
+            "ontouchstart" in window;
+
+        // Tooltip & press state
+        this._openTooltipId = null;
+        this._pressStartId = null;
+        this._pressHandledAsHold = false;
+        this._pressTimer = null;
+
+        // Bind once
+        this._onPressStart  = this._onPressStart.bind(this);
+        this._onPressEnd    = this._onPressEnd.bind(this);
+        this._onPressCancel = this._onPressCancel.bind(this);
+        this._onGlobalPointerDown = this._onGlobalPointerDown.bind(this);
     }
 
     static get properties() {
@@ -220,161 +237,94 @@ class QuattDashboardCard extends LitElement {
             : this.getSensorState('hp1.hp1_temperatureoutside', { number: true, decimals: 1 });
     }
 
-    firstUpdated() {
-        const legendHeat = this.shadowRoot.querySelector('#legendHeatInfo');
-        const legendElectricity = this.shadowRoot.querySelector('#legendElectricityInfo');
-        const legendBoiler = this.shadowRoot.querySelector('#legendBoilerInfo');
-        const tank = this.shadowRoot.querySelector('#tankInfo');
-        const room = this.shadowRoot.querySelector('#roomTemperature');
-        const ac = this.shadowRoot.querySelector('#aircoTemperature');
-        const waterPipe = this.shadowRoot.querySelector('#waterPipeTemperature');
-        const hp1Metric = this.shadowRoot.querySelector('#hp1Metric');
-        const hp2Metric = this.shadowRoot.querySelector('#hp2Metric');
-        const solar = this.shadowRoot.querySelector('#solarPower');
-        const battery = this.shadowRoot.querySelector('#homeBatterySOC');
-        const outside = this.shadowRoot.querySelector('#outsideTemperature');
+    _onPressStart(e) {
+        const target = e.currentTarget;
+        if (!target || !target.id) return;
 
-        if (legendHeat) {
-            legendHeat.addEventListener('click', () => {
-                const legendHeatEntity = this.config?.cic?.total_power;
-                if (legendHeatEntity) {
-                    this._openMoreInfo(legendHeatEntity);
-                }
-            });
+        // Ignore non-left mouse buttons (but allow touch where e.button is undefined)
+        if (e.button !== undefined && e.button !== 0) return;
+
+        e.preventDefault();
+
+        this._pressStartId = target.id;
+        this._pressHandledAsHold = false;
+
+        if (this._pressTimer) {
+            clearTimeout(this._pressTimer);
         }
-        if (legendElectricity) {
-            legendElectricity.addEventListener('click', () => {
-                const legendElectricityEntity = this.config?.cic?.total_powerinput;
-                if (legendElectricityEntity) {
-                    this._openMoreInfo(legendElectricityEntity);
-                }
-            });
+
+        this._pressTimer = window.setTimeout(() => {
+            this._pressHandledAsHold = true;
+            this._handleAction("hold", this._pressStartId);
+        }, 500);
+    }
+
+    _onPressEnd(e) {
+        const target = e.currentTarget;
+        if (!target || !target.id) return;
+
+        if (this._pressTimer) {
+            clearTimeout(this._pressTimer);
+            this._pressTimer = null;
         }
-        if (legendBoiler) {
-            legendBoiler.addEventListener('click', () => {
-                const legendBoilerEntity = this.config?.boiler?.boiler_heating;
-                if (legendBoilerEntity) {
-                    this._openMoreInfo(legendBoilerEntity);
-                }
-            });
+
+        if (!this._pressHandledAsHold) {
+            this._handleAction("tap", target.id);
         }
-        if (tank) {
-            if (this.isAllElectric()) {
-                tank.addEventListener('mouseenter', () => {
-                    this.shadowRoot.querySelector('#tooltipTankInfo').classList.add('tooltip-show');
-                });
-                tank.addEventListener('mouseleave', () => {
-                    this.shadowRoot.querySelector('#tooltipTankInfo').classList.remove('tooltip-show');
-                });
-            }
-            tank.addEventListener('click', () => {
-                const temperatureEntity = this.config?.other?.hot_water_cylinder_temperature;
-                if (temperatureEntity) {
-                    this._openMoreInfo(temperatureEntity);
-                }
-            });
+
+        this._pressStartId = null;
+        this._pressHandledAsHold = false;
+    }
+
+    _onPressCancel() {
+        if (this._pressTimer) {
+            clearTimeout(this._pressTimer);
+            this._pressTimer = null;
         }
-        if (room) {
-            room.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.add('tooltip-show');
-            });
-            room.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipRoomTemperature').classList.remove('tooltip-show');
-            });
-            room.addEventListener('click', () => {
-                const thermostatEntity = this.config?.other?.thermostat_room;
-                if (thermostatEntity) {
-                    this._openMoreInfo(thermostatEntity);
-                }
-            });
+        this._pressStartId = null;
+        this._pressHandledAsHold = false;
+    }
+
+    _showTooltip(id) {
+        // Close previously open tooltip if it's a different one
+        if (this._openTooltipId && this._openTooltipId !== id) {
+            this._hideTooltip(this._openTooltipId);
         }
-        if (outside) {
-            outside.addEventListener('click', () => {
-                const temperatureEntity =
-                    this.config?.other?.outside_temperature || this.config?.hp1?.hp1_temperatureoutside;
-                if (temperatureEntity) {
-                    this._openMoreInfo(temperatureEntity);
-                }
-            });
+
+        const element = this.shadowRoot && this.shadowRoot.getElementById(id);
+        if (element) {
+            element.classList.add("tooltip-show");
+            this._openTooltipId = id;
         }
-        if (ac) {
-            ac.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.add('tooltip-show');
-            });
-            ac.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipAircoTemperature').classList.remove('tooltip-show');
-            });
-            ac.addEventListener('click', () => {
-                const aircoEntity = this.config?.other?.thermostat_airco;
-                if (aircoEntity) {
-                    this._openMoreInfo(aircoEntity);
-                }
-            });
+    }
+
+    _hideTooltip(id) {
+        const element = this.shadowRoot && this.shadowRoot.getElementById(id);
+        if (element) {
+            element.classList.remove("tooltip-show");
         }
-        if (waterPipe) {
-            waterPipe.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.add('tooltip-show');
-            });
-            waterPipe.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipWaterPipeTemperature').classList.remove('tooltip-show');
-            });
-            waterPipe.addEventListener('click', () => {
-                const waterPipeEntity = this.config?.flowmeter?.flowmeter_temperature;
-                if (waterPipeEntity) {
-                    this._openMoreInfo(waterPipeEntity);
-                }
-            });
+        if (this._openTooltipId === id) {
+            this._openTooltipId = null;
         }
-        if (hp1Metric) {
-            hp1Metric.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipHp1Metric').classList.add('tooltip-show');
-            });
-            hp1Metric.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipHp1Metric').classList.remove('tooltip-show');
-            });
-            hp1Metric.addEventListener('click', () => {
-                const metric = this.getHeatpumpMetric();
-                let entityId =
-                    metric === 'cop'        ? this.config?.hp1?.hp1_cop :
-                    metric === 'power'      ? this.config?.hp1?.hp1_power :
-                    metric === 'powerinput' ? this.config?.hp1?.hp1_powerinput : this.config?.hp1?.hp1_waterdelta;
-                if (entityId)
-                    this._openMoreInfo(entityId);
-            });
+    }
+
+    _toggleTooltip(id) {
+        if (this._openTooltipId === id) {
+            this._hideTooltip(id);
+        } else {
+            this._showTooltip(id);
         }
-        if (hp2Metric) {
-            hp2Metric.addEventListener('mouseenter', () => {
-                this.shadowRoot.querySelector('#tooltipHp2Metric').classList.add('tooltip-show');
-            });
-            hp2Metric.addEventListener('mouseleave', () => {
-                this.shadowRoot.querySelector('#tooltipHp2Metric').classList.remove('tooltip-show');
-            });
-            hp2Metric.addEventListener('click', () => {
-                const metric = this.getHeatpumpMetric();
-                let entityId =
-                    metric === 'cop'        ? this.config?.hp2?.hp2_cop :
-                    metric === 'power'      ? this.config?.hp2?.hp2_power :
-                    metric === 'powerinput' ? this.config?.hp2?.hp2_powerinput : this.config?.hp2?.hp2_waterdelta;
-                if (entityId)
-                    this._openMoreInfo(entityId);
-            });
-        }
-        if (solar) {
-            solar.addEventListener('click', () => {
-                const solarPowerEntity = this.config?.other?.solar_power;
-                if (solarPowerEntity) {
-                    this._openMoreInfo(solarPowerEntity);
-                }
-            });
-        }
-        if (battery) {
-            battery.addEventListener('click', () => {
-                const batterySOCEntity = this.config?.other?.home_battery_soc;
-                if (batterySOCEntity) {
-                    this._openMoreInfo(batterySOCEntity);
-                }
-            });
-        }
+    }
+
+    _onGlobalPointerDown(e) {
+        // Only do this on touch devices
+        if (!this._isTouch) return;
+
+        // Check that we have an open tooltip
+        if (!this._openTooltipId) return;
+
+        // Close whatever tooltip is open, no matter where we tapped
+        this._hideTooltip(this._openTooltipId);
     }
 
     _openMoreInfo(entityId) {
@@ -384,6 +334,155 @@ class QuattDashboardCard extends LitElement {
         });
         event.detail = { entityId };
         this.dispatchEvent(event);
+    }
+
+    _handleAction(action, targetId) {
+        let entityId = null;
+        let tooltipId = null;
+
+        switch (targetId) {
+            case "legendHeatInfo":
+                entityId = this.config?.cic?.total_power;
+                break;
+            case "legendElectricityInfo":
+                entityId = this.config?.cic?.total_powerinput;
+                break;
+            case "legendBoilerInfo":
+                entityId = this.config?.boiler?.boiler_heating;
+                break;
+
+            case "tankInfo":
+                entityId = this.isAllElectric()
+                    ? this.config?.heat_battery?.heat_battery_percentage
+                    : this.config?.other?.hot_water_cylinder_temperature;
+                if (this.isAllElectric())
+                    tooltipId = "tooltipTankInfo";
+                break;
+
+            case "roomTemperature":
+                entityId = this.config?.other?.thermostat_room;
+                tooltipId = "tooltipRoomTemperature";
+                break;
+
+            case "aircoTemperature":
+                entityId = this.config?.other?.thermostat_airco;
+                tooltipId = "tooltipAircoTemperature";
+                break;
+
+            case "waterPipeTemperature":
+                entityId = this.config?.flowmeter?.flowmeter_temperature;
+                tooltipId = "tooltipWaterPipeTemperature";
+                break;
+
+            case "hp1Metric": {
+                const metric = this.getHeatpumpMetric();
+                entityId =
+                    metric === "cop"        ? this.config?.hp1?.hp1_cop :
+                    metric === "power"      ? this.config?.hp1?.hp1_power :
+                    metric === "powerinput" ? this.config?.hp1?.hp1_powerinput :
+                                            this.config?.hp1?.hp1_waterdelta;
+                tooltipId = "tooltipHp1Metric";
+                break;
+            }
+            case "hp2Metric": {
+                const metric = this.getHeatpumpMetric();
+                entityId =
+                    metric === "cop"        ? this.config?.hp2?.hp2_cop :
+                    metric === "power"      ? this.config?.hp2?.hp2_power :
+                    metric === "powerinput" ? this.config?.hp2?.hp2_powerinput :
+                                            this.config?.hp2?.hp2_waterdelta;
+                tooltipId = "tooltipHp2Metric";
+                break;
+            }
+
+            case "solarPower":
+                entityId = this.config?.other?.solar_power;
+                break;
+            case "homeBatterySOC":
+                entityId = this.config?.other?.home_battery_soc;
+                break;
+            case "outsideTemperature":
+                entityId =
+                    this.config?.other?.outside_temperature ||
+                    this.config?.hp1?.hp1_temperatureoutside;
+                break;
+
+            default:
+                break;
+        }
+
+        if (action === "tap") {
+            if (entityId)
+                this._openMoreInfo(entityId);
+            return;
+        }
+
+        if (action === "hold" && tooltipId) {
+            this._toggleTooltip(tooltipId);
+            return;
+        }
+    }
+
+    firstUpdated() {
+        const tank       = this.shadowRoot.querySelector('#tankInfo');
+        const room       = this.shadowRoot.querySelector('#roomTemperature');
+        const ac         = this.shadowRoot.querySelector('#aircoTemperature');
+        const waterPipe  = this.shadowRoot.querySelector('#waterPipeTemperature');
+        const hp1Metric  = this.shadowRoot.querySelector('#hp1Metric');
+        const hp2Metric  = this.shadowRoot.querySelector('#hp2Metric');
+
+        const isTouch = this._isTouch;
+
+        const bindHover = (el, tooltipId, condition = true) => {
+            if (!el || !tooltipId || !condition || isTouch) return;
+
+            el.addEventListener('mouseenter', () => this._showTooltip(tooltipId));
+            el.addEventListener('mouseleave', () => this._hideTooltip(tooltipId));
+        };
+
+        const bindPress = (el) => {
+            if (!el) return;
+
+            el.style.cursor = 'pointer';
+            el.addEventListener('pointerdown', this._onPressStart);
+            el.addEventListener('pointerup', this._onPressEnd);
+            el.addEventListener('pointerleave', this._onPressCancel);
+            el.addEventListener('pointercancel', this._onPressCancel);
+        };
+
+        // Hover tooltips (desktop)
+        if (this.isAllElectric()) {
+            bindHover(tank, 'tooltipTankInfo', true);
+        }
+        bindHover(room, 'tooltipRoomTemperature', true);
+        bindHover(ac, 'tooltipAircoTemperature', this.hasAirco());
+        bindHover(waterPipe, 'tooltipWaterPipeTemperature', true);
+        bindHover(hp1Metric, 'tooltipHp1Metric', true);
+        bindHover(hp2Metric, 'tooltipHp2Metric', this.isDuoHeatpump());
+
+        // Tap / hold
+        [
+            tank,
+            room,
+            ac,
+            waterPipe,
+            hp1Metric,
+            hp2Metric,
+            this.shadowRoot.getElementById('legendHeatInfo'),
+            this.shadowRoot.getElementById('legendElectricityInfo'),
+            this.shadowRoot.getElementById('legendBoilerInfo'),
+            this.shadowRoot.getElementById('solarPower'),
+            this.shadowRoot.getElementById('homeBatterySOC'),
+            this.shadowRoot.getElementById('outsideTemperature'),
+        ].forEach(bindPress);
+
+        // Close tooltip on tap/click outside
+        window.addEventListener('pointerdown', this._onGlobalPointerDown, true);
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback?.();
+        window.removeEventListener('pointerdown', this._onGlobalPointerDown, true);
     }
 
     render() {
