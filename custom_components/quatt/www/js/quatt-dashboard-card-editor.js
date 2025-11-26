@@ -17,12 +17,22 @@ class QuattDashboardCardEditor extends LitElement {
         this.requestUpdate();
     }
 
+    _parseBool(value) {
+        if (typeof value === "boolean") return value;
+        if (typeof value === "string") {
+            const v = value.trim().toLowerCase();
+            if (["true", "on", "yes"].includes(v)) return true;
+            if (["false", "off", "no"].includes(v)) return false;
+        }
+        return undefined;
+    }
+
     _isTrue(value) {
-        return value === true || value === 'true';
+        return this._parseBool(value) === true;
     }
 
     _isFalse(value) {
-        return value === false || value === 'false';
+        return this._parseBool(value) === false;
     }
 
     // Helper for an expandable section with a grid inside
@@ -354,7 +364,7 @@ class QuattDashboardCardEditor extends LitElement {
             heatpump_metric: "User selection",
         };
         return map[name];
-  };
+    };
 
     // When a value changes in the editor trigger the config-changed event
     _valueChanged(ev) {
