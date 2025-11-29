@@ -1,0 +1,53 @@
+template:
+  - sensor:
+      - name: "Quatt electricity today"
+        unique_id: quatt_electricity_today
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >-
+          {% set raw = state_attr('sensor.quatt_insights', 'insights_json') %}
+          {% if not raw %}
+            0
+          {% else %}
+            {% set d = raw | from_json %}
+            {{ (d.totalHpElectric | float(0) / 1000) | round(2) }}
+          {% endif %}
+
+      - name: "Quatt heat today"
+        unique_id: quatt_heat_today
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >-
+          {% set raw = state_attr('sensor.quatt_insights', 'insights_json') %}
+          {% if not raw %}
+            0
+          {% else %}
+            {% set d = raw | from_json %}
+            {{ (d.totalHpHeat | float(0) / 1000) | round(2) }}
+          {% endif %}
+
+      - name: "Quatt boiler today"
+        unique_id: quatt_boiler_today
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >-
+          {% set raw = state_attr('sensor.quatt_insights', 'insights_json') %}
+          {% if not raw %}
+            0
+          {% else %}
+            {% set d = raw | from_json %}
+            {{ (d.totalBoilerHeat | float(0) / 1000) | round(2) }}
+          {% endif %}
+
+      - name: "Quatt gas today"
+        unique_id: quatt_gas_today
+        unit_of_measurement: "m³"
+        device_class: gas
+        state: >-
+          {% set raw = state_attr('sensor.quatt_insights', 'insights_json') %}
+          {% if not raw %}
+            0
+          {% else %}
+            {% set d = raw | from_json %}
+            {{ d.totalBoilerGas | float(0) | round(2) }}
+          {% endif %}
