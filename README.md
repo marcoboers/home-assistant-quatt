@@ -171,7 +171,7 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 
 ## Quatt Daily Usage Graph with ApexCharts (Optional)
 
-With th `quatt.get_insights` action it is possible to recreate a Quatt-style **daily usage graph** (similar to the official app) in Home Assistant.
+With the `quatt.get_insights` action it is possible to recreate a Quatt-style **daily usage graph** (similar to the official app) in Home Assistant.
 
 <img width="506" height="429" alt="Quatt overview" src="docs/images/quatt-information-day.png" />
 
