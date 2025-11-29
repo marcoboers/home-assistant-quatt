@@ -2,6 +2,11 @@
 
 target-version = "py310"
 
+# Extra paths Ruff should ignore
+extend-exclude = [
+    "examples",
+]
+
 select = [
     "B007", # Loop control variable {name} not used within loop body
     "B014", # Exception handler with duplicate exception

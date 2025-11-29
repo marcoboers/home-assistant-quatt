@@ -116,13 +116,13 @@ To enable the remote API for your existing Quatt CIC:
 
 Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
 
-## Quatt Dashboard Card
+## Quatt Dashboard Card (Optional)
 
 This integration includes a fully-featured **Quatt Dashboard Card** that replicates and enhances the dashboard from the official Quatt mobile app directly in your Home Assistant interface. This provides a comprehensive, at-a-glance view of your Quatt heat pump system status and performance.
 
 **Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app. The extracted images form the foundation of this card!**
 
-<img width="930" height="732" alt="Quatt overview" src="https://github.com/user-attachments/assets/2dc22c2d-21fe-4c5a-a181-08a596e98e42" />
+<img width="930" height="732" alt="Quatt overview" src="docs/images/quatt-dashboard-card.png" />
 
 ### Features
 
@@ -144,18 +144,20 @@ This integration includes a fully-featured **Quatt Dashboard Card** that replica
 
 ### Prerequisites
 
-To use the Quatt Dashboard, you need:
+The Quatt Dashboard works with the **local CIC JSON API**. Configuring the **Remote Mobile API** is optional but recommended for more accurate heat pump images.
 
-1. **Remote API configured**: The dashboard requires the Remote Mobile API to be set up (see [Remote Mobile API](#remote-mobile-api-optional---beta) section above)
-2. **Required sensors enabled**: Two sensors from the remote API must be manually enabled:
-   - `OduType` (ODU Type)
-   - `Number of heatpumps`
+To get the most out of the Quatt Dashboard:
 
-   These sensors are disabled by default. To enable them:
+1. **Optional: Remote API configured**: Configure the Remote Mobile API (see [Remote Mobile API](#remote-mobile-api-optional) section above).
+2. **Optional: `OduType` sensor enabled**: The `OduType` (ODU Type) sensor is used to select the correct heat pump image.
+   - When `OduType` is **available and enabled**, the dashboard shows the **accurate heat pump image** for your unit.
+   - When `OduType` is **not available** (for example if the Remote API is not configured), the dashboard will still work but will fall back to **generic v1 heat pump images**.
+
+   The `OduType` sensor is disabled by default. To enable it:
    - Go to `Settings` → `Devices & services` → `Integrations` → `Quatt`
    - Click on your CIC device
-   - Find the `OduType` and `Number of heatpumps` sensors
-   - Click on each sensor and enable it
+   - Find the `OduType` sensor
+   - Click on the sensor and enable it
 
 ### Installation
 
@@ -164,8 +166,77 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 ### Troubleshooting
 
 - **Card not found**: Ensure Home Assistant has loaded the integration properly. Try restarting Home Assistant
-- **Incomplete data**: Make sure both `OduType` and `Number of heatpumps` sensors are enabled
-- **No data showing**: Confirm the Remote API is configured and working (check the Remote API sensors)
+- **Generic heat pump image**: Enable and configure the `OduType` sensor (requires Remote API) to show the accurate heat pump image instead of the generic v1 image
+
+
+## Quatt Daily Usage Graph with ApexCharts (Optional)
+
+With th `quatt.get_insights` action it is possible to recreate a Quatt-style **daily usage graph** (similar to the official app) in Home Assistant.
+
+<img width="506" height="429" alt="Quatt overview" src="docs/images/quatt-information-day.png" />
+
+This setup uses three building blocks that work together:
+
+- The `quatt.get_insights` **action (service)** to fetch today’s detailed usage data from Quatt
+- A small **Python script** that stores the retrieved JSON data in a Home Assistant sensor
+- An **ApexCharts custom card** that reads this sensor, transforms the JSON, and renders a stacked kWh bar chart
+
+
+All example files are included in this repository:
+
+- Python script: [`examples/set_quatt_insights.py`](examples/set_quatt_insights.py)
+- Automation: [`examples/quatt_insights_today.yaml`](examples/automation_quatt_insights.yaml)
+- ApexCharts card: [`examples/quatt_daily_usage_apexcharts.yaml`](examples/apexcharts_quatt_daily_usage.yaml)
+
+### Prerequisites
+
+1. **ApexCharts card installed**
+
+   Install the **ApexCharts Card** via HACS (Frontend → Search for `apexcharts-card`).
+
+2. **Python Scripts enabled in Home Assistant**
+
+   In your `configuration.yaml`:
+
+   ```yaml
+     python_script:
+   ```
+   Create a `python_scripts` folder in your Home Assistant config directory if it doesn’t exist yet.
+
+#### Step 1 – Python script: store insights in a sensor
+
+Copy the contents of:
+- [`examples/set_quatt_insights.py`](examples/set_quatt_insights.py)
+
+into a file called:
+- `<HA config>/python_scripts/set_quatt_insights.py`
+
+This script creates/updates `sensor.quatt_insights` with the daily insights data retrieved from the Quatt integration.
+
+#### Step 2 – Automation: fetch today’s insights every 10 minutes
+
+Import the automation from:
+
+- [`examples/quatt_insights_today.yaml`](examples/automation_quatt_insights.yaml)
+
+You can either:
+
+- Paste the contents into Settings → Automations & Scenes → Add automation → Edit in YAML, or
+- Include it in your `automations.yaml`
+
+This automation:
+- Runs on Home Assistant startup and then every 10 minutes
+- Calls `quatt.get_insights` for today (timeframe: day)
+- Retries up to 3 times until valid *today* data is returned
+- Calls `python_script.set_quatt_insights` to update `sensor.quatt_insights`
+
+#### Step 3 – ApexCharts card: Quatt daily usage graph
+
+Add a new Manual card in your dashboard and paste the contents of:
+
+- [`examples/quatt_daily_usage_apexcharts.yaml`](examples/apexcharts_quatt_daily_usage.yaml)
+
+This card displays the daily usage graph similar to the official Quatt app.
 
 ## Sensors
 
@@ -194,7 +265,7 @@ All sensors from the local API feed are available. In addition, the following co
 
 ## Contributions are welcome!
 
-Special thanks to [@patrickvorgers](https://github.com/patrickvorgers) for maintaing this integration and enhancing the integration to its current level.
+Special thanks to [@patrickvorgers](https://github.com/patrickvorgers) for maintaining this integration and enhancing the integration to its current level.
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
