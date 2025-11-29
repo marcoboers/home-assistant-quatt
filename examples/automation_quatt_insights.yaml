@@ -1,0 +1,51 @@
+alias: Quatt Insights (today - refresh every 10 min)
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: /10
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - alias: Repeat max 3 times or insights are valid
+    repeat:
+      until:
+        - alias: Stop in case more than 3 attempts OR when data is correct
+          condition: template
+          value_template: "{{ repeat.index >= 3 or insights_valid }}"
+      sequence:
+        - action: quatt.get_insights
+          metadata: {}
+          data:
+            from_date: "{{ now().date() }}"
+            timeframe: day
+            advanced_insights: false
+          response_variable: insights_response
+        - variables:
+            insights_valid: |
+              {% set json_data = insights_response | default({}, true) %}
+              {% set from_str = json_data.from | default('', true) %}
+              {% set from_dt = as_datetime(from_str) if from_str else none %}
+              {{ from_dt is not none
+                 and as_local(from_dt).date() == now().date() }}
+        - alias: Update sensor quatt_insights when data is valid
+          if:
+            - condition: template
+              value_template: "{{ insights_valid }}"
+              alias: >-
+                Valid data? Sometimes invalid data is returned (whole period
+                instead of today)
+          then:
+            - action: python_script.set_quatt_insights
+              data:
+                entity_id: sensor.quatt_insights
+                insights: "{{ insights_response | tojson }}"
+          else:
+            - delay:
+                hours: 0
+                minutes: 0
+                seconds: 0
+                milliseconds: 100
+mode: single
+trace:
+  stored_traces: 10
