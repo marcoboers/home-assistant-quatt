@@ -129,16 +129,16 @@ This integration includes a fully-featured **Quatt Dashboard Card** that replica
 - **Complete system overview**: Visual representation of your entire Quatt system including heat pump(s), boiler, and heat battery
 - **Real-time status**: Live updates of temperatures, power consumption, and operating modes
 - **Universal support**: Works with all Quatt configurations:
-    - Hybrid setups (heat pump + boiler)
-    - All-Electric setups (with heat battery/heat charger)
-    - Quatt Mono (single heat pump)
-    - Quatt Duo (dual heat pumps)
+  - Hybrid setups (heat pump + boiler)
+  - All-Electric setups (with heat battery/heat charger)
+  - Quatt Mono (single heat pump)
+  - Quatt Duo (dual heat pumps)
 - **Additional features**:
-    - Airconditioning integration including heating and cooling animations
-    - Solar panel integration including animations
-    - Solar collector integration including animations
-    - Home battery integration
-    - Hot water tank integration including water temperature animations
+  - Airconditioning integration including heating and cooling animations
+  - Solar panel integration including animations
+  - Solar collector integration including animations
+  - Home battery integration
+  - Hot water tank integration including water temperature animations
 - **Responsive design**: Adapts to different screen sizes and devices
 - **Custom card implementation**: Uses a dedicated Lovelace custom card for optimal performance
 
@@ -150,10 +150,12 @@ To get the most out of the Quatt Dashboard:
 
 1. **Optional: Remote API configured**: Configure the Remote Mobile API (see [Remote Mobile API](#remote-mobile-api-optional) section above).
 2. **Optional: `OduType` sensor enabled**: The `OduType` (ODU Type) sensor is used to select the correct heat pump image.
+
    - When `OduType` is **available and enabled**, the dashboard shows the **accurate heat pump image** for your unit.
    - When `OduType` is **not available** (for example if the Remote API is not configured), the dashboard will still work but will fall back to **generic v1 heat pump images**.
 
    The `OduType` sensor is disabled by default. To enable it:
+
    - Go to `Settings` → `Devices & services` → `Integrations` → `Quatt`
    - Click on your CIC device
    - Find the `OduType` sensor
@@ -168,24 +170,24 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 - **Card not found**: Ensure Home Assistant has loaded the integration properly. Try restarting Home Assistant
 - **Generic heat pump image**: Enable and configure the `OduType` sensor (requires Remote API) to show the accurate heat pump image instead of the generic v1 image
 
-
 ## Quatt Daily Usage Graph with ApexCharts (Optional)
 
 With the `quatt.get_insights` action it is possible to recreate a Quatt-style **daily usage graph** (similar to the official app) in Home Assistant.
 
 <img width="506" height="429" alt="Quatt overview" src="docs/images/quatt-information-day.png" />
 
-This setup uses three building blocks that work together:
+This setup uses four building blocks that work together:
 
 - The `quatt.get_insights` **action (service)** to fetch today’s detailed usage data from Quatt
 - A small **Python script** that stores the retrieved JSON data in a Home Assistant sensor
-- An **ApexCharts custom card** that reads this sensor, transforms the JSON, and renders a stacked kWh bar chart
-
+- A set of **helper template sensors** that expose daily totals for use in the card header
+- An **ApexCharts custom card** that reads both the raw insights sensor and the helper sensors and renders a stacked kWh bar chart
 
 All example files are included in this repository:
 
 - Python script: [`examples/set_quatt_insights.py`](examples/set_quatt_insights.py)
 - Automation: [`examples/quatt_insights_today.yaml`](examples/automation_quatt_insights.yaml)
+- Template sensors: [`examples/helpers_quatt_insights.yaml`](examples/helpers_quatt_insights.yaml)
 - ApexCharts card: [`examples/quatt_daily_usage_apexcharts.yaml`](examples/apexcharts_quatt_daily_usage.yaml)
 
 ### Prerequisites
@@ -199,16 +201,19 @@ All example files are included in this repository:
    In your `configuration.yaml`:
 
    ```yaml
-     python_script:
+   python_script:
    ```
+
    Create a `python_scripts` folder in your Home Assistant config directory if it doesn’t exist yet.
 
 #### Step 1 – Python script: store insights in a sensor
 
 Copy the contents of:
+
 - [`examples/set_quatt_insights.py`](examples/set_quatt_insights.py)
 
 into a file called:
+
 - `<HA config>/python_scripts/set_quatt_insights.py`
 
 This script creates/updates `sensor.quatt_insights` with the daily insights data retrieved from the Quatt integration.
@@ -225,12 +230,27 @@ You can either:
 - Include it in your `automations.yaml`
 
 This automation:
+
 - Runs on Home Assistant startup and then every 10 minutes
 - Calls `quatt.get_insights` for today (timeframe: day)
-- Retries up to 3 times until valid *today* data is returned
+- Retries up to 3 times until valid _today_ data is returned
 - Calls `python_script.set_quatt_insights` to update `sensor.quatt_insights`
 
-#### Step 3 – ApexCharts card: Quatt daily usage graph
+#### Step 3 – Template sensors: daily totals for header values
+
+To show daily totals in the card header, create four helper template sensors:
+
+- `sensor.quatt_heat_today`
+- `sensor.quatt_electricity_today`
+- `sensor.quatt_boiler_today`
+- `sensor.quatt_gas_today`
+
+How to create:
+
+- Create them via Settings → Devices & services → Helpers → + Create helper → Template, or
+- Define them in YAML (see [`examples/helpers_quatt_insights.yaml`](examples/helpers_quatt_insights.yaml))
+
+#### Step 4 – ApexCharts card: Quatt daily usage graph
 
 Add a new Manual card in your dashboard and paste the contents of:
 
