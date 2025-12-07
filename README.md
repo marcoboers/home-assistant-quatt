@@ -159,7 +159,6 @@ To get the most out of the Quatt Dashboard:
    - Go to `Settings` → `Devices & services` → `Integrations` → `Quatt`
    - Click on your CIC device
    - Find the `OduType` sensor, you will find it under the Diagnostics of the Heatpump (if you have two heatpumps enabling one is enough)
-   - Find the `Number of heat pumps`, found under the CIC Diagnostics
    - Click on the sensor and enable it
 
 ### Installation
