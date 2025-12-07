@@ -158,7 +158,7 @@ To get the most out of the Quatt Dashboard:
 
    - Go to `Settings` → `Devices & services` → `Integrations` → `Quatt`
    - Click on your CIC device
-   - Find the `OduType` sensor
+   - Find the `OduType` sensor, you will find it under the Diagnostics of the Heatpump (if you have two heatpumps enabling one is enough)
    - Click on the sensor and enable it
 
 ### Installation
@@ -167,7 +167,10 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 
 ### Troubleshooting
 
-- **Card not found**: Ensure Home Assistant has loaded the integration properly. Try restarting Home Assistant
+- **Card not found**:
+  - Ensure Home Assistant has loaded the integration properly. Does the config have a `quatt-dashboard-card.js` file in `<HA config>/custom_components/quatt/www/js/`? Download a newer version when the file is missing.
+  - Try restarting Home Assistant
+  - Caching can be an issue, clear the cache or try incognito mode
 - **Generic heat pump image**: Enable and configure the `OduType` sensor (requires Remote API) to show the accurate heat pump image instead of the generic v1 image
 
 ## Quatt Daily Usage Graph with ApexCharts (Optional)
