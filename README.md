@@ -172,6 +172,7 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
   - Try restarting Home Assistant
   - Caching can be an issue, clear the cache or try incognito mode
 - **Generic heat pump image**: Enable and configure the `OduType` sensor (requires Remote API) to show the accurate heat pump image instead of the generic v1 image
+- **Mobile card not loading**: On Android/IOS devices newly added cards may not load. Caching can be an issue. On Android clear the cache and or wipe Home Assistant application data and log back in. On IOS a douple pull down of the screen with the card in in may result in it loading properly.
 
 ## Quatt Daily Usage Graph with ApexCharts (Optional)
 
