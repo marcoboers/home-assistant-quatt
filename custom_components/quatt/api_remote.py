@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 import json
 import logging
 from typing import Any
@@ -23,6 +24,7 @@ from .const import (
     GOOGLE_APP_INSTANCE_ID,
     GOOGLE_CLIENT_VERSION,
     GOOGLE_FIREBASE_CLIENT,
+    INSIGHTS_REMOTE_SCAN_INTERVAL,
     QUATT_API_BASE_URL,
 )
 
@@ -51,6 +53,8 @@ class QuattRemoteApiClient(QuattApiClient):
         self._firebase_auth_token: str | None = None
         self._installation_id: str | None = None
         self._pairing_completed: bool = False
+        self._insights_get_data_cache: dict[str, Any] | None = None
+        self._insights_get_data_last_update: datetime | None = None
 
     def load_tokens(
         self,
@@ -563,6 +567,20 @@ class QuattRemoteApiClient(QuattApiClient):
             _LOGGER.error("Get CIC data error - invalid JSON response: %s", err)
             return None
 
+    def _should_refresh_get_data_insights(self) -> bool:
+        """Return True if get_data insights should be refreshed from backend."""
+
+        # No cache yet so refresh needed
+        if (
+            self._insights_get_data_cache is None
+            or self._insights_get_data_last_update is None
+        ):
+            return True
+
+        now = datetime.now(timezone.utc)  # noqa: UP017
+        min_interval = timedelta(minutes=INSIGHTS_REMOTE_SCAN_INTERVAL)
+        return (now - self._insights_get_data_last_update) >= min_interval
+
     async def async_get_data(self) -> Any:
         """Get data from the remote API (compatible with local client interface)."""
         # Get CIC data from remote API
@@ -573,15 +591,28 @@ class QuattRemoteApiClient(QuattApiClient):
         result = cic_data.get("result", {})
 
         # Fetch insights data and merge it into the result
-        if self._installation_id:
+        if not self._installation_id:
+            _LOGGER.debug("No installation ID available, skipping insights fetch")
+            return result
+
+        if self._should_refresh_get_data_insights():
             insights_data = await self.get_insights()
             if insights_data:
-                result["insights"] = insights_data
-                _LOGGER.debug("Insights data fetched and merged into CIC data")
+                self._insights_get_data_cache = insights_data
+                self._insights_get_data_last_update = datetime.now(timezone.utc)  # noqa: UP017
+                _LOGGER.debug("Insights data fetched from backend and cached")
+            elif self._insights_get_data_cache is not None:
+                _LOGGER.debug(
+                    "Insights refresh failed, keeping existing cached insights",
+                )
             else:
-                _LOGGER.debug("No insights data available")
-        else:
-            _LOGGER.debug("No installation ID available, skipping insights fetch")
+                _LOGGER.debug("No insights data available (no cache, no backend)")
+        elif self._insights_get_data_cache is not None:
+            _LOGGER.debug("Using cached insights data (no backend call)")
+
+        # Merge cached insights into result
+        if self._insights_get_data_cache is not None:
+            result["insights"] = self._insights_get_data_cache
 
         return result
 
@@ -589,7 +620,7 @@ class QuattRemoteApiClient(QuattApiClient):
         self,
         from_date: str = "2024-01-01",
         timeframe: str = "all",
-        advanced_insights: bool = True,
+        advanced_insights: bool = False,
         retry_on_403: bool = True,
     ) -> dict[str, Any] | None:
         """Get insights data from installation.
@@ -598,7 +629,7 @@ class QuattRemoteApiClient(QuattApiClient):
             from_date: Start date in ISO format (e.g., "2024-01-01"). Defaults to "2024-01-01"
             timeframe: Timeframe for insights ("all", "day", "week", "month", "year"). Defaults to "all".
                       The API automatically calculates the end date based on from_date and timeframe.
-            advanced_insights: Whether to include advanced insights. Defaults to True
+            advanced_insights: Whether to include advanced insights. Defaults to False
             retry_on_403: Whether to retry on 403 errors. Defaults to True
 
         Returns:
@@ -606,7 +637,9 @@ class QuattRemoteApiClient(QuattApiClient):
 
         """
         if not self._id_token or not self._installation_id:
-            _LOGGER.error("Cannot get insights: not authenticated or no installation ID")
+            _LOGGER.error(
+                "Cannot get insights: not authenticated or no installation ID"
+            )
             return None
 
         # Build query parameters
