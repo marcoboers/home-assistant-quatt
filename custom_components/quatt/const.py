@@ -73,8 +73,16 @@ DEVICE_LIST = [
     {"name": "Boiler", "id": DEVICE_BOILER_ID, "kind": QuattDeviceKind.DEVICE},
     {"name": "CIC", "id": DEVICE_CIC_ID, "kind": QuattDeviceKind.HUB},
     {"name": "Flowmeter", "id": DEVICE_FLOWMETER_ID, "kind": QuattDeviceKind.DEVICE},
-    {"name": "Heat battery", "id": DEVICE_HEAT_BATTERY_ID, "kind": QuattDeviceKind.DEVICE},
-    {"name": "Heat charger", "id": DEVICE_HEAT_CHARGER_ID, "kind": QuattDeviceKind.DEVICE},
+    {
+        "name": "Heat battery",
+        "id": DEVICE_HEAT_BATTERY_ID,
+        "kind": QuattDeviceKind.DEVICE,
+    },
+    {
+        "name": "Heat charger",
+        "id": DEVICE_HEAT_CHARGER_ID,
+        "kind": QuattDeviceKind.DEVICE,
+    },
     {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID, "kind": QuattDeviceKind.DEVICE},
     {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID, "kind": QuattDeviceKind.DEVICE},
     {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID, "kind": QuattDeviceKind.DEVICE},
@@ -192,6 +200,7 @@ DEFAULT_REMOTE_SCAN_INTERVAL: Final = 1
 REMOTE_MIN_SCAN_INTERVAL: Final = 1
 REMOTE_MAX_SCAN_INTERVAL: Final = 10
 REMOTE_CONF_SCAN_INTERVAL: Final = "remote_scan_interval"
+INSIGHTS_REMOTE_SCAN_INTERVAL: Final = 60
 
 
 # Temperature-dependent conversion factors for water in a central heating system at 2 bar pressure.
