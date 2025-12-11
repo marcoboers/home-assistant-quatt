@@ -116,7 +116,7 @@ To enable the remote API for your existing Quatt CIC:
 
 Once enabled, additional sensors and the sound level controls will appear in your Home Assistant installation.
 
-## Quatt Dashboard Card (Optional)
+## Quatt Dashboard Card (Optional - Beta)
 
 This integration includes a fully-featured **Quatt Dashboard Card** that replicates and enhances the dashboard from the official Quatt mobile app directly in your Home Assistant interface. This provides a comprehensive, at-a-glance view of your Quatt heat pump system status and performance.
 
@@ -174,7 +174,7 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 - **Generic heat pump image**: Enable and configure the `OduType` sensor (requires Remote API) to show the accurate heat pump image instead of the generic v1 image
 - **Mobile card not loading**: On Android/iOS devices newly added cards may not load. Caching can be an issue. On Android/iOS clear the cache and or wipe Home Assistant application data and log back in. On iOS a double pull down of the screen with the card in it may result in it loading properly.
 
-## Quatt Daily Usage Graph with ApexCharts (Optional)
+## Quatt Daily Usage Graph with ApexCharts (Optional - Beta)
 
 With the `quatt.get_insights` action it is possible to recreate a Quatt-style **daily usage graph** (similar to the official app) in Home Assistant.
 
@@ -186,6 +186,12 @@ This setup uses four building blocks that work together:
 - A small **Python script** that stores the retrieved JSON data in a Home Assistant sensor
 - A set of **helper template sensors** that expose daily totals for use in the card header
 - An **ApexCharts custom card** that reads both the raw insights sensor and the helper sensors and renders a stacked kWh bar chart
+
+> ℹ️ **API refresh rate**
+>
+> The insights data on the Quatt side is only refreshed **once every hour**.<br>
+> Polling more frequently will not return fresher data and only adds unnecessary load on the Quatt servers.<br>
+> Please do **not** schedule the automation more often than once per hour.
 
 All example files are included in this repository:
 
@@ -222,23 +228,42 @@ into a file called:
 
 This script creates/updates `sensor.quatt_insights` with the daily insights data retrieved from the Quatt integration.
 
-#### Step 2 – Automation: fetch today’s insights every 10 minutes
+#### Step 2 – Automation: fetch today’s insights once per hour
 
 Import the automation from:
 
 - [`examples/quatt_insights_today.yaml`](examples/automation_quatt_insights.yaml)
 
-You can either:
+Either:
 
-- Paste the contents into Settings → Automations & Scenes → Add automation → Edit in YAML, or
-- Include it in your `automations.yaml`
+ - Paste the contents into Settings → Automations & Scenes → Add automation → Edit in YAML, or
+ - Include it in `automations.yaml`
 
 This automation:
 
-- Runs on Home Assistant startup and then every 10 minutes
+- Runs on Home Assistant startup and then once per hour
 - Calls `quatt.get_insights` for today (timeframe: day)
 - Retries up to 3 times until valid _today_ data is returned
 - Calls `python_script.set_quatt_insights` to update `sensor.quatt_insights`
+
+By default, the example automation is scheduled to run at **15 minutes past every hour**.
+To help spread load across the Quatt servers, it is recommended to **change the minute value** in the trigger to a value between **13 and 20** that is unique for each installation.
+
+For example, if the automation uses:
+
+```yaml
+trigger:
+  - platform: time_pattern
+    minutes: "15"
+```
+
+this can be changed to, for example:
+
+```yaml
+trigger:
+  - platform: time_pattern
+    minutes: "17"
+```
 
 #### Step 3 – Template sensors: daily totals for header values
 

@@ -2,7 +2,7 @@ alias: Quatt Insights (today - refresh every 10 min)
 description: ""
 triggers:
   - trigger: time_pattern
-    minutes: /10
+    minutes: "15"
   - trigger: homeassistant
     event: start
 conditions: []
