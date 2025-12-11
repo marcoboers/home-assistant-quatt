@@ -154,15 +154,6 @@ def create_heatpump_sensor_entity_descriptions(
             ),
         ),
         QuattSensorEntityDescription(
-            name="On",
-            key=f"heatPumps.{index}.on",
-            icon="mdi:power",
-            quatt_features=QuattFeatureFlags(
-                duo=is_duo,
-                mobile_api=True,
-            ),
-        ),
-        QuattSensorEntityDescription(
             name="Compressor frequency",
             key=f"heatPumps.{index}.compressorFrequency",
             icon="mdi:sine-wave",
