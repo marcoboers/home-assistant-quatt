@@ -65,6 +65,16 @@ def create_heatpump_sensor_entity_descriptions(
                 duo=is_duo,
             ),
         ),
+        QuattBinarySensorEntityDescription(
+            name="On",
+            key=f"heatPumps.{index}.on",
+            icon="mdi:power",
+            device_class=BinarySensorDeviceClass.POWER,
+            quatt_features=QuattFeatureFlags(
+                duo=is_duo,
+                mobile_api=True,
+            ),
+        ),
     ]
 
 
