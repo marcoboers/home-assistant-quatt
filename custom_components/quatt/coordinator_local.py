@@ -96,7 +96,7 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
 
         # Retrieve the supervisory control mode state first
         state = self.get_value("qc.supervisoryControlMode")
-        LOGGER.debug("computedBoilerHeatPower.supervisoryControlMode: %s", state)
+        LOGGER.debug("computedHeatPower.supervisoryControlMode: %s", state)
 
         # If the state is not valid or the heatpump is not active, no need to proceed
         if state is None:
@@ -139,17 +139,14 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
     def computedBoilerHeatPower(self) -> float | None:  # pylint: disable=invalid-name
         """Compute the boiler's added heat power."""
 
-        # Retrieve the supervisory control mode state first
-        state = self.get_value("qc.supervisoryControlMode")
-        LOGGER.debug("computedBoilerHeatPower.supervisoryControlMode: %s", state)
+        # Check if boiler heating is active
+        boiler__cic_heating = self.get_value("boiler.otTbCH")
+        LOGGER.debug("computedBoilerHeatPower.otTbCH: %s", boiler__cic_heating)
 
         # If the state is not valid or the boiler is not active, no need to proceed
-        if state is None:
+        if boiler__cic_heating is None:
             return None
-        if state not in [
-            SupervisoryControlMode.HEATING_HEATPUMP_PLUS_BOILER,
-            SupervisoryControlMode.HEATING_BOILER_ONLY,
-        ]:
+        if not boiler__cic_heating:
             return 0.0
 
         # Retrieve other required values
