@@ -6,8 +6,6 @@ import ipaddress
 
 import voluptuous as vol
 
-from homeassistant import config_entries, data_entry_flow
-from homeassistant.components import dhcp
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
@@ -20,6 +18,14 @@ from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+
+try:
+    from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
+except ImportError:
+    # import fallback for Home Assistant versions < 2025.2
+    from homeassistant.components.dhcp import (
+        DhcpServiceInfo,  # type: ignore  # noqa: PGH003
+    )
 
 from .api import (
     QuattApiClientAuthenticationError,
@@ -73,7 +79,7 @@ async def _async_step_pair_common(
     flow,
     config_update: bool,
     user_input: dict | None = None,
-) -> config_entries.FlowResult:
+) -> ConfigFlowResult:
     """Handle pairing step in config and options flow."""
     # Ensure static resources are registered for use in the form
     await _async_register_static_resources(flow.hass)
@@ -150,7 +156,7 @@ async def _async_step_pair_common(
 
 
 async def _async_get_cic_name(hass: HomeAssistant, ip_address: str) -> str:
-    """Validate devic:e and return the CIC id/ name (system.hostName)."""
+    """Validate device and return the CIC id/name (system.hostName)."""
     client = QuattLocalApiClient(
         ip_address=ip_address,
         session=async_create_clientsession(hass),
@@ -184,14 +190,14 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self,
         user_input: dict | None = None,
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by the user - start with local setup."""
         return await self.async_step_local()
 
     async def async_step_local(
         self,
         user_input: dict | None = None,
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Handle local connection setup with IP address."""
         _errors = {}
         if user_input is not None:
@@ -252,14 +258,14 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
-    async def async_step_pair(self, user_input=None) -> config_entries.FlowResult:
+    async def async_step_pair(self, user_input=None) -> ConfigFlowResult:
         """Handle pairing step in the config flow."""
         return await _async_step_pair_common(
             self, config_update=False, user_input=user_input
         )
 
     async def async_step_dhcp(
-        self, discovery_info: dhcp.DhcpServiceInfo
+        self, discovery_info: DhcpServiceInfo
     ) -> ConfigFlowResult:
         """Handle DHCP discovery."""
         LOGGER.debug(
@@ -302,13 +308,18 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
 
             # Loop through existing config entries to check for a match with prefix
             for entry in self.hass.config_entries.async_entries(self.handler):
+                entry_uid = entry.unique_id
+                if not entry_uid:
+                    # unique_id is None of "", skip this entry
+                    continue
+
                 # Hostnames could be shortened by routers so the check is done on a partial match
                 # Both directions have to be checked because routers can be switched
-                if entry.unique_id.startswith(
+                if entry_uid.startswith(
                     hostname_unique_id
-                ) or hostname_unique_id.startswith(entry.unique_id):
+                ) or hostname_unique_id.startswith(entry_uid):
                     # Use the found entry unique_id
-                    await self.async_set_unique_id(entry.unique_id)
+                    await self.async_set_unique_id(entry_uid)
                     self.ip_address = discovery_info.ip
                     self.cic_name = discovery_info.hostname
 
@@ -338,11 +349,12 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             self.context.update({"title_placeholders": {"name": hostname_unique_id}})
             return await self.async_step_confirm()
 
-    async def async_step_confirm(
-        self, user_input=None
-    ) -> data_entry_flow.ConfigFlowResult:
+    async def async_step_confirm(self, user_input=None) -> ConfigFlowResult:
         """Allow the user to confirm adding the device."""
         if user_input is not None:
+            if self.cic_name is None or self.ip_address is None:
+                return self.async_abort(reason="unknown")
+
             # Use the hostname instead of the ip (DHCP discovered device - always local)
             return self.async_create_entry(
                 title=self.cic_name,
@@ -367,7 +379,7 @@ class QuattOptionsFlowHandler(OptionsFlow):
         """Initialize options flow."""
         self.cic_name: str | None = None
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
         _errors = {}
 
@@ -456,7 +468,7 @@ class QuattOptionsFlowHandler(OptionsFlow):
             errors=_errors,
         )
 
-    async def async_step_pair(self, user_input=None) -> config_entries.FlowResult:
+    async def async_step_pair(self, user_input=None) -> ConfigFlowResult:
         """Handle pairing step in the options flow."""
         return await _async_step_pair_common(
             self, config_update=True, user_input=user_input

@@ -5,7 +5,7 @@
             "local": {
                 "description": "Set up local connection to the Quatt heatpump.",
                 "data": {
-                    "ip_address": "[%key:common::config_flow::data::ip%]",
+                    "ip_address": "IP address / hostname",
                     "add_remote": "Enable remote connection setup"
                 },
                 "data_description": {
@@ -22,7 +22,7 @@
                 }
             },
             "confirm": {
-                "description": "[%key:common::config_flow::description::confirm_setup%]"
+                "description": "Press Submit to confirm setup."
             }
         },
         "error": {
@@ -33,7 +33,7 @@
         },
         "abort": {
             "already_in_progress": "A configuration flow for this Quatt device is already in progress.",
-            "already_configured": "[%key:common::config_flow::abort::already_configured%]",
+            "already_configured": "Device is already configured.",
             "no_match": "No matching Quatt device found."
         }
     },
@@ -63,7 +63,7 @@
                 }
             },
             "confirm": {
-                "description": "[%key:common::config_flow::description::confirm_setup%]"
+                "description": "Press Submit to confirm setup."
             }
         },
         "error": {
