@@ -15,7 +15,7 @@
             },
             "pair": {
                 "title": "Koppel met het Quatt apparaat",
-                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk op de knop op je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk meerdere keren op de knop op je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
                 "data": {
                     "first_name": "Voornaam",
                     "last_name": "Achternaam"
@@ -56,7 +56,7 @@
             },
             "pair": {
                 "title": "Koppel met het Quatt apparaat",
-                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk op de knop op je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk meerdere keren op de knop op je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
                 "data": {
                     "first_name": "Voornaam",
                     "last_name": "Achternaam"
