@@ -581,7 +581,7 @@ class QuattRemoteApiClient(QuattApiClient):
         min_interval = timedelta(minutes=INSIGHTS_REMOTE_SCAN_INTERVAL)
         return (now - self._insights_get_data_last_update) >= min_interval
 
-    async def async_get_data(self) -> Any:
+    async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Get data from the remote API (compatible with local client interface)."""
         # Get CIC data from remote API
         cic_data = await self.get_cic_data()

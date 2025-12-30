@@ -29,9 +29,13 @@ class QuattLocalApiClient(QuattApiClient):
         self._ip_address = ip_address
         self._session = session
 
-    async def async_get_data(self) -> Any:
+    async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Get data from the API."""
-        return await self._api_wrapper(method="get", path="/beta/feed/data.json")
+        return await self._api_wrapper(
+            method="get",
+            path="/beta/feed/data.json",
+            retry_on_client_error=retry_on_client_error,
+        )
 
     async def _api_wrapper(
         self,
@@ -39,6 +43,7 @@ class QuattLocalApiClient(QuattApiClient):
         path: str,
         data: dict | None = None,
         headers: dict | None = None,
+        retry_on_client_error: bool = False,
     ) -> Any:
         """Get information from the API."""
         url = "http://" + self._ip_address + ":8080" + path
@@ -80,17 +85,23 @@ class QuattLocalApiClient(QuattApiClient):
                 ) from exception
 
             except aiohttp.ClientError as exception:
+                msg = "Client error fetching information"
+                if not retry_on_client_error:
+                    _LOGGER.error("%s from %s: %s", msg, url, exception)
+                    raise QuattApiClientCommunicationError(msg) from exception
+
+                # Retry path
                 _LOGGER.debug(
-                    "Client error fetching information from %s: %s. Retrying... Attempt %d",
+                    "%s from %s: %s. Retrying... Attempt %d",
+                    msg,
                     url,
                     exception,
                     attempt + 1,
                 )
                 if attempt == RETRY_ATTEMPTS - 1:
-                    raise QuattApiClientCommunicationError(
-                        "Client error fetching information",
-                    ) from exception
-                # During startup the device might be busy, wait longer before retrying
+                    raise QuattApiClientCommunicationError(msg) from exception
+
+                # During startup the device might be busy; wait longer before retrying
                 # This is especially true when a DHCP request is detected after startup
                 await asyncio.sleep(60)
 
