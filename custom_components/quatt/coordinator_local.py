@@ -53,15 +53,25 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
         """Get heatpump power from sensor."""
         if self._power_sensor_id is None:
             return None
-        LOGGER.debug("electricalPower %s", self.hass.states.get(self._power_sensor_id))
-        if self.hass.states.get(self._power_sensor_id) is None:
+
+        entity_state = self.hass.states.get(self._power_sensor_id)
+        LOGGER.debug("electricalPower %s", entity_state)
+
+        if entity_state is None:
             return None
-        if self.hass.states.get(self._power_sensor_id).state not in [
-            STATE_UNAVAILABLE,
-            STATE_UNKNOWN,
-        ]:
-            return self.hass.states.get(self._power_sensor_id).state
-        return None
+
+        if entity_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return None
+
+        try:
+            return float(entity_state.state)
+        except (TypeError, ValueError):
+            LOGGER.debug(
+                "Power sensor '%s' has non-numeric state: %s",
+                self._power_sensor_id,
+                entity_state.state,
+            )
+            return None
 
     def computedWaterDelta(self, parent_key: str | None = None) -> float | None:  # pylint: disable=invalid-name
         """Compute waterdelta."""
@@ -267,7 +277,7 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
         # Prevent negative sign for 0 values (like: -0.0)
         return math.copysign(0.0, 1) if value == 0 else value
 
-    def computedDefrost(self, parent_key: str | None = None) -> bool:  # pylint: disable=invalid-name
+    def computedDefrost(self, parent_key: str | None = None) -> bool | None:  # pylint: disable=invalid-name
         """Compute Quatt Defrost State."""
         if parent_key is None:
             return None

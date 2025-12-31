@@ -30,7 +30,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
             update_interval=update_interval,
         )
 
-        self._power_sensor_id: str = (
+        self._power_sensor_id: str | None = (
             self.config_entry.options.get(CONF_POWER_SENSOR, "")
             if (self.config_entry is not None)
             and (len(self.config_entry.options.get(CONF_POWER_SENSOR, "")) > 6)
