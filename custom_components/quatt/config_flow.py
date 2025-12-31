@@ -18,6 +18,7 @@ from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.storage import Store
 
 try:
     from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
@@ -47,6 +48,8 @@ from .const import (
     REMOTE_CONF_SCAN_INTERVAL,
     REMOTE_MAX_SCAN_INTERVAL,
     REMOTE_MIN_SCAN_INTERVAL,
+    STORAGE_KEY,
+    STORAGE_VERSION,
 )
 
 CONF_FIRST_NAME = "first_name"
@@ -88,7 +91,13 @@ async def _async_step_pair_common(
     if user_input is not None:
         # User confirmed they are ready to pair
         session = async_create_clientsession(flow.hass)
-        api = QuattRemoteApiClient(flow.cic_name, session)
+
+        # Use the HA-assigned unique_id as stable store key.
+        # - Config flow: flow.unique_id
+        # - Options flow: flow.config_entry.unique_id
+        store_key = flow.config_entry.unique_id if config_update else flow.unique_id
+        store = Store(flow.hass, STORAGE_VERSION, f"{STORAGE_KEY}_{store_key}")
+        api = QuattRemoteApiClient(flow.cic_name, session, store=store)
 
         first_name = user_input[CONF_FIRST_NAME]
         last_name = user_input[CONF_LAST_NAME]
@@ -171,7 +180,7 @@ async def _async_get_cic_name(
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
-    VERSION = 5
+    VERSION = 6
 
     def __init__(self) -> None:
         """Initialize a Quatt flow."""

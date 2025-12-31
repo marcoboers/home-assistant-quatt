@@ -18,7 +18,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
     def __init__(
         self,
         hass: HomeAssistant,
-        update_interval: int,
+        update_interval: timedelta,
         client: QuattApiClient,
     ) -> None:
         """Initialize."""
@@ -27,7 +27,7 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
             hass=hass,
             logger=LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=update_interval),
+            update_interval=update_interval,
         )
 
         self._power_sensor_id: str = (
