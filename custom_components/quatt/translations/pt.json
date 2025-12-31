@@ -5,7 +5,7 @@
             "local": {
                 "description": "Configurar ligação local à bomba de calor Quatt.",
                 "data": {
-                    "ip_address": "[%key:common::config_flow::data::ip%]",
+                    "ip_address": "Endereço IP / nome do host",
                     "add_remote": "Ativar configuração de ligação remota"
                 },
                 "data_description": {

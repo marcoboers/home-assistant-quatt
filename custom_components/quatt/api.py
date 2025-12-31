@@ -26,7 +26,7 @@ class QuattApiClient(ABC):
             raise QuattApiClientAuthenticationError("Invalid credentials")
 
     @abstractmethod
-    async def async_get_data(self) -> Any:
+    async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Asynchronously fetch data from the Quatt API.
 
         Implementations must return the parsed data retrieved from the API.
