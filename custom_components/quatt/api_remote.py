@@ -53,8 +53,10 @@ class QuattRemoteApiClient(QuattApiClient):
         self._firebase_auth_token: str | None = None
         self._installation_id: str | None = None
         self._pairing_completed: bool = False
-        self._insights_get_data_cache: dict[str, Any] | None = None
-        self._insights_get_data_last_update: datetime | None = None
+        # Insights cache keyed by request parameters: key -> (expires_at, result_dict)
+        self._insights_cache: dict[
+            tuple[str, str, bool], tuple[datetime, dict[str, Any]]
+        ] = {}
 
     def load_tokens(
         self,
@@ -567,20 +569,6 @@ class QuattRemoteApiClient(QuattApiClient):
             _LOGGER.error("Get CIC data error - invalid JSON response: %s", err)
             return None
 
-    def _should_refresh_get_data_insights(self) -> bool:
-        """Return True if get_data insights should be refreshed from backend."""
-
-        # No cache yet so refresh needed
-        if (
-            self._insights_get_data_cache is None
-            or self._insights_get_data_last_update is None
-        ):
-            return True
-
-        now = datetime.now(timezone.utc)  # noqa: UP017
-        min_interval = timedelta(minutes=INSIGHTS_REMOTE_SCAN_INTERVAL)
-        return (now - self._insights_get_data_last_update) >= min_interval
-
     async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Get data from the remote API (compatible with local client interface)."""
         # Get CIC data from remote API
@@ -595,38 +583,24 @@ class QuattRemoteApiClient(QuattApiClient):
             _LOGGER.debug("No installation ID available, skipping insights fetch")
             return result
 
-        if self._should_refresh_get_data_insights():
-            insights_data = await self.get_insights()
-            if insights_data:
-                self._insights_get_data_cache = insights_data
-                self._insights_get_data_last_update = datetime.now(timezone.utc)  # noqa: UP017
-                _LOGGER.debug("Insights data fetched from backend and cached")
-            elif self._insights_get_data_cache is not None:
-                _LOGGER.debug(
-                    "Insights refresh failed, keeping existing cached insights",
-                )
-            else:
-                _LOGGER.debug("No insights data available (no cache, no backend)")
-        elif self._insights_get_data_cache is not None:
-            _LOGGER.debug("Using cached insights data (no backend call)")
-
-        # Merge cached insights into result
-        if self._insights_get_data_cache is not None:
-            result["insights"] = self._insights_get_data_cache
+        # Get the insights data (with caching)
+        insights_data = await self.get_insights()
+        if insights_data is not None:
+            result["insights"] = insights_data
 
         return result
 
     async def get_insights(
         self,
-        from_date: str = "2024-01-01",
+        from_date: str = "2020-01-01",
         timeframe: str = "all",
         advanced_insights: bool = False,
         retry_on_403: bool = True,
     ) -> dict[str, Any] | None:
-        """Get insights data from installation.
+        """Get (cached) insights data from installation.
 
         Args:
-            from_date: Start date in ISO format (e.g., "2024-01-01"). Defaults to "2024-01-01"
+            from_date: Start date in ISO format (e.g., "2020-01-01"). Defaults to "2020-01-01"
             timeframe: Timeframe for insights ("all", "day", "week", "month", "year"). Defaults to "all".
                       The API automatically calculates the end date based on from_date and timeframe.
             advanced_insights: Whether to include advanced insights. Defaults to False
@@ -649,17 +623,42 @@ class QuattRemoteApiClient(QuattApiClient):
             "advancedInsights": str(advanced_insights).lower(),
         }
 
-        # Build URL with query parameters
-        query_string = "&".join(f"{k}={v}" for k, v in params.items())
-        url = f"{QUATT_API_BASE_URL}/me/installation/{self._installation_id}/insights?{query_string}"
+        # Stable cache key for this specific parameter combination
+        key = (from_date, timeframe, advanced_insights)
+        cached = self._insights_cache.get(key)
 
+        # Fresh cache hit
+        now = datetime.now(timezone.utc)  # noqa: UP017
+        if cached and cached[0] > now:
+            _LOGGER.debug("Using cached insights: %s", key)
+            return cached[1]
+
+        url = f"{QUATT_API_BASE_URL}/me/installation/{self._installation_id}/insights"
         headers = {"Authorization": f"Bearer {self._id_token}"}
 
         try:
-            async with self._session.get(url, headers=headers) as response:
+            async with self._session.get(
+                url, headers=headers, params=params
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    return data.get("result", {})
+                    result = data.get("result", {})
+                    fetched_at = datetime.now(timezone.utc)  # noqa: UP017
+                    expires_at = fetched_at + timedelta(
+                        minutes=INSIGHTS_REMOTE_SCAN_INTERVAL
+                    )
+                    _LOGGER.debug("Fetched and cached insights: %s", key)
+                    self._insights_cache[key] = (expires_at, result)
+
+                    # Cleanup expired cache entries (keeps memory bounded over time)
+                    for cache_key, (expires_at, _cached_result) in list(
+                        self._insights_cache.items()
+                    ):
+                        if expires_at <= fetched_at:
+                            _LOGGER.debug("Removing cached insights: %s", cache_key)
+                            self._insights_cache.pop(cache_key, None)
+
+                    return result
 
                 # Handle 401 Unauthorized or 403 Forbidden - token might be expired
                 if response.status in (401, 403) and retry_on_403:
@@ -669,25 +668,51 @@ class QuattRemoteApiClient(QuattApiClient):
                     )
                     if await self.refresh_token():
                         await self._save_tokens()
-                        # Retry once with new token (prevent infinite loop with retry_on_403=False)
-                        return await self.get_insights(retry_on_403=False)
-                    _LOGGER.error("Token refresh failed after %s", response.status)
-                    return None
+                        # Retry once with new token (avoid infinite loop)
+                        retry = await self.get_insights(
+                            from_date=from_date,
+                            timeframe=timeframe,
+                            advanced_insights=advanced_insights,
+                            retry_on_403=False,
+                        )
 
-                _LOGGER.error(
+                        # If retry succeeded, return it
+                        if retry is not None:
+                            return retry
+
+                        # Retry failed: fall back to last cached value (even if expired), if available
+                        if cached is not None:
+                            _LOGGER.debug(
+                                "Insights retry failed, returning cached value (%s)",
+                                key,
+                            )
+                            return cached[1]
+                        return None
+
+                    _LOGGER.warning("Token refresh failed while getting insights")
+
+                _LOGGER.warning(
                     "Get insights failed with status %s: %s",
                     response.status,
                     await response.text(),
                 )
+
+                # Backend failed: fall back to last cached value (even if expired), if available
+                if cached is not None:
+                    _LOGGER.debug(
+                        "Insights fetch failed, returning cached value (%s)", key
+                    )
+                    return cached[1]
+
                 return None
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Get insights error - network error: %s", err)
-            return None
-        except TimeoutError as err:
-            _LOGGER.error("Get insights error - timeout: %s", err)
-            return None
-        except json.JSONDecodeError as err:
-            _LOGGER.error("Get insights error - invalid JSON response: %s", err)
+        except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError) as err:
+            _LOGGER.warning("Get insights error: %s", err)
+
+            # Transport/parse error: fall back to last cached value (even if expired), if available
+            if cached is not None:
+                _LOGGER.debug("Insights error, returning cached value (%s)", key)
+                return cached[1]
+
             return None
 
     async def update_cic_settings(self, settings: dict[str, Any]) -> bool:
