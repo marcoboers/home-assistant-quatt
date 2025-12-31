@@ -99,7 +99,7 @@ async def async_setup_entities(
             _LOGGER.info(
                 "[%s] Removing obsolete device: %s (identifiers=%s)",
                 entity_domain,
-                dev.name or dev_id,
+                (dev.name if dev else None) or dev_id,
                 dev.identifiers if dev else "unknown",
             )
             device_reg.async_remove_device(dev_id)

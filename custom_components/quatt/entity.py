@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
+from datetime import date, datetime
+from decimal import Decimal
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -18,9 +20,11 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
+from .api_remote import QuattRemoteApiClient
 from .const import (
     ALL_ELECTRIC_SYSTEM,
     ATTRIBUTION,
@@ -53,11 +57,13 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         """Initialize."""
         super().__init__(coordinator)
 
+        entry = coordinator.config_entry
+        if entry is None:
+            raise RuntimeError("Coordinator has no config_entry")
+
         # Get a HUB id based in the config entry id to make sure all entities
         # created in this config entry are part of the same device.
-        self._hub_id = (
-            coordinator.config_entry.unique_id or coordinator.config_entry.entry_id
-        ).strip()
+        self._hub_id = (entry.unique_id or entry.entry_id).strip()
 
         self._device_name = device_name
         self._device_id = device_id
@@ -107,12 +113,12 @@ class QuattSensor(QuattEntity, SensorEntity):
         return self.entity_description.entity_registry_enabled_default
 
     @property
-    def native_value(self) -> str:
+    def native_value(self) -> StateType | date | datetime | Decimal:
         """Return the native value of the sensor."""
         value = self.coordinator.get_value(self.entity_description.key)
 
-        if not value:
-            return value
+        if value is None:
+            return None
 
         if self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
             value = dt_util.parse_datetime(value)
@@ -233,6 +239,11 @@ class QuattSoundSelect(QuattSelect):
     async def _perform_api_update(self, option: str) -> bool:
         """Perform paired day/night sound level update."""
 
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattRemoteApiClient):
+            _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
+            return False
+
         # Get current values for both sound levels
         day_level = self.coordinator.get_value("dayMaxSoundLevel")
         night_level = self.coordinator.get_value("nightMaxSoundLevel")
@@ -259,7 +270,7 @@ class QuattSoundSelect(QuattSelect):
         }
 
         _LOGGER.debug("Updating CIC sound levels: %s", settings)
-        return await self.coordinator.client.update_cic_settings(settings)
+        return await remote_client.update_cic_settings(settings)
 
 
 class QuattSwitch(QuattEntity, SwitchEntity):
@@ -346,6 +357,11 @@ class QuattSettingSwitch(QuattSwitch):
 
     async def _perform_api_update(self, state: bool) -> bool:
         """Perform boolean setting update."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattRemoteApiClient):
+            _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
+            return False
+
         # Convert dot notation to nested object structure
         key_parts = self.entity_description.key.split(".")
 
@@ -362,7 +378,7 @@ class QuattSettingSwitch(QuattSwitch):
                 current = current[part]
 
         _LOGGER.debug("Updating CIC setting: %s", settings)
-        return await self.coordinator.client.update_cic_settings(settings)
+        return await remote_client.update_cic_settings(settings)
 
 
 @dataclass(frozen=True)
@@ -380,7 +396,7 @@ class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=Tru
     """A class that describes Quatt sensor entities."""
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
-    quatt_entity_class: QuattSensor = QuattSensor
+    quatt_entity_class: type[QuattEntity] = QuattSensor
 
 
 class QuattBinarySensorEntityDescription(
@@ -389,18 +405,18 @@ class QuattBinarySensorEntityDescription(
     """A class that describes Quatt binary sensor entities."""
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
-    quatt_entity_class: QuattSensor = QuattBinarySensor
+    quatt_entity_class: type[QuattEntity] = QuattBinarySensor
 
 
 class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt select entities."""
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
-    quatt_entity_class: QuattSensor = QuattSelect
+    quatt_entity_class: type[QuattEntity] = QuattSelect
 
 
 class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=True):
     """A class that describes Quatt switch entities."""
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
-    quatt_entity_class: QuattSensor = QuattSwitch
+    quatt_entity_class: type[QuattEntity] = QuattSwitch
