@@ -21,7 +21,7 @@
             },
             "pair": {
                 "title": "Emparelhar com o dispositivo Quatt",
-                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir um nome e pressionar o botão no dispositivo CIC.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir um nome e pressionar o botão no dispositivo CIC várias vezes (até confirmar/avançar).\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
                 "data": {
                     "first_name": "Primeiro nome",
                     "last_name": "Apelido"
@@ -62,7 +62,7 @@
             },
             "pair": {
                 "title": "Emparelhar com o dispositivo Quatt",
-                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir um nome e pressionar o botão no dispositivo CIC.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduzir um nome e pressionar o botão no dispositivo CIC várias vezes (até confirmar/avançar).\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
                 "data": {
                     "first_name": "Primeiro nome",
                     "last_name": "Apelido"
