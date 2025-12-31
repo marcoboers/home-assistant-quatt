@@ -15,7 +15,7 @@
             },
             "pair": {
                 "title": "Pair with the Quatt device",
-                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nPlease enter your name and press the button on the CIC device several times.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nPlease enter your name and press the button on the CIC device.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
                 "data": {
                     "first_name": "First name",
                     "last_name": "Last name"
@@ -56,7 +56,7 @@
             },
             "pair": {
                 "title": "Pair with the Quatt device",
-                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nPlease enter your name and press the button on the CIC device several times.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nPlease enter your name and press the button on the CIC device.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
                 "data": {
                     "first_name": "First name",
                     "last_name": "Last name"

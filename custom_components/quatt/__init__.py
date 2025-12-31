@@ -101,10 +101,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     has_remote = CONF_REMOTE_CIC in entry.data
 
-    coordinators = {
-        "local": None,
-        "remote": None,
-    }
+    coordinators: dict[
+        str, QuattLocalDataUpdateCoordinator | QuattRemoteDataUpdateCoordinator | None
+    ] = {"local": None, "remote": None}
 
     local_client = QuattLocalApiClient(
         ip_address=entry.data[CONF_LOCAL_CIC],
@@ -113,8 +112,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     local_coordinator = QuattLocalDataUpdateCoordinator(
         hass=hass,
-        update_interval=entry.options.get(
-            CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
+        update_interval=timedelta(
+            seconds=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL)
         ),
         client=local_client,
     )
@@ -127,7 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         cic = entry.data[CONF_REMOTE_CIC]
 
         # Create storage for tokens
-        store = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry.entry_id}")
+        store = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry.unique_id}")
 
         # Load stored tokens
         stored_data = await store.async_load()
@@ -154,7 +153,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     minutes=entry.options.get(
                         REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
                     )
-                ).total_seconds(),
+                ),
                 client=remote_client,
             )
 
@@ -333,6 +332,9 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     device_reg = dr.async_get(hass)
 
     hub_id = config_entry.unique_id
+    if not hub_id:
+        LOGGER.error("Cannot migrate v3->v4: config entry unique_id is missing")
+        return False
 
     # Get the information about the devices for this config entry
     device_info: list[tuple[str, str, bool]] = []
@@ -351,14 +353,19 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     device_info.sort(key=lambda device_entry: 0 if device_entry[2] else 1)
 
     # Update devices and entities
+    hub_device_id: str | None = None
     for device_id, device_identifier, is_hub in device_info:
+        # Device_info is sorted so hub is first
+        if is_hub:
+            hub_device_id = device_id
+
         # Update the device identifiers and via_device_id (if not hub)
         device_reg.async_update_device(
             device_id,
             new_identifiers={
                 (DOMAIN, hub_id if is_hub else f"{hub_id}:{device_identifier}")
             },
-            via_device_id=None if is_hub else (DOMAIN, hub_id),
+            via_device_id=None if is_hub else hub_device_id,
         )
 
         # Rewrite unique_ids for entities on this device: hub_id:<device_identifier>:<sensor_key>
@@ -392,6 +399,60 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     return True
 
 
+async def _migrate_v4_to_v5(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate v4 entry to v5 entry."""
+
+    # No data changes, just bump the version
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
+
+    # Update the config entry to version 5
+    hass.config_entries.async_update_entry(
+        config_entry,
+        version=5,
+    )
+
+    return True
+
+
+async def _migrate_v5_to_v6(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate v5 entry to v6 entry."""
+
+    # Migrate remote token storage key from entry_id-based to CIC-based
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
+
+    # We require a unique_id (no fallbacks).
+    if not config_entry.unique_id:
+        LOGGER.error("Cannot migrate v5->v6: config entry unique_id is missing")
+        return False
+
+    # Always bump the entry version, even if no remote is configured
+    if CONF_REMOTE_CIC in config_entry.data:
+        old_store = Store(
+            hass, STORAGE_VERSION, f"{STORAGE_KEY}_{config_entry.entry_id}"
+        )
+        new_store = Store(
+            hass, STORAGE_VERSION, f"{STORAGE_KEY}_{config_entry.unique_id}"
+        )
+
+        new_data = await new_store.async_load()
+        if not new_data:
+            old_data = await old_store.async_load()
+            if old_data:
+                await new_store.async_save(old_data)
+                LOGGER.debug(
+                    "Migrated remote tokens from legacy store to unique_id store (%s)",
+                    config_entry.unique_id,
+                )
+
+    # Update the config entry to version 6
+    hass.config_entries.async_update_entry(
+        config_entry,
+        version=6,
+    )
+
+    return True
+
+
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
 
@@ -405,6 +466,14 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     if config_entry.version == 3:
         if not await _migrate_v3_to_v4(hass, config_entry):
+            return False
+
+    if config_entry.version == 4:
+        if not await _migrate_v4_to_v5(hass, config_entry):
+            return False
+
+    if config_entry.version == 5:
+        if not await _migrate_v5_to_v6(hass, config_entry):
             return False
 
     return True

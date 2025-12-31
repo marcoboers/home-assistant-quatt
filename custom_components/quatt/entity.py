@@ -66,19 +66,23 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         attach_to_hub = device_kind == QuattDeviceKind.HUB
         is_service_device = device_kind == QuattDeviceKind.SERVICE
 
-        self._attr_device_info = DeviceInfo(
-            identifiers={
-                (
-                    DOMAIN,
-                    self._hub_id if attach_to_hub else f"{self._hub_id}:{device_id}",
-                )
-            },
-            via_device=None if attach_to_hub else (DOMAIN, self._hub_id),
-            name=device_name,
-            manufacturer=NAME,
-            model="—",
-            entry_type=DeviceEntryType.SERVICE if is_service_device else None,
-        )
+        if attach_to_hub:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, self._hub_id)},
+                name=device_name,
+                manufacturer=NAME,
+                model="—",
+                entry_type=DeviceEntryType.SERVICE if is_service_device else None,
+            )
+        else:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, f"{self._hub_id}:{device_id}")},
+                via_device=(DOMAIN, self._hub_id),
+                name=device_name,
+                manufacturer=NAME,
+                model="—",
+                entry_type=DeviceEntryType.SERVICE if is_service_device else None,
+            )
 
 
 class QuattSensor(QuattEntity, SensorEntity):
