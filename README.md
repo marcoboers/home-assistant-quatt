@@ -174,31 +174,64 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 - **Generic heat pump image**: Enable and configure the `OduType` sensor (requires Remote API) to show the accurate heat pump image instead of the generic v1 image
 - **Mobile card not loading**: On Android/iOS devices newly added cards may not load. Caching can be an issue. On Android/iOS clear the cache and or wipe Home Assistant application data and log back in. On iOS a double pull down of the screen with the card in it may result in it loading properly.
 
-## Quatt Daily Usage Graph with ApexCharts (Optional - Beta)
+## Quatt Usage Graph with ApexCharts (Optional - Beta)
 
-With the `quatt.get_insights` action it is possible to recreate a Quatt-style **daily usage graph** (similar to the official app) in Home Assistant.
+With the `quatt.get_insights` action it is possible to recreate a Quatt-style **usage graph** (similar to the official app) in Home Assistant.
 
-<img width="506" height="429" alt="Quatt overview" src="docs/images/quatt-information-day.png" />
+<div style="display:flex; gap:12px; flex-wrap:nowrap; align-items:flex-start;">
+  <figure style="margin:0; flex:1 1 0; max-width:504px;">
+    <img alt="Quatt insights day" src="docs/images/quatt_insights_day.png"
+         style="width:100%; max-width:504px; height:auto; display:block;" />
+    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Day</b></figcaption>
+  </figure>
 
-This setup uses four building blocks that work together:
+  <figure style="margin:0; flex:1 1 0; max-width:504px;">
+    <img alt="Quatt insights week" src="docs/images/quatt_insights_week.png"
+         style="width:100%; max-width:504px; height:auto; display:block;" />
+    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Week</b></figcaption>
+  </figure>
 
-- The `quatt.get_insights` **action (service)** to fetch today’s detailed usage data from Quatt
+  <figure style="margin:0; flex:1 1 0; max-width:504px;">
+    <img alt="Quatt insights month" src="docs/images/quatt_insights_month.png"
+         style="width:100%; max-width:504px; height:auto; display:block;" />
+    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Month</b></figcaption>
+  </figure>
+
+  <figure style="margin:0; flex:1 1 0; max-width:504px;">
+    <img alt="Quatt insights year" src="docs/images/quatt_insights_year.png"
+         style="width:100%; max-width:504px; height:auto; display:block;" />
+    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Year</b></figcaption>
+  </figure>
+
+  <figure style="margin:0; flex:1 1 0; max-width:504px;">
+    <img alt="Quatt insights all" src="docs/images/quatt_insights_all.png"
+         style="width:100%; max-width:504px; height:auto; display:block;" />
+    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>All</b></figcaption>
+  </figure>
+</div>
+<br>
+This setup uses three building blocks that work together:
+
+- The `quatt.get_insights` **action (service)** to fetch detailed usage data from Quatt
 - A small **Python script** that stores the retrieved JSON data in a Home Assistant sensor
-- A set of **helper template sensors** that expose daily totals for use in the card header
-- An **ApexCharts custom card** that reads both the raw insights sensor and the helper sensors and renders a stacked kWh bar chart
+- An **ApexCharts custom card** that reads the raw insights sensor and renders a stacked kWh bar chart
 
 > ℹ️ **API refresh rate**
 >
 > The insights data on the Quatt side is only refreshed **once every hour**.<br>
-> Polling more frequently will not return fresher data and only adds unnecessary load on the Quatt servers.<br>
+> Polling more frequently will not return fresher data and will only return cached data from the last refresh.
 > Please do **not** schedule the automation more often than once per hour.
 
 All example files are included in this repository:
 
 - Python script: [`examples/set_quatt_insights.py`](examples/set_quatt_insights.py)
 - Automation: [`examples/quatt_insights_today.yaml`](examples/automation_quatt_insights.yaml)
-- Template sensors: [`examples/helpers_quatt_insights.yaml`](examples/helpers_quatt_insights.yaml)
-- ApexCharts card: [`examples/quatt_daily_usage_apexcharts.yaml`](examples/apexcharts_quatt_daily_usage.yaml)
+- ApexCharts charts:
+    - Day card: [`examples/apexcharts_quatt_insights_day.yaml`](examples/apexcharts_quatt_insights_day.yaml)
+    - Week card: [`examples/apexcharts_quatt_insights_week.yaml`](examples/apexcharts_quatt_insights_week.yaml)
+    - Month card: [`examples/apexcharts_quatt_insights_month.yaml`](examples/apexcharts_quatt_insights_month.yaml)
+    - Year card: [`examples/apexcharts_quatt_insights_year.yaml`](examples/apexcharts_quatt_insights_year.yaml)
+    - All card: [`examples/apexcharts_quatt_insights_all.yaml`](examples/apexcharts_quatt_insights_all.yaml)
 
 ### Prerequisites
 
@@ -226,25 +259,26 @@ into a file called:
 
 - `<HA config>/python_scripts/set_quatt_insights.py`
 
-This script creates/updates `sensor.quatt_insights` with the daily insights data retrieved from the Quatt integration.
+This script creates/updates `sensor.quatt_insights_<day/week/month_year/all>` with the insights data retrieved from the Quatt integration for that specific timeframe.
 
-#### Step 2 – Automation: fetch today’s insights once per hour
+#### Step 2 – Automation: fetch insights once per hour
 
 Import the automation from:
 
-- [`examples/quatt_insights_today.yaml`](examples/automation_quatt_insights.yaml)
+- [`examples/automation_quatt_insights.yaml`](examples/automation_quatt_insights.yaml)
 
 Either:
 
  - Paste the contents into Settings → Automations & Scenes → Add automation → Edit in YAML, or
  - Include it in `automations.yaml`
+ - Update the `periods_to_fetch` variable in the automation to specify which timeframes you want to fetch (day, week, month, year, all). Remove the insights that are not needed to reduce the number API calls.
 
 This automation:
 
 - Runs on Home Assistant startup and then once per hour
-- Calls `quatt.get_insights` for today (timeframe: day)
-- Retries up to 3 times until valid _today_ data is returned
-- Calls `python_script.set_quatt_insights` to update `sensor.quatt_insights`
+- Calls `quatt.get_insights` for each timeframe in `periods_to_fetch`
+- Retries up to 3 times until valid data is returned
+- Calls `python_script.set_quatt_insights` to update `sensor.quatt_insights_<day/week/month_year/all>`
 
 By default, the example automation is scheduled to run at **15 minutes past every hour**.
 To help spread load across the Quatt servers, it is recommended to **change the minute value** in the trigger to a value between **13 and 20** that is unique for each installation.
@@ -265,25 +299,12 @@ trigger:
     minutes: "17"
 ```
 
-#### Step 3 – Template sensors: daily totals for header values
+#### Step 3 – ApexCharts card: Quatt usage graph
 
-To show daily totals in the card header, create four helper template sensors:
+Add a new Manual card in your dashboard and paste the contents of the required card.
+For instance for the daily usage card use:
 
-- `sensor.quatt_heat_today`
-- `sensor.quatt_electricity_today`
-- `sensor.quatt_boiler_today`
-- `sensor.quatt_gas_today`
-
-How to create:
-
-- Create them via Settings → Devices & services → Helpers → + Create helper → Template, or
-- Define them in YAML (see [`examples/helpers_quatt_insights.yaml`](examples/helpers_quatt_insights.yaml))
-
-#### Step 4 – ApexCharts card: Quatt daily usage graph
-
-Add a new Manual card in your dashboard and paste the contents of:
-
-- [`examples/quatt_daily_usage_apexcharts.yaml`](examples/apexcharts_quatt_daily_usage.yaml)
+- [`examples/apexcharts_quatt_insights_day.yaml`](examples/apexcharts_quatt_insights_day.yaml)
 
 This card displays the daily usage graph similar to the official Quatt app.
 
