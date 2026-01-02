@@ -1,4 +1,4 @@
-alias: Quatt Insights (today - refresh every 10 min)
+alias: Quatt Insights (multi period - refresh every hour at :15)
 description: ""
 triggers:
   - trigger: time_pattern
@@ -7,45 +7,100 @@ triggers:
     event: start
 conditions: []
 actions:
-  - alias: Repeat max 3 times or insights are valid
-    repeat:
-      until:
-        - alias: Stop in case more than 3 attempts OR when data is correct
-          condition: template
-          value_template: "{{ repeat.index >= 3 or insights_valid }}"
+  - variables:
+      periods_to_fetch:
+        - Day
+        - Week
+        - Month
+        - Year
+        - All
+  - repeat:
+      for_each: "{{ periods_to_fetch }}"
       sequence:
-        - action: quatt.get_insights
-          metadata: {}
-          data:
-            from_date: "{{ now().date() }}"
-            timeframe: day
-            advanced_insights: false
-          response_variable: insights_response
         - variables:
-            insights_valid: |
-              {% set json_data = insights_response | default({}, true) %}
-              {% set from_str = json_data.from | default('', true) %}
-              {% set from_dt = as_datetime(from_str) if from_str else none %}
-              {{ from_dt is not none
-                 and as_local(from_dt).date() == now().date() }}
-        - alias: Update sensor quatt_insights when data is valid
-          if:
-            - condition: template
-              value_template: "{{ insights_valid }}"
-              alias: >-
-                Valid data? Sometimes invalid data is returned (whole period
-                instead of today)
-          then:
-            - action: python_script.set_quatt_insights
-              data:
-                entity_id: sensor.quatt_insights
-                insights: "{{ insights_response | tojson }}"
-          else:
-            - delay:
-                hours: 0
-                minutes: 0
-                seconds: 0
-                milliseconds: 100
+            period: "{{ repeat.item }}"
+            expected_from_date: |-
+              {% if period == 'Day' %}
+                {{ now().date() }}
+              {% elif period == 'Week' %}
+                {{ (now() - timedelta(days=now().weekday())).date() }}
+              {% elif period == 'Month' %}
+                {{ now().strftime('%Y-%m-01') }}
+              {% elif period == 'Year' %}
+                {{ now().strftime('%Y-01-01') }}
+              {% else %}
+                2020-01-01
+              {% endif %}
+            timeframe: >-
+              {% if period == 'Day' %}day{% elif period == 'Week' %}week{% elif
+              period == 'Month' %}month{% elif period == 'Year' %}year{% else
+              %}all{% endif %}
+            insights_entity_id: |-
+              {% if period == 'Day' %}
+                sensor.quatt_insights_day
+              {% elif period == 'Week' %}
+                sensor.quatt_insights_week
+              {% elif period == 'Month' %}
+                sensor.quatt_insights_month
+              {% elif period == 'Year' %}
+                sensor.quatt_insights_year
+              {% else %}
+                sensor.quatt_insights_all
+              {% endif %}
+            insights_valid: false
+        - alias: Repeat max 3 times or insights are valid
+          repeat:
+            until:
+              - alias: Stop in case more than 3 attempts OR when data is correct
+                condition: template
+                value_template: "{{ repeat.index >= 3 or insights_valid }}"
+            sequence:
+              - action: quatt.get_insights
+                metadata: {}
+                data:
+                  from_date: |
+                    {{ expected_from_date }}
+                  timeframe: |
+                    {{ timeframe }}
+                  advanced_insights: false
+                response_variable: insights_response
+              - variables:
+                  insights_valid: >
+                    {% set json_data = insights_response | default({}, true) %}
+
+                    {% set from_str = json_data.from | default('', true) %}
+
+                    {% set from_dt = as_datetime(from_str) if from_str else none
+                    %}
+
+                    {% if from_dt is none %}
+                      {{ false }}
+                    {% else %}
+                      {% set local_from = as_local(from_dt).date() | string %}
+                      {{ local_from == (expected_from_date | string) }}
+                    {% endif %}           
+              - alias: Update sensor quatt_insights when data is valid
+                if:
+                  - condition: template
+                    value_template: "{{ insights_valid }}"
+                    alias: Valid data? Sometimes invalid data is returned
+                then:
+                  - action: python_script.set_quatt_insights
+                    data:
+                      entity_id: "{{ insights_entity_id }}"
+                      insights: "{{ insights_response | tojson }}"
+                      new_state: "{{ now().isoformat() }}"
+                else:
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 0
+                      milliseconds: 250
+        - delay:
+            hours: 0
+            minutes: 0
+            seconds: 0
+            milliseconds: 750
 mode: single
 trace:
   stored_traces: 10

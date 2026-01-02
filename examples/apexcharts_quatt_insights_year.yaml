@@ -1,0 +1,359 @@
+type: custom:apexcharts-card
+graph_span: 1y
+span:
+  start: year
+  offset: +1d
+stacked: true
+update_interval: 1m
+header:
+  show: true
+  title: Centrale verwarming
+  show_states: true
+  colorize_states: true
+yaxis:
+  - id: energy
+    decimals: 0
+    min: 0
+    max: "|+1000|"
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 12
+    labels:
+      formatter: |
+        EVAL:(value) => {
+          const d = new Date(value);
+          return d.toLocaleDateString('nl-NL', { month: 'short' });
+        }
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          const d = new Date(value);
+          const s = d.toLocaleDateString('nl-NL', {
+            month: 'long',
+            year: 'numeric',
+          });
+          // Capitalize first letter
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+    "y":
+      formatter: |
+        EVAL:(value) => {
+          return Number(value).toFixed(2) + ' kWh';
+        }   
+series:
+  - entity: sensor.quatt_insights_year
+    name: Verbruikte elektriciteit
+    type: column
+    yaxis_id: energy
+    stack_group: quatt
+    color: "#cef4f7"
+    float_precision: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const points = json.graph || [];
+      if (!points.length) return [];
+
+      // Bepaal doeljaar uit 'from' (lokale tijd), anders uit eerste punt
+      let targetYear;
+      if (json.from) {
+        const fromDt = new Date(json.from);
+        if (!isNaN(fromDt)) {
+          targetYear = fromDt.getFullYear();
+        }
+      }
+      if (targetYear === undefined) {
+        const firstDt = new Date(points[0].timestamp);
+        if (!isNaN(firstDt)) {
+          targetYear = firstDt.getFullYear();
+        } else {
+          return [];
+        }
+      }
+
+      // Array met 12 maanden, default 0 kWh
+      const months = new Array(12).fill(0);
+
+      for (const p of points) {
+        const dtLocal = new Date(p.timestamp);  // browser = NL-tijd
+        if (isNaN(dtLocal)) continue;
+
+        const y = dtLocal.getFullYear();
+        if (y !== targetYear) continue;        // alleen huidige jaar tonen
+
+        const m = dtLocal.getMonth();          // 0 = jan, 11 = dec
+        if (m < 0 || m > 11) continue;
+
+        const kwh = (p.hpElectric || 0) / 1000;
+        months[m] = Number(kwh.toFixed(2));
+      }
+
+      // Bouw 12 punten op: 1e dag van elke maand om 00:00
+      const result = [];
+      for (let m = 0; m < 12; m++) {
+        const ts = new Date(targetYear, m, 1, 0, 0, 0).getTime();
+        result.push([ts, months[m]]);
+      }
+      return result;
+  - entity: sensor.quatt_insights_year
+    name: Warmte
+    type: column
+    yaxis_id: energy
+    stack_group: quatt
+    color: "#4faba8"
+    float_precision: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const points = json.graph || [];
+      if (!points.length) return [];
+
+      let targetYear;
+      if (json.from) {
+        const fromDt = new Date(json.from);
+        if (!isNaN(fromDt)) {
+          targetYear = fromDt.getFullYear();
+        }
+      }
+      if (targetYear === undefined) {
+        const firstDt = new Date(points[0].timestamp);
+        if (!isNaN(firstDt)) {
+          targetYear = firstDt.getFullYear();
+        } else {
+          return [];
+        }
+      }
+
+      const months = new Array(12).fill(0);
+
+      for (const p of points) {
+        const dtLocal = new Date(p.timestamp);
+        if (isNaN(dtLocal)) continue;
+
+        const y = dtLocal.getFullYear();
+        if (y !== targetYear) continue;
+
+        const m = dtLocal.getMonth();
+        if (m < 0 || m > 11) continue;
+
+        // hpHeat >= hpElectric (volgens jouw aanname)
+        const warmte = Math.max(
+          0,
+          ((p.hpHeat || 0) - (p.hpElectric || 0)) / 1000
+        );
+        months[m] = Number(warmte.toFixed(2));
+      }
+
+      const result = [];
+      for (let m = 0; m < 12; m++) {
+        const ts = new Date(targetYear, m, 1, 0, 0, 0).getTime();
+        result.push([ts, months[m]]);
+      }
+      return result;
+  - entity: sensor.quatt_insights_year
+    name: CV-ketel
+    type: column
+    yaxis_id: energy
+    stack_group: quatt
+    color: "#ed7344"
+    float_precision: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const points = json.graph || [];
+      if (!points.length) return [];
+
+      let targetYear;
+      if (json.from) {
+        const fromDt = new Date(json.from);
+        if (!isNaN(fromDt)) {
+          targetYear = fromDt.getFullYear();
+        }
+      }
+      if (targetYear === undefined) {
+        const firstDt = new Date(points[0].timestamp);
+        if (!isNaN(firstDt)) {
+          targetYear = firstDt.getFullYear();
+        } else {
+          return [];
+        }
+      }
+
+      const months = new Array(12).fill(0);
+
+      for (const p of points) {
+        const dtLocal = new Date(p.timestamp);
+        if (isNaN(dtLocal)) continue;
+
+        const y = dtLocal.getFullYear();
+        if (y !== targetYear) continue;
+
+        const m = dtLocal.getMonth();
+        if (m < 0 || m > 11) continue;
+
+        const kwh = (p.boilerHeat || 0) / 1000;
+        months[m] = Number(kwh.toFixed(2));
+      }
+
+      const result = [];
+      for (let m = 0; m < 12; m++) {
+        const ts = new Date(targetYear, m, 1, 0, 0, 0).getTime();
+        result.push([ts, months[m]]);
+      }
+      return result;
+  - entity: sensor.quatt_insights_year
+    name: gemiddelde COP
+    yaxis_id: energy
+    color: "#4faba8"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 1
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const cop = json.averageCOP || 0;
+      return [[Date.now(), cop]];      
+  - entity: sensor.quatt_insights_year
+    name: warmte door Quatt
+    unit: kWh
+    yaxis_id: energy
+    color: "#4faba8"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const kwh = (json.totalHpHeat || 0) / 1000;
+      return [[Date.now(), kwh]];     
+  - entity: sensor.quatt_insights_year
+    name: gebruikte elektriciteit
+    unit: kWh
+    yaxis_id: energy
+    color: "#cef4f7"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const kwh = (json.totalHpElectric || 0) / 1000;
+      return [[Date.now(), kwh]];     
+  - entity: sensor.quatt_insights_year
+    name: cv-ketel
+    unit: kWh
+    yaxis_id: energy
+    color: "#ed7344"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const kwh = (json.totalBoilerHeat || 0) / 1000;
+      return [[Date.now(), kwh]];      
+  - entity: sensor.quatt_insights_year
+    name: geschat gasverbruik
+    unit: m³
+    yaxis_id: energy
+    color: "#ed7344"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      return [[Date.now(), (json.totalBoilerGas || 0)]];
