@@ -177,38 +177,30 @@ The Quatt Dashboard is implemented as a custom Lovelace card which is installed 
 ## Quatt Usage Graph with ApexCharts (Optional - Beta)
 
 With the `quatt.get_insights` action it is possible to recreate a Quatt-style **usage graph** (similar to the official app) in Home Assistant.
-
-<div style="display:flex; gap:12px; flex-wrap:nowrap; align-items:flex-start;">
-  <figure style="margin:0; flex:1 1 0; max-width:504px;">
-    <img alt="Quatt insights day" src="docs/images/quatt_insights_day.png"
-         style="width:100%; max-width:504px; height:auto; display:block;" />
-    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Day</b></figcaption>
-  </figure>
-
-  <figure style="margin:0; flex:1 1 0; max-width:504px;">
-    <img alt="Quatt insights week" src="docs/images/quatt_insights_week.png"
-         style="width:100%; max-width:504px; height:auto; display:block;" />
-    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Week</b></figcaption>
-  </figure>
-
-  <figure style="margin:0; flex:1 1 0; max-width:504px;">
-    <img alt="Quatt insights month" src="docs/images/quatt_insights_month.png"
-         style="width:100%; max-width:504px; height:auto; display:block;" />
-    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Month</b></figcaption>
-  </figure>
-
-  <figure style="margin:0; flex:1 1 0; max-width:504px;">
-    <img alt="Quatt insights year" src="docs/images/quatt_insights_year.png"
-         style="width:100%; max-width:504px; height:auto; display:block;" />
-    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>Year</b></figcaption>
-  </figure>
-
-  <figure style="margin:0; flex:1 1 0; max-width:504px;">
-    <img alt="Quatt insights all" src="docs/images/quatt_insights_all.png"
-         style="width:100%; max-width:504px; height:auto; display:block;" />
-    <figcaption style="text-align:center; font-size:0.9em; margin-top:6px;"><b>All</b></figcaption>
-  </figure>
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/quatt_insights_day.png" width="180"><br>
+      <b>Day</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_insights_week.png" width="180"><br>
+      <b>Week</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_insights_month.png" width="180"><br>
+      <b>Month</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_insights_year.png" width="180"><br>
+      <b>Year</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_insights_all.png" width="180"><br>
+      <b>All</b>
+    </td>
+  </tr>
+</table>
 <br>
 This setup uses three building blocks that work together:
 
