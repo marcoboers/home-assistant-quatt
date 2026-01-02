@@ -1,0 +1,286 @@
+type: custom:apexcharts-card
+graph_span: 1w
+span:
+  start: isoWeek
+stacked: true
+update_interval: 1m
+header:
+  show: true
+  title: Centrale verwarming
+  show_states: true
+  colorize_states: true
+yaxis:
+  - id: energy
+    decimals: 0
+    min: 0
+    max: "|+50|"
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 7
+    labels:
+      formatter: |
+        EVAL:(value) =>
+          new Date(value).toLocaleDateString('nl-NL', { weekday: 'short' })
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          // No tooltips for dates in the future
+          const now = Date.now();
+          if (value > now) {
+            return '';
+          }
+
+          const d = new Date(value);
+          const s = d.toLocaleDateString('nl-NL', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          });
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+    "y":
+      formatter: |
+        EVAL:(value, { seriesIndex, dataPointIndex, w }) => {
+          // No tooltips for dates in the future
+          const now = Date.now();
+          const x = w?.globals?.seriesX?.[seriesIndex]?.[dataPointIndex];
+          if (typeof x === 'number' && x > now) {
+            return '';
+          }
+
+          return Number(value).toFixed(2) + ' kWh';
+        }      
+series:
+  - entity: sensor.quatt_insights_week
+    name: Verbruikte elektriciteit
+    type: column
+    yaxis_id: energy
+    stack_group: quatt
+    color: "#cef4f7"
+    float_precision: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try { json = JSON.parse(raw); } catch { return []; }
+
+      const points = json.graph || [];
+      if (!points.length || !json.from) return [];
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const weekStart = new Date(json.from);
+      weekStart.setHours(0, 0, 0, 0);  // maandag 00:00
+
+      // 7 dagen (ma–zo), default 0
+      const values = Array(7).fill(0);
+
+      // index 0 = maandag, 1 = dinsdag, ...
+      for (let i = 0; i < points.length && i < 7; i++) {
+        const p = points[i];
+        values[i] = (p.hpElectric || 0) / 1000;
+      }
+
+      return values.map((v, i) => {
+        const ts = weekStart.getTime() + i * ONE_DAY;
+        return [ts, Number(v.toFixed(2))];
+      });
+  - entity: sensor.quatt_insights_week
+    name: Warmte
+    type: column
+    yaxis_id: energy
+    stack_group: quatt
+    color: "#4faba8"
+    float_precision: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try { json = JSON.parse(raw); } catch { return []; }
+
+      const points = json.graph || [];
+      if (!points.length || !json.from) return [];
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const weekStart = new Date(json.from);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const values = Array(7).fill(0);
+
+      for (let i = 0; i < points.length && i < 7; i++) {
+        const p = points[i];
+        // hpHeat >= hpElectric, dus geen Math.max nodig
+        const warmte = ((p.hpHeat || 0) - (p.hpElectric || 0)) / 1000;
+        values[i] = warmte;
+      }
+
+      return values.map((v, i) => {
+        const ts = weekStart.getTime() + i * ONE_DAY;
+        return [ts, Number(v.toFixed(2))];
+      });
+  - entity: sensor.quatt_insights_week
+    name: CV-ketel
+    type: column
+    yaxis_id: energy
+    stack_group: quatt
+    color: "#ed7344"
+    float_precision: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try { json = JSON.parse(raw); } catch { return []; }
+
+      const points = json.graph || [];
+      if (!points.length || !json.from) return [];
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const weekStart = new Date(json.from);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const values = Array(7).fill(0);
+
+      for (let i = 0; i < points.length && i < 7; i++) {
+        const p = points[i];
+        values[i] = (p.boilerHeat || 0) / 1000;
+      }
+
+      return values.map((v, i) => {
+        const ts = weekStart.getTime() + i * ONE_DAY;
+        return [ts, Number(v.toFixed(2))];
+      });
+  - entity: sensor.quatt_insights_week
+    name: gemiddelde COP
+    yaxis_id: energy
+    color: "#4faba8"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 1
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const cop = json.averageCOP || 0;
+      return [[Date.now(), cop]];      
+  - entity: sensor.quatt_insights_week
+    name: warmte door Quatt
+    unit: kWh
+    yaxis_id: energy
+    color: "#4faba8"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const kwh = (json.totalHpHeat || 0) / 1000;
+      return [[Date.now(), kwh]];     
+  - entity: sensor.quatt_insights_week
+    name: gebruikte elektriciteit
+    unit: kWh
+    yaxis_id: energy
+    color: "#cef4f7"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const kwh = (json.totalHpElectric || 0) / 1000;
+      return [[Date.now(), kwh]];     
+  - entity: sensor.quatt_insights_week
+    name: cv-ketel
+    unit: kWh
+    yaxis_id: energy
+    color: "#ed7344"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      const kwh = (json.totalBoilerHeat || 0) / 1000;
+      return [[Date.now(), kwh]];      
+  - entity: sensor.quatt_insights_week
+    name: geschat gasverbruik
+    unit: m³
+    yaxis_id: energy
+    color: "#ed7344"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.insights_json;
+      if (!raw) return [];
+
+      let json;
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        return [];
+      }
+
+      return [[Date.now(), (json.totalBoilerGas || 0)]];
