@@ -330,7 +330,7 @@ class QuattDashboardCardEditor extends LitElement {
             // CIC
             total_power: "Provided by local API",
             total_powerinput: "Provided by local API",
-            cic_central_heating_on: "Provided by local API",
+            cic_central_heating_on: "Provided by remote API",
 
             // Flowmeter
             flowmeter_temperature: "Provided by local API",
