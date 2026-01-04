@@ -6,7 +6,7 @@ get_insights:
       name: From date
       description: Start date for insights data in ISO format (YYYY-MM-DD).
       example: "2024-01-01"
-      default: "2024-01-01"
+      default: "2020-01-01"
       selector:
         text:
     timeframe:
