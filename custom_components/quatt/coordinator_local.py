@@ -150,13 +150,21 @@ class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
         """Compute the boiler's added heat power."""
 
         # Check if boiler heating is active
-        boiler__cic_heating = self.get_value("boiler.otTbCH")
-        LOGGER.debug("computedBoilerHeatPower.otTbCH: %s", boiler__cic_heating)
+        boiler_active_flag = (
+            "boiler.otTbCH"
+            if self.is_boiler_opentherm()
+            else "boiler.oTtbTurnOnOffBoilerOn"
+        )
+
+        boiler_active = self.get_value(boiler_active_flag)
+        LOGGER.debug(
+            "computedBoilerHeatPower.%s: %s", boiler_active_flag, boiler_active
+        )
 
         # If the state is not valid or the boiler is not active, no need to proceed
-        if boiler__cic_heating is None:
+        if boiler_active is None:
             return None
-        if not boiler__cic_heating:
+        if not boiler_active:
             return 0.0
 
         # Retrieve other required values
