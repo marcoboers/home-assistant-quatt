@@ -70,6 +70,7 @@ class QuattDashboardCardEditor extends LitElement {
                 { name: "hp1_powerinput", required: true, selector: { entity: { integration: "quatt", domain: "sensor", device_class: "power" } } },
                 { name: "hp1_power", required: true, selector: { entity: { integration: "quatt", domain: "sensor", device_class: "power" } } },
                 { name: "hp1_cop", required: true, selector: { entity: { integration: "quatt", domain: "sensor" } } },
+                { name: "hp1_defrosting", required: true, selector: { entity: { integration: "quatt", domain: "binary_sensor" } } },
             ],
         };
         const HP2_GRID = {
@@ -84,6 +85,7 @@ class QuattDashboardCardEditor extends LitElement {
                 { name: "hp2_powerinput", selector: { entity: { integration: "quatt", domain: "sensor", device_class: "power" } } },
                 { name: "hp2_power", selector: { entity: { integration: "quatt", domain: "sensor", device_class: "power" } } },
                 { name: "hp2_cop", selector: { entity: { integration: "quatt", domain: "sensor" } } },
+                { name: "hp2_defrosting", required: true, selector: { entity: { integration: "quatt", domain: "binary_sensor" } } },
             ],
         };
         const THERMOSTAT = {
@@ -238,6 +240,7 @@ class QuattDashboardCardEditor extends LitElement {
             hp1_powerinput: "HP1 power input",
             hp1_power: "HP1 power",
             hp1_cop: "HP1 COP",
+            hp1_defrosting: "HP1 defrosting",
 
             // Heatpump 2
             hp2_workingmode: "HP2 working mode",
@@ -248,6 +251,7 @@ class QuattDashboardCardEditor extends LitElement {
             hp2_powerinput: "HP2 power input",
             hp2_power: "HP2 power",
             hp2_cop: "HP2 COP",
+            hp2_defrosting: "HP2 defrosting",
 
             // Thermostat
             thermostat_room_temperature: "Thermostat room temperature",
@@ -312,6 +316,7 @@ class QuattDashboardCardEditor extends LitElement {
             hp1_powerinput: "Provided by local API",
             hp1_power: "Provided by local API",
             hp1_cop: "Provided by local API",
+            hp1_defrosting: "Provided by local API",
 
             // Heatpump 2
             hp2_workingmode: "Provided by local API",
@@ -322,6 +327,7 @@ class QuattDashboardCardEditor extends LitElement {
             hp2_powerinput: "Provided by local API",
             hp2_power: "Provided by local API",
             hp2_cop: "Provided by local API",
+            hp2_defrosting: "Provided by local API",
 
             // Thermostat
             thermostat_room_temperature: "Provided by local API",

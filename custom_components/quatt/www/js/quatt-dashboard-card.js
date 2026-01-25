@@ -843,26 +843,111 @@ class QuattDashboardCard extends LitElement {
         `;
     }
 
+    _renderDefrostOverlay({ x, y, scale = 1 }) {
+        return svg`
+            <g class="defrost-overlay" transform="translate(${x}, ${y}) scale(${scale})">
+
+            <!-- Steam puffs -->
+            <g filter="url(#smokeBlur)">
+                <ellipse cx="0" cy="0" rx="10" ry="7" fill="#E8F4F8" opacity="0">
+                    <animate attributeName="cy" values="0;-25;-55" dur="2.6s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.55;0" dur="2.6s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="8;14;22" dur="2.6s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="6;10;16" dur="2.6s" repeatCount="indefinite"/>
+                </ellipse>
+                <ellipse cx="14" cy="6" rx="9" ry="6" fill="#D4E8F0" opacity="0">
+                    <animate attributeName="cy" values="6;-20;-50" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.50;0" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="7;13;20" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="5;9;14" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                </ellipse>
+                <ellipse cx="-16" cy="8" rx="9" ry="6" fill="#E0EDF5" opacity="0">
+                    <animate attributeName="cy" values="8;-18;-48" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.45;0" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="7;12;19" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="5;9;14" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                </ellipse>
+            </g>
+
+            <!-- Pulsing snowflake -->
+            <g transform="translate(0, -28)">
+                <animate attributeName="opacity" values="0.45;1;0.45" dur="1.2s" repeatCount="indefinite"/>
+                <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    values="-10 0 0; 10 0 0; -10 0 0"
+                    dur="2.2s"
+                    repeatCount="indefinite"
+                    calcMode="spline"
+                    keyTimes="0;0.5;1"
+                    keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" />
+
+                <g stroke="#B3E5FC" stroke-width="4" stroke-linecap="round">
+                    <line x1="-18" y1="0" x2="18" y2="0"/>
+                    <line x1="0" y1="-18" x2="0" y2="18"/>
+                    <line x1="-13" y1="-13" x2="13" y2="13"/>
+                    <line x1="13" y1="-13" x2="-13" y2="13"/>
+
+                    <!-- small branches -->
+                    <line x1="-18" y1="0" x2="-24" y2="-6"/>
+                    <line x1="-18" y1="0" x2="-24" y2="6"/>
+                    <line x1="18" y1="0" x2="24" y2="-6"/>
+                    <line x1="18" y1="0" x2="24" y2="6"/>
+
+                    <line x1="0" y1="-18" x2="-6" y2="-24"/>
+                    <line x1="0" y1="-18" x2="6" y2="-24"/>
+                    <line x1="0" y1="18" x2="-6" y2="24"/>
+                    <line x1="0" y1="18" x2="6" y2="24"/>
+                </g>
+            </g>
+
+            <!-- Melt drips (reuses your .water-droplet animation) -->
+            <g transform="translate(0, 18)">
+                <ellipse class="water-droplet" cx="-10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
+                    style="animation-duration:0.9s; animation-delay:0.0s;"/>
+                <ellipse class="water-droplet" cx="0" cy="0" rx="2.2" ry="4.5" fill="#4DB8FF" opacity="0.7"
+                    style="animation-duration:1.0s; animation-delay:0.25s;"/>
+                <ellipse class="water-droplet" cx="10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
+                    style="animation-duration:0.95s; animation-delay:0.5s;"/>
+            </g>
+            </g>
+        `;
+    }
+
     _renderHeatingCircuit() {
         const hp1Mode = this.getSensorState('hp1.hp1_workingmode', { number: true, asString: false, decimals: 0, fallback: 0 });
         const hp2Mode = this.getSensorState('hp2.hp2_workingmode', { number: true, asString: false, decimals: 0, fallback: 0 });
         const qcMode = this.getSensorState('cic.qc_supervisory_control_mode_code', { number: true, asString: false, decimals: 0, fallback: NaN });
+        const centralHeatingOn = this.getSensorState('cic.cic_central_heating_on', { fallback: { state: 'off' } })?.state === 'on';
 
         const hp1On = hp1Mode >= 1;
         const hp2On = hp2Mode >= 1;
         const anyHpOn = hp1On || hp2On;
 
-        const centralHeatingOn = this.getSensorState('cic.cic_central_heating_on', { fallback: { state: 'off' } })?.state === 'on';
-        const antiFreezeMode = qcMode === 98
+        // Defrosting
+        const hp1Defrost = this.getSensorState('hp1.hp1_defrosting', { fallback: { state: 'off' } })?.state === 'on';
+        const hp2Defrost = this.isDuoHeatpump() && (this.getSensorState('hp2.hp2_defrosting', { fallback: { state: 'off' } })?.state === 'on');
+        const anyDefrost = hp1Defrost || hp2Defrost;
+
+        // Anti-freeze mode
+        const antiFreezeMode = (qcMode === 98);
         const anyCirculation = anyHpOn || antiFreezeMode;
 
-        // Pipes: normal = ToRight (warm), antifreeze = CoolToLeft (reverse + cool)
-        const outsideStroke = antiFreezeMode ? `url(#waterGradientCoolToRight)` : `url(#waterGradientToLeft)`;
-        const bottomStroke = antiFreezeMode ? `url(#waterGradientCoolToLeft)` : `url(#waterGradientToRight)`;
+        // Reverse flow when antifreeze or defrosting (house -> heatpump)
+        const reverseFlow = antiFreezeMode || anyDefrost;
 
-        // No fog-lines when in anti-freeze mode
-        const hp1ShowFog = hp1On && !antiFreezeMode;
-        const hp2ShowFog = hp2On && !antiFreezeMode;
+        // Color: antifreeze cool, otherwise warm (defrost stays warm)
+        const prefix = antiFreezeMode ? "Cool" : "";
+
+        // Direction mapping:
+        // normal:  outside ToLeft,  bottom ToRight  (heatpump -> house)
+        // reverse: outside ToRight, bottom ToLeft   (house -> heatpump)
+        const outsideStroke = `url(#waterGradient${prefix}${reverseFlow ? "ToRight" : "ToLeft"})`;
+        const bottomStroke  = `url(#waterGradient${prefix}${reverseFlow ? "ToLeft"  : "ToRight"})`;
+
+        // No fog-lines when in anti-freeze mode or defrosting
+        const hp1ShowFog = hp1On && !antiFreezeMode && !hp1Defrost;
+        const hp2ShowFog = hp2On && !antiFreezeMode && !hp2Defrost;
 
         return svg`
             <!-- Outside & bottom pipes -->
@@ -887,6 +972,10 @@ class QuattDashboardCard extends LitElement {
                         <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
             </g>
+
+            <!-- Defrost overlays -->
+            ${hp1Defrost ? this._renderDefrostOverlay({ x: 560, y: 1410, scale: 1.0 }) : svg``}
+            ${hp2Defrost ? this._renderDefrostOverlay({ x: 405, y: 1345, scale: 0.95 }) : svg``}
 
             <!-- HP1 flow -->
             ${hp1ShowFog
