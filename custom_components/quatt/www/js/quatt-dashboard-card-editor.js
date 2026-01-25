@@ -103,6 +103,7 @@ class QuattDashboardCardEditor extends LitElement {
                 { name: "total_power", required: true, selector: { entity: { integration: "quatt", domain: "sensor", device_class: "power" } } },
                 { name: "total_powerinput", required: true, selector: { entity: { integration: "quatt", domain: "sensor", device_class: "power" } } },
                 { name: "cic_central_heating_on", required: true, selector: { entity: { integration: "quatt", domain: "binary_sensor" } } },
+                { name: "qc_supervisory_control_mode_code", required: true, selector: { entity: { integration: "quatt", domain: "sensor" } } },
             ],
         };
         const FLOWMETER = {
@@ -258,6 +259,7 @@ class QuattDashboardCardEditor extends LitElement {
             total_power: "Total power",
             total_powerinput: "Total power input",
             cic_central_heating_on: "Central heating on",
+            qc_supervisory_control_mode_code: "Supervisory control mode code",
 
             // Flowmeter
             flowmeter_temperature: "Flowmeter temperature",
@@ -331,6 +333,7 @@ class QuattDashboardCardEditor extends LitElement {
             total_power: "Provided by local API",
             total_powerinput: "Provided by local API",
             cic_central_heating_on: "Provided by remote API",
+            qc_supervisory_control_mode_code: "Provided by local API",
 
             // Flowmeter
             flowmeter_temperature: "Provided by local API",
