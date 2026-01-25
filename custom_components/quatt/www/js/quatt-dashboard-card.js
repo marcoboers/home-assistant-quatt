@@ -694,6 +694,76 @@ class QuattDashboardCard extends LitElement {
                     </stop>
                 </linearGradient>
 
+                <!-- Cool (anti-freeze / water circulation) gradients -->
+                <linearGradient id="waterGradientCoolToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
+                        <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                </linearGradient>
+                <linearGradient id="waterGradientCoolToRight" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
+                        <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                </linearGradient>
+                <linearGradient id="waterGradientCoolUp" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
+                        <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                </linearGradient>
+                <linearGradient id="waterGradientCoolDown" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
+                        <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
+                        <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
+                        <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
+                    </stop>
+                </linearGradient>
+
                 <clipPath id="outsidePipe">
                     <rect x="250" y="1245" width="181" height="100"></rect>
                     ${this.getSensorState('hp1.hp1_workingmode')?.state >= 1
@@ -770,37 +840,53 @@ class QuattDashboardCard extends LitElement {
     }
 
     _renderHeatingCircuit() {
-        const hp1On = this.getSensorState('hp1.hp1_workingmode')?.state >= 1;
-        const hp2On = this.getSensorState('hp2.hp2_workingmode')?.state >= 1;
+        const hp1Mode = Number(this.getSensorState('hp1.hp1_workingmode')?.state);
+        const hp2Mode = Number(this.getSensorState('hp2.hp2_workingmode')?.state);
+
+        const hp1On = Number.isFinite(hp1Mode) && hp1Mode >= 1;
+        const hp2On = Number.isFinite(hp2Mode) && hp2Mode >= 1;
         const anyHpOn = hp1On || hp2On;
+
         const centralHeatingOn = this.getSensorState('cic.cic_central_heating_on')?.state == 'on';
+
+        const hp1AntiFreeze = hp1Mode === 98;
+        const hp2AntiFreeze = hp2Mode === 98;
+        const anyAntiFreeze = hp1AntiFreeze || hp2AntiFreeze;
+
+        // Pipes: normal = ToRight (warm), antifreeze = CoolToLeft (reverse + cool)
+        const outsideStroke = anyAntiFreeze ? `url(#waterGradientCoolToRight)` : `url(#waterGradientToLeft)`;
+        const bottomStroke = anyAntiFreeze ? `url(#waterGradientCoolToLeft)` : `url(#waterGradientToRight)`;
+
+        // No fog-lines when in anti-freeze mode
+        const hp1ShowFog = hp1On && !hp1AntiFreeze;
+        const hp2ShowFog = hp2On && !hp2AntiFreeze;
 
         return svg`
             <!-- Outside & bottom pipes -->
             <g clip-path="url(#outsidePipe)">
                 ${anyHpOn
-                    ? svg`<path id="quatt.outsidePipe" d="M 274 1253 L 567 1400" stroke="url(#waterGradientToLeft)" stroke-width="8" fill="none" stroke-linecap="round"/>`
+                    ? svg`<path id="quatt.outsidePipe" d="M 274 1253 L 567 1400" stroke="${outsideStroke}" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
             </g>
 
             <g clip-path="url(#bottomPipe)">
                 ${anyHpOn
-                    ? svg`<path id="quatt.bottomPipe" d="M 275 1250 L 404 1185" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>`
+                    ? svg`<path id="quatt.bottomPipe" d="M 275 1250 L 404 1185" stroke="${bottomStroke}" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
 
-                ${this.isAllElectric() && anyHpOn
+                ${this.isAllElectric() && anyHpOn && !anyAntiFreeze
                     ? svg`<path id="quatt.alle.bottomPipe" d="M 405 1185 L 406 1117" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
 
-                ${this.isAllElectric() && centralHeatingOn
+                ${this.isAllElectric() && centralHeatingOn && !anyAntiFreeze
                     ? svg`
                         <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
-                        <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientToRight)" stroke-width="8" fill="none" stroke-linecap="round"/>`
+                        <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
             </g>
 
             <!-- HP1 flow -->
-            ${hp1On
+            ${hp1ShowFog
                 ? svg`<g id="quatt.hp1Flow">
                         <path class="fog-line" pathLength="100" style="animation-duration: 4.2s; animation-delay: 0s; stroke: #E8F4F8; stroke-width: 3;"
                             d="M 425 1415 Q 435 1408, 445 1415 Q 455 1422, 465 1415 Q 475 1408, 485 1415 Q 495 1422, 505 1415 Q 515 1408, 525 1415 Q 535 1422, 545 1415 Q 555 1408, 565 1415 Q 575 1422, 585 1415 Q 595 1408, 605 1415 Q 615 1422, 625 1415 Q 635 1408, 645 1415 Q 655 1422, 665 1415"/>
@@ -814,7 +900,7 @@ class QuattDashboardCard extends LitElement {
                 : svg``}
 
             <!-- HP2 flow -->
-            ${hp2On
+            ${hp2ShowFog
                 ? svg`<g id="quatt.hp2Flow">
                         <path class="fog-line" pathLength="100" style="animation-duration: 4.3s; animation-delay: -0.5s; stroke: #E8F4F8; stroke-width: 3;"
                             d="M 295 1350 Q 305 1343, 315 1350 Q 325 1357, 335 1350 Q 345 1343, 355 1350 Q 365 1357, 375 1350 Q 385 1343, 395 1350 Q 405 1357, 415 1350 Q 425 1343, 435 1350 Q 445 1357, 455 1350 Q 465 1343, 475 1350 Q 485 1357, 495 1350 Q 505 1343, 515 1350 Q 525 1357, 535 1350"/>
@@ -828,7 +914,7 @@ class QuattDashboardCard extends LitElement {
                 : svg``}
 
             <!-- Radiator heat -->
-            ${((this.isAllElectric() && centralHeatingOn) || (this.isHybrid() && anyHpOn))
+            ${!anyAntiFreeze && ((this.isAllElectric() && centralHeatingOn) || (this.isHybrid() && anyHpOn))
                 ? svg`<g id="quatt.radiatorHeat" transform="${this.isAllElectric() ? 'translate(100,-40)' : ''}">
                         <path class="radiator-heat-line" pathLength="100" transform="translate(0,-12)"
                             style="animation-duration:6.77s; animation-delay:-2.13s"
@@ -1393,7 +1479,7 @@ class QuattDashboardCard extends LitElement {
 
     _renderDebug() {
         if (!DEBUG) return svg``;
-        
+
         // Small toggle “i” chip (always visible)
         const chip = svg`
             <g id="qdc.debug.toggle" style="cursor:pointer" @click=${() => this._toggleDebug()}>
