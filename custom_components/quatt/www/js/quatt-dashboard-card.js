@@ -623,6 +623,10 @@ class QuattDashboardCard extends LitElement {
     }
 
     _renderDefs() {
+        const hp1Mode = this.getSensorState('hp1.hp1_workingmode', { number:true, asString:false, decimals:0, fallback: 0 });
+        const qcMode  = this.getSensorState('cic.qc_supervisory_control_mode_code', { number:true, asString:false, decimals:0, fallback: 0 });
+        const hp1Circulation = (hp1Mode >= 1) || (qcMode === 98);
+
         return svg`
             <defs>
                 <linearGradient id="waterGradientToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -766,7 +770,7 @@ class QuattDashboardCard extends LitElement {
 
                 <clipPath id="outsidePipe">
                     <rect x="250" y="1245" width="181" height="100"></rect>
-                    ${this.getSensorState('hp1.hp1_workingmode')?.state >= 1
+                    ${hp1Circulation
                         ? svg`<rect x="555" y="1387" width="12" height="20"></rect>`
                         : svg``
                     }
@@ -840,45 +844,44 @@ class QuattDashboardCard extends LitElement {
     }
 
     _renderHeatingCircuit() {
-        const hp1Mode = Number(this.getSensorState('hp1.hp1_workingmode')?.state);
-        const hp2Mode = Number(this.getSensorState('hp2.hp2_workingmode')?.state);
+        const hp1Mode = this.getSensorState('hp1.hp1_workingmode', { number: true, asString: false, decimals: 0, fallback: 0 });
+        const hp2Mode = this.getSensorState('hp2.hp2_workingmode', { number: true, asString: false, decimals: 0, fallback: 0 });
+        const qcMode = this.getSensorState('cic.qc_supervisory_control_mode_code', { number: true, asString: false, decimals: 0, fallback: NaN });
 
-        const hp1On = Number.isFinite(hp1Mode) && hp1Mode >= 1;
-        const hp2On = Number.isFinite(hp2Mode) && hp2Mode >= 1;
+        const hp1On = hp1Mode >= 1;
+        const hp2On = hp2Mode >= 1;
         const anyHpOn = hp1On || hp2On;
 
-        const centralHeatingOn = this.getSensorState('cic.cic_central_heating_on')?.state == 'on';
-
-        const hp1AntiFreeze = hp1Mode === 98;
-        const hp2AntiFreeze = hp2Mode === 98;
-        const anyAntiFreeze = hp1AntiFreeze || hp2AntiFreeze;
+        const centralHeatingOn = this.getSensorState('cic.cic_central_heating_on', { fallback: { state: 'off' } })?.state === 'on';
+        const antiFreezeMode = qcMode === 98
+        const anyCirculation = anyHpOn || antiFreezeMode;
 
         // Pipes: normal = ToRight (warm), antifreeze = CoolToLeft (reverse + cool)
-        const outsideStroke = anyAntiFreeze ? `url(#waterGradientCoolToRight)` : `url(#waterGradientToLeft)`;
-        const bottomStroke = anyAntiFreeze ? `url(#waterGradientCoolToLeft)` : `url(#waterGradientToRight)`;
+        const outsideStroke = antiFreezeMode ? `url(#waterGradientCoolToRight)` : `url(#waterGradientToLeft)`;
+        const bottomStroke = antiFreezeMode ? `url(#waterGradientCoolToLeft)` : `url(#waterGradientToRight)`;
 
         // No fog-lines when in anti-freeze mode
-        const hp1ShowFog = hp1On && !hp1AntiFreeze;
-        const hp2ShowFog = hp2On && !hp2AntiFreeze;
+        const hp1ShowFog = hp1On && !antiFreezeMode;
+        const hp2ShowFog = hp2On && !antiFreezeMode;
 
         return svg`
             <!-- Outside & bottom pipes -->
             <g clip-path="url(#outsidePipe)">
-                ${anyHpOn
+                ${anyCirculation
                     ? svg`<path id="quatt.outsidePipe" d="M 274 1253 L 567 1400" stroke="${outsideStroke}" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
             </g>
 
             <g clip-path="url(#bottomPipe)">
-                ${anyHpOn
+                ${anyCirculation
                     ? svg`<path id="quatt.bottomPipe" d="M 275 1250 L 404 1185" stroke="${bottomStroke}" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
 
-                ${this.isAllElectric() && anyHpOn && !anyAntiFreeze
+                ${this.isAllElectric() && anyCirculation && !antiFreezeMode
                     ? svg`<path id="quatt.alle.bottomPipe" d="M 405 1185 L 406 1117" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
 
-                ${this.isAllElectric() && centralHeatingOn && !anyAntiFreeze
+                ${this.isAllElectric() && centralHeatingOn && !antiFreezeMode
                     ? svg`
                         <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
                         <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>`
@@ -914,7 +917,7 @@ class QuattDashboardCard extends LitElement {
                 : svg``}
 
             <!-- Radiator heat -->
-            ${!anyAntiFreeze && ((this.isAllElectric() && centralHeatingOn) || (this.isHybrid() && anyHpOn))
+            ${!antiFreezeMode && ((this.isAllElectric() && centralHeatingOn) || (this.isHybrid() && anyHpOn))
                 ? svg`<g id="quatt.radiatorHeat" transform="${this.isAllElectric() ? 'translate(100,-40)' : ''}">
                         <path class="radiator-heat-line" pathLength="100" transform="translate(0,-12)"
                             style="animation-duration:6.77s; animation-delay:-2.13s"
