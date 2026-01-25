@@ -901,7 +901,7 @@ class QuattDashboardCard extends LitElement {
                 </g>
             </g>
 
-            <!-- Melt drips (reuses your .water-droplet animation) -->
+            <!-- Melt drips -->
             <g transform="translate(0, 18)">
                 <ellipse class="water-droplet" cx="-10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
                     style="animation-duration:0.9s; animation-delay:0.0s;"/>
