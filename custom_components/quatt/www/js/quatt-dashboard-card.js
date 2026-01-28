@@ -629,143 +629,141 @@ class QuattDashboardCard extends LitElement {
 
         return svg`
             <defs>
-                <linearGradient id="waterGradientToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
-                        <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+                <linearGradient id="waterGradientToLeft"
+                    x1="0%" y1="0%" x2="100%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#FF8C00" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#FF4500" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#FF8C00" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="-1 0"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
-                <linearGradient id="waterGradientToRight" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
-                        <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+
+                <linearGradient id="waterGradientToRight"
+                    x1="0%" y1="0%" x2="100%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#FF8C00" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#FF4500" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#FF8C00" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="1 0"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
-                <linearGradient id="waterGradientUp" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
-                        <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+
+                <linearGradient id="waterGradientUp"
+                    x1="0%" y1="100%" x2="0%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#FF8C00" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#FF4500" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#FF8C00" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="0 -1"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
-                <linearGradient id="waterGradientDown" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#FF4500;stop-opacity:1">
-                        <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#FF6B35;stop-opacity:1">
-                        <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1">
-                        <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+
+                <linearGradient id="waterGradientDown"
+                    x1="0%" y1="100%" x2="0%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#FF8C00" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#FF4500" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#FF6B35" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#FF8C00" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="0 1"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
 
                 <!-- Cool (anti-freeze / water circulation) gradients -->
-                <linearGradient id="waterGradientCoolToLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
-                        <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+                <linearGradient id="waterGradientCoolToLeft"
+                    x1="0%" y1="0%" x2="100%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#64B5F6" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#1E88E5" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#64B5F6" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="-1 0"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
-                <linearGradient id="waterGradientCoolToRight" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
-                        <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+
+                <linearGradient id="waterGradientCoolToRight"
+                    x1="0%" y1="0%" x2="100%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#64B5F6" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#1E88E5" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#64B5F6" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="1 0"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
-                <linearGradient id="waterGradientCoolUp" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="-0.25;1.75" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
-                        <animate attributeName="offset" values="0;2" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="0.25;2.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="0.5;2.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+
+                <linearGradient id="waterGradientCoolUp"
+                    x1="0%" y1="100%" x2="0%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#64B5F6" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#1E88E5" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#64B5F6" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="0 -1"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
-                <linearGradient id="waterGradientCoolDown" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="1.5;-0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="25%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="1.75;-0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="50%" style="stop-color:#1E88E5;stop-opacity:1">
-                        <animate attributeName="offset" values="2;0" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="75%" style="stop-color:#42A5F5;stop-opacity:1">
-                        <animate attributeName="offset" values="2.25;0.25" dur="2s" repeatCount="indefinite" />
-                    </stop>
-                    <stop offset="100%" style="stop-color:#64B5F6;stop-opacity:1">
-                        <animate attributeName="offset" values="2.5;0.5" dur="2s" repeatCount="indefinite" />
-                    </stop>
+
+                <linearGradient id="waterGradientCoolDown"
+                    x1="0%" y1="100%" x2="0%" y2="0%"
+                    spreadMethod="repeat">
+                    <stop offset="0%"   stop-color="#64B5F6" stop-opacity="1" />
+                    <stop offset="25%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="50%"  stop-color="#1E88E5" stop-opacity="1" />
+                    <stop offset="75%"  stop-color="#42A5F5" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#64B5F6" stop-opacity="1" />
+                    <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from="0 0"
+                        to="0 1"
+                        dur="2s"
+                        repeatCount="indefinite" />
                 </linearGradient>
 
                 <clipPath id="outsidePipe">
@@ -846,70 +844,69 @@ class QuattDashboardCard extends LitElement {
     _renderDefrostOverlay({ x, y, scale = 1 }) {
         return svg`
             <g class="defrost-overlay" transform="translate(${x}, ${y}) scale(${scale})">
-
-            <!-- Steam puffs -->
-            <g filter="url(#smokeBlur)">
-                <ellipse cx="0" cy="0" rx="10" ry="7" fill="#E8F4F8" opacity="0">
-                    <animate attributeName="cy" values="0;-25;-55" dur="2.6s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0;0.55;0" dur="2.6s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="8;14;22" dur="2.6s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="6;10;16" dur="2.6s" repeatCount="indefinite"/>
-                </ellipse>
-                <ellipse cx="14" cy="6" rx="9" ry="6" fill="#D4E8F0" opacity="0">
-                    <animate attributeName="cy" values="6;-20;-50" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0;0.50;0" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="7;13;20" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="5;9;14" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
-                </ellipse>
-                <ellipse cx="-16" cy="8" rx="9" ry="6" fill="#E0EDF5" opacity="0">
-                    <animate attributeName="cy" values="8;-18;-48" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0;0.45;0" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="7;12;19" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="5;9;14" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
-                </ellipse>
-            </g>
-
-            <!-- Pulsing snowflake -->
-            <g transform="translate(0, -28)">
-                <animate attributeName="opacity" values="0.45;1;0.45" dur="1.2s" repeatCount="indefinite"/>
-                <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    values="-10 0 0; 10 0 0; -10 0 0"
-                    dur="2.2s"
-                    repeatCount="indefinite"
-                    calcMode="spline"
-                    keyTimes="0;0.5;1"
-                    keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" />
-
-                <g stroke="#B3E5FC" stroke-width="4" stroke-linecap="round">
-                    <line x1="-18" y1="0" x2="18" y2="0"/>
-                    <line x1="0" y1="-18" x2="0" y2="18"/>
-                    <line x1="-13" y1="-13" x2="13" y2="13"/>
-                    <line x1="13" y1="-13" x2="-13" y2="13"/>
-
-                    <!-- small branches -->
-                    <line x1="-18" y1="0" x2="-24" y2="-6"/>
-                    <line x1="-18" y1="0" x2="-24" y2="6"/>
-                    <line x1="18" y1="0" x2="24" y2="-6"/>
-                    <line x1="18" y1="0" x2="24" y2="6"/>
-
-                    <line x1="0" y1="-18" x2="-6" y2="-24"/>
-                    <line x1="0" y1="-18" x2="6" y2="-24"/>
-                    <line x1="0" y1="18" x2="-6" y2="24"/>
-                    <line x1="0" y1="18" x2="6" y2="24"/>
+                <!-- Steam puffs -->
+                <g filter="url(#smokeBlur)">
+                    <ellipse cx="0" cy="0" rx="10" ry="7" fill="#E8F4F8" opacity="0">
+                        <animate attributeName="cy" values="0;-25;-55" dur="2.6s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0;0.55;0" dur="2.6s" repeatCount="indefinite"/>
+                        <animate attributeName="rx" values="8;14;22" dur="2.6s" repeatCount="indefinite"/>
+                        <animate attributeName="ry" values="6;10;16" dur="2.6s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="14" cy="6" rx="9" ry="6" fill="#D4E8F0" opacity="0">
+                        <animate attributeName="cy" values="6;-20;-50" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0;0.50;0" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                        <animate attributeName="rx" values="7;13;20" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                        <animate attributeName="ry" values="5;9;14" dur="2.6s" begin="0.6s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="-16" cy="8" rx="9" ry="6" fill="#E0EDF5" opacity="0">
+                        <animate attributeName="cy" values="8;-18;-48" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0;0.45;0" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                        <animate attributeName="rx" values="7;12;19" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                        <animate attributeName="ry" values="5;9;14" dur="2.6s" begin="1.2s" repeatCount="indefinite"/>
+                    </ellipse>
                 </g>
-            </g>
 
-            <!-- Melt drips -->
-            <g transform="translate(0, 18)">
-                <ellipse class="water-droplet" cx="-10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
-                    style="animation-duration:0.9s; animation-delay:0.0s;"/>
-                <ellipse class="water-droplet" cx="0" cy="0" rx="2.2" ry="4.5" fill="#4DB8FF" opacity="0.7"
-                    style="animation-duration:1.0s; animation-delay:0.25s;"/>
-                <ellipse class="water-droplet" cx="10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
-                    style="animation-duration:0.95s; animation-delay:0.5s;"/>
-            </g>
+                <!-- Pulsing snowflake -->
+                <g transform="translate(0, -28)">
+                    <animate attributeName="opacity" values="0.45;1;0.45" dur="1.2s" repeatCount="indefinite"/>
+                    <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        values="-10 0 0; 10 0 0; -10 0 0"
+                        dur="2.2s"
+                        repeatCount="indefinite"
+                        calcMode="spline"
+                        keyTimes="0;0.5;1"
+                        keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" />
+
+                    <g stroke="#B3E5FC" stroke-width="4" stroke-linecap="round">
+                        <line x1="-18" y1="0" x2="18" y2="0"/>
+                        <line x1="0" y1="-18" x2="0" y2="18"/>
+                        <line x1="-13" y1="-13" x2="13" y2="13"/>
+                        <line x1="13" y1="-13" x2="-13" y2="13"/>
+
+                        <!-- small branches -->
+                        <line x1="-18" y1="0" x2="-24" y2="-6"/>
+                        <line x1="-18" y1="0" x2="-24" y2="6"/>
+                        <line x1="18" y1="0" x2="24" y2="-6"/>
+                        <line x1="18" y1="0" x2="24" y2="6"/>
+
+                        <line x1="0" y1="-18" x2="-6" y2="-24"/>
+                        <line x1="0" y1="-18" x2="6" y2="-24"/>
+                        <line x1="0" y1="18" x2="-6" y2="24"/>
+                        <line x1="0" y1="18" x2="6" y2="24"/>
+                    </g>
+                </g>
+
+                <!-- Melt drips -->
+                <g transform="translate(0, 18)">
+                    <ellipse class="water-droplet" cx="-10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
+                        style="animation-duration:0.9s; animation-delay:0.0s;"/>
+                    <ellipse class="water-droplet" cx="0" cy="0" rx="2.2" ry="4.5" fill="#4DB8FF" opacity="0.7"
+                        style="animation-duration:1.0s; animation-delay:0.25s;"/>
+                    <ellipse class="water-droplet" cx="10" cy="0" rx="2.5" ry="5" fill="#6EC9FF" opacity="0.7"
+                        style="animation-duration:0.95s; animation-delay:0.5s;"/>
+                </g>
             </g>
         `;
     }
@@ -968,7 +965,7 @@ class QuattDashboardCard extends LitElement {
 
                 ${this.isAllElectric() && centralHeatingOn && !antiFreezeMode
                     ? svg`
-                        <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                        <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>
                         <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
             </g>
@@ -1084,39 +1081,49 @@ class QuattDashboardCard extends LitElement {
 
         return svg`
             <g id="quatt.chimneyPipe">
-                <path d="M 347 1125 L 348 1205" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
-                <path d="M 317 1123 L 318 1225" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <path d="M 317 1123 L 318 1225" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <path d="M 347 1125 L 348 1210" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>
             </g>
-            <g id="quatt.chimneySmoke">
-                <ellipse cx="400" cy="675" rx="12" ry="15" fill="#6B6B6B" filter="url(#smokeBlur)">
-                    <animate attributeName="cy" values="675;555;435" dur="4s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="12;17;22" dur="4s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="15;21;27" dur="4s" repeatCount="indefinite"/>
+            <!-- Chimney smoke (steam-puff style, but rising higher) -->
+            <g id="quatt.chimneySmoke" filter="url(#smokeBlur)" transform="translate(400, 675)">
+                <ellipse cx="0" cy="0" rx="10" ry="7" fill="#6B6B6B" opacity="0">
+                    <animate attributeName="cy" values="0;-80;-190" dur="3.4s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="0;6;14" dur="3.4s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.55;0" dur="3.4s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="9;16;26" dur="3.4s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="6;12;20" dur="3.4s" repeatCount="indefinite"/>
                 </ellipse>
-                <ellipse cx="408" cy="670" rx="14" ry="16" fill="#7A7A7A" filter="url(#smokeBlur)">
-                    <animate attributeName="cy" values="670;550;430" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="14;19;24" dur="4s" begin="0.8s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="16;22;28" dur="4s" begin="0.8s" repeatCount="indefinite"/>
+
+                <ellipse cx="6" cy="6" rx="9" ry="6" fill="#7A7A7A" opacity="0">
+                    <animate attributeName="cy" values="6;-68;-176" dur="3.4s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="6;10;18" dur="3.4s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.50;0" dur="3.4s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="8;15;24" dur="3.4s" begin="0.6s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="5;11;18" dur="3.4s" begin="0.6s" repeatCount="indefinite"/>
                 </ellipse>
-                <ellipse cx="395" cy="680" rx="13" ry="14" fill="#656565" filter="url(#smokeBlur)">
-                    <animate attributeName="cy" values="680;560;440" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="13;18;23" dur="4s" begin="1.6s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="14;20;26" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+
+                <ellipse cx="-8" cy="8" rx="9" ry="6" fill="#656565" opacity="0">
+                    <animate attributeName="cy" values="8;-60;-168" dur="3.4s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="-8;-2;8" dur="3.4s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.45;0" dur="3.4s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="8;14;22" dur="3.4s" begin="1.2s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="5;10;17" dur="3.4s" begin="1.2s" repeatCount="indefinite"/>
                 </ellipse>
-                <ellipse cx="403" cy="673" rx="15" ry="17" fill="#707070" filter="url(#smokeBlur)">
-                    <animate attributeName="cy" values="673;553;433" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="15;20;25" dur="4s" begin="2.4s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="17;23;29" dur="4s" begin="2.4s" repeatCount="indefinite"/>
+
+                <ellipse cx="2" cy="4" rx="11" ry="7" fill="#707070" opacity="0">
+                    <animate attributeName="cy" values="4;-76;-184" dur="3.4s" begin="1.8s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="2;8;16" dur="3.4s" begin="1.8s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.50;0" dur="3.4s" begin="1.8s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="10;18;28" dur="3.4s" begin="1.8s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="6;13;21" dur="3.4s" begin="1.8s" repeatCount="indefinite"/>
                 </ellipse>
-                <ellipse cx="397" cy="677" rx="11" ry="13" fill="#6F6F6F" filter="url(#smokeBlur)">
-                    <animate attributeName="cy" values="677;557;437" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0.5;0" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="11;16;21" dur="4s" begin="3.2s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="13;19;25" dur="4s" begin="3.2s" repeatCount="indefinite"/>
+
+                <ellipse cx="-4" cy="10" rx="8" ry="6" fill="#6F6F6F" opacity="0">
+                    <animate attributeName="cy" values="10;-56;-164" dur="3.4s" begin="2.4s" repeatCount="indefinite"/>
+                    <animate attributeName="cx" values="-4;2;12" dur="3.4s" begin="2.4s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0;0.45;0" dur="3.4s" begin="2.4s" repeatCount="indefinite"/>
+                    <animate attributeName="rx" values="7;13;21" dur="3.4s" begin="2.4s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="5;10;16" dur="3.4s" begin="2.4s" repeatCount="indefinite"/>
                 </ellipse>
             </g>
         `;
@@ -1614,9 +1621,9 @@ class QuattDashboardCard extends LitElement {
                     ${this._renderDefs()}
                     ${this._renderSunshine()}
                     ${this._renderLegend()}
+                    ${this._renderChimneySmoke()}
                     ${this._renderHeatingCircuit()}
                     ${this._renderAircoFlow()}
-                    ${this._renderChimneySmoke()}
                     ${this._renderHeatBatteryDomesticHotWater()}
                     ${this._renderHeatBatterySteam()}
                     ${this._renderWaterTankIndicator()}
