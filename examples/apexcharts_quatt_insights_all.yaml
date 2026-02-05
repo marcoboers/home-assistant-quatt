@@ -39,7 +39,12 @@ apex_config:
         }
     "y":
       formatter: |
-        EVAL:(value) => {
+        EVAL:(value, { seriesIndex, dataPointIndex, w }) => {
+          // No tooltips for dates in the future
+          const now = Date.now();
+          const x = w?.globals?.seriesX?.[seriesIndex]?.[dataPointIndex];
+          if (typeof x === 'number' && x > now) return '';
+          
           return Number(value).toFixed(2) + ' kWh';
         }   
 series:
@@ -66,7 +71,6 @@ series:
       }
 
       const points = data.graph || [];
-
       return points.map(p => {
         const dtLocal = new Date(p.timestamp);
         const year = dtLocal.getFullYear();
@@ -98,17 +102,16 @@ series:
       }
 
       const points = data.graph || [];
-
       return points.map(p => {
         const dtLocal = new Date(p.timestamp);
         const year = dtLocal.getFullYear();
         const ts = new Date(year, 0, 1, 0, 0, 0).getTime();
 
-        const warmte = Math.max(
+        const heat = Math.max(
           0,
           ((p.hpHeat || 0) - (p.hpElectric || 0)) / 1000
         );
-        return [ts, Number(warmte.toFixed(2))];
+        return [ts, Number(heat.toFixed(2))];
       });
   - entity: sensor.quatt_insights_all
     name: CV-ketel
@@ -133,7 +136,6 @@ series:
       }
 
       const points = data.graph || [];
-
       return points.map(p => {
         const dtLocal = new Date(p.timestamp);
         const year = dtLocal.getFullYear();
@@ -155,14 +157,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const cop = json.averageCOP || 0;
+      const cop = data.averageCOP || 0;
       return [[Date.now(), cop]];      
   - entity: sensor.quatt_insights_all
     name: warmte door Quatt
@@ -178,14 +180,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalHpHeat || 0) / 1000;
+      const kwh = (data.totalHpHeat || 0) / 1000;
       return [[Date.now(), kwh]];     
   - entity: sensor.quatt_insights_all
     name: gebruikte elektriciteit
@@ -201,14 +203,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalHpElectric || 0) / 1000;
+      const kwh = (data.totalHpElectric || 0) / 1000;
       return [[Date.now(), kwh]];     
   - entity: sensor.quatt_insights_all
     name: cv-ketel
@@ -224,14 +226,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalBoilerHeat || 0) / 1000;
+      const kwh = (data.totalBoilerHeat || 0) / 1000;
       return [[Date.now(), kwh]];      
   - entity: sensor.quatt_insights_all
     name: geschat gasverbruik
@@ -247,11 +249,11 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      return [[Date.now(), (json.totalBoilerGas || 0)]];
+      return [[Date.now(), (data.totalBoilerGas || 0)]];
