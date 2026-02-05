@@ -72,9 +72,9 @@ series:
 
       const points = data.graph || [];
       return points.map(p => {
-        const dtLocal = new Date(p.timestamp);      // lokale tijd
-        const year = dtLocal.getFullYear();         // jaar volgens NL-tijd
-        const ts = new Date(year, 0, 1, 0, 0, 0).getTime(); // 1 jan 00:00
+        const dtLocal = new Date(p.timestamp);
+        const year = dtLocal.getFullYear();
+        const ts = new Date(year, 0, 1, 0, 0, 0).getTime();
 
         const kwh = (p.hpElectric || 0) / 1000;
         return [ts, Number(kwh.toFixed(2))];
