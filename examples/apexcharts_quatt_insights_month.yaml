@@ -25,9 +25,9 @@ apex_config:
     tickAmount: 10
     labels:
       formatter: |
-        EVAL:(value, timestamp, opts) => {
+        EVAL:(value) => {
           const d = new Date(value);
-          const base = new Date(opts.w.globals.minX); // maand die je toont
+          const base = new Date();
           const sameMonth =
             d.getMonth() === base.getMonth() &&
             d.getFullYear() === base.getFullYear();
