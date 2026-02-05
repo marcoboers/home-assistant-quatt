@@ -1,5 +1,5 @@
 type: custom:apexcharts-card
-graph_span: 1mo
+graph_span: 31d
 span:
   start: month
 stacked: true
@@ -18,9 +18,6 @@ apex_config:
   chart:
     toolbar:
       show: false
-  plotOptions:
-    bar:
-      columnWidth: "-70%"
   xaxis:
     tooltip:
       enabled: false
@@ -30,13 +27,12 @@ apex_config:
       formatter: |
         EVAL:(value, timestamp, opts) => {
           const d = new Date(value);
-          const today = new Date();
+          const base = new Date(opts.w.globals.minX); // maand die je toont
           const sameMonth =
-            d.getMonth() === today.getMonth() &&
-            d.getFullYear() === today.getFullYear();
-          if (!sameMonth && d.getDate() === 1) {
-            return '';
-          }
+            d.getMonth() === base.getMonth() &&
+            d.getFullYear() === base.getFullYear();
+
+          if (!sameMonth) return '';
           return d.getDate().toString();
         }
   tooltip:
@@ -55,7 +51,12 @@ apex_config:
         }
     "y":
       formatter: |
-        EVAL:function (value) {
+        EVAL:(value, { seriesIndex, dataPointIndex, w }) => {
+          // No tooltips for dates in the future
+          const now = Date.now();
+          const x = w?.globals?.seriesX?.[seriesIndex]?.[dataPointIndex];
+          if (typeof x === 'number' && x > now) return '';
+          
           return Number(value).toFixed(2) + ' kWh';
         }       
 series:
@@ -77,15 +78,32 @@ series:
       let data;
       try {
         data = JSON.parse(raw);
-      } catch (e) {
+      } catch {
         return [];
       }
 
       const points = data.graph || [];
-      return points.map(p => {
-        const ts = new Date(p.timestamp).getTime();
-        const kwh = (p.hpElectric || 0) / 1000;
-        return [ts, kwh];
+      if (!data.from) return [];
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const monthStart = new Date(data.from);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const daysInMonth = new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth() + 1,
+        0
+      ).getDate();
+
+      const values = Array(daysInMonth).fill(0);
+      for (let i = 0; i < points.length && i < daysInMonth; i++) {
+        const p = points[i];
+        values[i] = (p.hpElectric || 0) / 1000;
+      }
+
+      return values.map((v, i) => {
+        const ts = monthStart.getTime() + i * ONE_DAY;
+        return [ts, Number(v.toFixed(2))];
       });
   - entity: sensor.quatt_insights_month
     name: Warmte
@@ -105,18 +123,33 @@ series:
       let data;
       try {
         data = JSON.parse(raw);
-      } catch (e) {
+      } catch {
         return [];
       }
 
       const points = data.graph || [];
-      return points.map(p => {
-        const ts = new Date(p.timestamp).getTime();
-        const kwh = Math.max(
-          0,
-          ((p.hpHeat || 0) - (p.hpElectric || 0)) / 1000
-        );
-        return [ts, kwh];
+      if (!data.from) return [];
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const monthStart = new Date(data.from);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const daysInMonth = new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth() + 1,
+        0
+      ).getDate();
+
+      const values = Array(daysInMonth).fill(0);
+      for (let i = 0; i < points.length && i < daysInMonth; i++) {
+        const p = points[i];
+        const heat = ((p.hpHeat || 0) - (p.hpElectric || 0)) / 1000;
+        values[i] = Math.max(0, heat);
+      }
+
+      return values.map((v, i) => {
+        const ts = monthStart.getTime() + i * ONE_DAY;
+        return [ts, Number(v.toFixed(2))];
       });
   - entity: sensor.quatt_insights_month
     name: CV-ketel
@@ -136,15 +169,33 @@ series:
       let data;
       try {
         data = JSON.parse(raw);
-      } catch (e) {
+      } catch {
         return [];
       }
 
       const points = data.graph || [];
-      return points.map(p => {
-        const ts = new Date(p.timestamp).getTime();
-        const kwh = (p.boilerHeat || 0) / 1000;
-        return [ts, kwh];
+      if (!data.from) return [];
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const monthStart = new Date(data.from);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const daysInMonth = new Date(
+        monthStart.getFullYear(),
+        monthStart.getMonth() + 1,
+        0
+      ).getDate();
+
+      const values = Array(daysInMonth).fill(0);
+
+      for (let i = 0; i < points.length && i < daysInMonth; i++) {
+        const p = points[i];
+        values[i] = (p.boilerHeat || 0) / 1000;
+      }
+
+      return values.map((v, i) => {
+        const ts = monthStart.getTime() + i * ONE_DAY;
+        return [ts, Number(v.toFixed(2))];
       });
   - entity: sensor.quatt_insights_month
     name: gemiddelde COP
@@ -159,14 +210,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const cop = json.averageCOP || 0;
+      const cop = data.averageCOP || 0;
       return [[Date.now(), cop]];      
   - entity: sensor.quatt_insights_month
     name: warmte door Quatt
@@ -182,14 +233,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalHpHeat || 0) / 1000;
+      const kwh = (data.totalHpHeat || 0) / 1000;
       return [[Date.now(), kwh]];     
   - entity: sensor.quatt_insights_month
     name: gebruikte elektriciteit
@@ -205,14 +256,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalHpElectric || 0) / 1000;
+      const kwh = (data.totalHpElectric || 0) / 1000;
       return [[Date.now(), kwh]];     
   - entity: sensor.quatt_insights_month
     name: cv-ketel
@@ -228,14 +279,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalBoilerHeat || 0) / 1000;
+      const kwh = (data.totalBoilerHeat || 0) / 1000;
       return [[Date.now(), kwh]];      
   - entity: sensor.quatt_insights_month
     name: geschat gasverbruik
@@ -251,11 +302,11 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      return [[Date.now(), (json.totalBoilerGas || 0)]];
+      return [[Date.now(), (data.totalBoilerGas || 0)]];

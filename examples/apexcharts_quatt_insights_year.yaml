@@ -44,7 +44,12 @@ apex_config:
         }
     "y":
       formatter: |
-        EVAL:(value) => {
+        EVAL:(value, { seriesIndex, dataPointIndex, w }) => {
+          // No tooltips for dates in the future
+          const now = Date.now();
+          const x = w?.globals?.seriesX?.[seriesIndex]?.[dataPointIndex];
+          if (typeof x === 'number' && x > now) return '';
+          
           return Number(value).toFixed(2) + ' kWh';
         }   
 series:
@@ -63,20 +68,19 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const points = json.graph || [];
+      const points = data.graph || [];
       if (!points.length) return [];
 
-      // Bepaal doeljaar uit 'from' (lokale tijd), anders uit eerste punt
       let targetYear;
-      if (json.from) {
-        const fromDt = new Date(json.from);
+      if (data.from) {
+        const fromDt = new Date(data.from);
         if (!isNaN(fromDt)) {
           targetYear = fromDt.getFullYear();
         }
@@ -90,24 +94,21 @@ series:
         }
       }
 
-      // Array met 12 maanden, default 0 kWh
       const months = new Array(12).fill(0);
-
       for (const p of points) {
-        const dtLocal = new Date(p.timestamp);  // browser = NL-tijd
+        const dtLocal = new Date(p.timestamp);
         if (isNaN(dtLocal)) continue;
 
         const y = dtLocal.getFullYear();
-        if (y !== targetYear) continue;        // alleen huidige jaar tonen
+        if (y !== targetYear) continue;
 
-        const m = dtLocal.getMonth();          // 0 = jan, 11 = dec
+        const m = dtLocal.getMonth();
         if (m < 0 || m > 11) continue;
 
         const kwh = (p.hpElectric || 0) / 1000;
         months[m] = Number(kwh.toFixed(2));
       }
 
-      // Bouw 12 punten op: 1e dag van elke maand om 00:00
       const result = [];
       for (let m = 0; m < 12; m++) {
         const ts = new Date(targetYear, m, 1, 0, 0, 0).getTime();
@@ -129,19 +130,19 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const points = json.graph || [];
+      const points = data.graph || [];
       if (!points.length) return [];
 
       let targetYear;
-      if (json.from) {
-        const fromDt = new Date(json.from);
+      if (data.from) {
+        const fromDt = new Date(data.from);
         if (!isNaN(fromDt)) {
           targetYear = fromDt.getFullYear();
         }
@@ -156,7 +157,6 @@ series:
       }
 
       const months = new Array(12).fill(0);
-
       for (const p of points) {
         const dtLocal = new Date(p.timestamp);
         if (isNaN(dtLocal)) continue;
@@ -167,12 +167,11 @@ series:
         const m = dtLocal.getMonth();
         if (m < 0 || m > 11) continue;
 
-        // hpHeat >= hpElectric (volgens jouw aanname)
-        const warmte = Math.max(
+        const heat = Math.max(
           0,
           ((p.hpHeat || 0) - (p.hpElectric || 0)) / 1000
         );
-        months[m] = Number(warmte.toFixed(2));
+        months[m] = Number(heat.toFixed(2));
       }
 
       const result = [];
@@ -196,19 +195,19 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const points = json.graph || [];
+      const points = data.graph || [];
       if (!points.length) return [];
 
       let targetYear;
-      if (json.from) {
-        const fromDt = new Date(json.from);
+      if (data.from) {
+        const fromDt = new Date(data.from);
         if (!isNaN(fromDt)) {
           targetYear = fromDt.getFullYear();
         }
@@ -223,7 +222,6 @@ series:
       }
 
       const months = new Array(12).fill(0);
-
       for (const p of points) {
         const dtLocal = new Date(p.timestamp);
         if (isNaN(dtLocal)) continue;
@@ -257,14 +255,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const cop = json.averageCOP || 0;
+      const cop = data.averageCOP || 0;
       return [[Date.now(), cop]];      
   - entity: sensor.quatt_insights_year
     name: warmte door Quatt
@@ -280,14 +278,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalHpHeat || 0) / 1000;
+      const kwh = (data.totalHpHeat || 0) / 1000;
       return [[Date.now(), kwh]];     
   - entity: sensor.quatt_insights_year
     name: gebruikte elektriciteit
@@ -303,14 +301,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalHpElectric || 0) / 1000;
+      const kwh = (data.totalHpElectric || 0) / 1000;
       return [[Date.now(), kwh]];     
   - entity: sensor.quatt_insights_year
     name: cv-ketel
@@ -326,14 +324,14 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      const kwh = (json.totalBoilerHeat || 0) / 1000;
+      const kwh = (data.totalBoilerHeat || 0) / 1000;
       return [[Date.now(), kwh]];      
   - entity: sensor.quatt_insights_year
     name: geschat gasverbruik
@@ -349,11 +347,11 @@ series:
       const raw = entity.attributes.insights_json;
       if (!raw) return [];
 
-      let json;
+      let data;
       try {
-        json = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch (e) {
         return [];
       }
 
-      return [[Date.now(), (json.totalBoilerGas || 0)]];
+      return [[Date.now(), (data.totalBoilerGas || 0)]];
