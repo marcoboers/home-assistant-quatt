@@ -7,11 +7,13 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 import logging
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -381,6 +383,132 @@ class QuattSettingSwitch(QuattSwitch):
         return await remote_client.update_cic_settings(settings)
 
 
+class QuattNumber(QuattEntity, NumberEntity):
+    """Quatt Number class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattNumberEntityDescription,
+        device_kind: QuattDeviceKind,
+    ) -> None:
+        """Initialize the number class."""
+        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the number should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current value."""
+        return self.coordinator.get_value(f"{self.entity_description.key}.value")
+
+    @property
+    def native_min_value(self) -> float:
+        """Return the minimum value."""
+        value = self.coordinator.get_value(f"{self.entity_description.key}.minValue")
+        if value is None:
+            return super().native_min_value
+        return value
+
+    @property
+    def native_max_value(self) -> float:
+        """Return the maximum value."""
+        value = self.coordinator.get_value(f"{self.entity_description.key}.maxValue")
+        if value is None:
+            return super().native_max_value
+        return value
+
+    @property
+    def native_step(self) -> float | None:
+        """Return the step value."""
+        value = self.coordinator.get_value(f"{self.entity_description.key}.increment")
+        if value is None:
+            return super().native_step
+        return value
+
+    def set_native_value(self, value: float) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_set_native_value instead")
+
+    @abstractmethod
+    async def _perform_api_update(self, value: float) -> bool:
+        """Perform the API call to update this setting.
+
+        Must return True if the update succeeded, False otherwise.
+        """
+        raise NotImplementedError
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the new value."""
+        # Only remote coordinator supports updating settings
+        if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
+            _LOGGER.error(
+                "Cannot update %s: only available via remote API",
+                self.entity_description.key,
+            )
+            raise NotImplementedError(
+                f"Setting {self.entity_description.key} is only available via remote API"
+            )
+
+        success = False
+        try:
+            success = await self._perform_api_update(value)
+        except Exception as err:
+            _LOGGER.exception("Error updating %s", self.entity_description.key)
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            ) from err
+
+        if not success:
+            _LOGGER.warning("Failed to update %s", self.entity_description.key)
+            raise RuntimeError(f"Failed to update {self.entity_description.key}")
+
+        # Always refresh coordinator data after a successful update
+        await self.coordinator.async_request_refresh()
+
+
+class QuattSettingNumber(QuattNumber):
+    """Number entity for Quatt numeric settings stored as {value, minValue, maxValue, increment}."""
+
+    async def _perform_api_update(self, value: float) -> bool:
+        """Perform numeric setting update."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattRemoteApiClient):
+            _LOGGER.error(
+                "Cannot update %s: remote client required", self.entity_description.key
+            )
+            return False
+
+        # Preserve integer type when the step is whole-number
+        step = self.native_step
+        if step is not None and float(step).is_integer() and float(value).is_integer():
+            payload_value: int | float = int(value)
+        else:
+            payload_value = value
+
+        # Convert dot notation to nested object structure ending at ".value"
+        key_parts = self.entity_description.key.split(".") + ["value"]
+
+        settings: dict[str, Any] = {}
+        current = settings
+        for i, part in enumerate(key_parts):
+            if i == len(key_parts) - 1:
+                current[part] = payload_value
+            else:
+                current[part] = {}
+                current = current[part]
+
+        _LOGGER.debug("Updating CIC setting: %s", settings)
+        return await remote_client.update_cic_settings(settings)
+
+
 @dataclass(frozen=True)
 class QuattFeatureFlags:
     """Quatt feature flags used an entity."""
@@ -420,3 +548,10 @@ class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSwitch
+
+
+class QuattNumberEntityDescription(NumberEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt number entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: type[QuattEntity] = QuattNumber
