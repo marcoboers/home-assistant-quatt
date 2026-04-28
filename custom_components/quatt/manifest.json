@@ -23,5 +23,5 @@
   "issue_tracker": "https://github.com/marcoboers/home-assistant-quatt/issues",
   "requirements": [],
   "single_config_entry": false,
-  "version": "1.0.2"
+  "version": "0.0.1"
 }

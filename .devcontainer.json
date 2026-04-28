@@ -1,6 +1,6 @@
 {
     "name": "marcoboers/home_assistant_quatt",
-    "image": "mcr.microsoft.com/devcontainers/python:3.13-bookworm",
+    "image": "mcr.microsoft.com/devcontainers/python:3.13-trixie",
     "postCreateCommand": "scripts/setup",
     "appPort": [
         "8123:8123"
