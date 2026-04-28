@@ -2,7 +2,6 @@ type: custom:apexcharts-card
 graph_span: 1y
 span:
   start: year
-  offset: +1d
 stacked: true
 update_interval: 1m
 header:
@@ -10,10 +9,6 @@ header:
   title: Energie flow dit jaar
   show_states: true
   colorize_states: true
-yaxis:
-  - id: energy
-    decimals: 0
-    max: "|+50|"
 apex_config:
   chart:
     toolbar:
@@ -46,7 +41,7 @@ apex_config:
           });
           return s.charAt(0).toUpperCase() + s.slice(1);
         }
-    "y":
+    y:
       formatter: |
         EVAL:(value, { seriesIndex, dataPointIndex, w }) => {
           const now = Date.now();
@@ -59,7 +54,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: Zonne-energie
     type: column
-    yaxis_id: energy
     stack_group: negative
     color: "#f4d03f"
     float_precision: 2
@@ -86,7 +80,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: Batterij ontladen
     type: column
-    yaxis_id: energy
     stack_group: negative
     color: "#ffffff"
     float_precision: 2
@@ -113,7 +106,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: Huisverbruik
     type: column
-    yaxis_id: energy
     stack_group: positive
     color: "#3498db"
     float_precision: 2
@@ -140,7 +132,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: Batterij laden
     type: column
-    yaxis_id: energy
     stack_group: positive
     color: "#27ae60"
     float_precision: 2
@@ -167,7 +158,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: zonne-energie
     unit: kWh
-    yaxis_id: energy
     color: "#f4d03f"
     show:
       in_chart: false
@@ -189,7 +179,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: batterij ontladen
     unit: kWh
-    yaxis_id: energy
     color: "#ffffff"
     show:
       in_chart: false
@@ -211,7 +200,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: huisverbruik
     unit: kWh
-    yaxis_id: energy
     color: "#3498db"
     show:
       in_chart: false
@@ -233,7 +221,6 @@ series:
   - entity: sensor.quatt_home_battery_energy_flow_year
     name: batterij laden
     unit: kWh
-    yaxis_id: energy
     color: "#27ae60"
     show:
       in_chart: false

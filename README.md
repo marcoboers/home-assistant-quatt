@@ -122,6 +122,23 @@ This integration supports the **Quatt Home Battery** as a separate device that c
 
 **Special thanks to [@WoutervanderLoopNL](https://github.com/WoutervanderLoopNL) for reverse engineering the official Quatt mobile app, which made this home battery support possible!**
 
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/quatt_battery_insights_day.png" width="180"><br>
+      <b>Day</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_battery_insights_month.png" width="180"><br>
+      <b>Month</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_battery_insights_year.png" width="180"><br>
+      <b>Year</b>
+    </td>
+  </tr>
+</table>
+
 ### Key Features
 
 - **Stand-alone device**: A home battery can be added without a CIC/heat pump — pick "Home battery" in the `+ Add integration` menu
@@ -180,6 +197,10 @@ Example files are included in this repository:
 - Home battery energy flow:
   - Python script: [`examples/set_home_battery_energy_flow.py`](examples/set_home_battery_energy_flow.py)
   - Automation (today / day / month / year): [`examples/automation_home_battery_energy_flow.yaml`](examples/automation_home_battery_energy_flow.yaml)
+  - ApexCharts charts (energy flow):
+    - Day card: [`examples/apexcharts_home_battery_energy_flow_day.yaml`](examples/apexcharts_home_battery_energy_flow_day.yaml)
+    - Month card: [`examples/apexcharts_home_battery_energy_flow_month.yaml`](examples/apexcharts_home_battery_energy_flow_month.yaml)
+    - Year card: [`examples/apexcharts_home_battery_energy_flow_year.yaml`](examples/apexcharts_home_battery_energy_flow_year.yaml)
 
 ## Quatt Dashboard Card (Optional - Beta)
 
