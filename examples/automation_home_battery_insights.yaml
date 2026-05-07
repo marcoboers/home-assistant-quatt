@@ -1,9 +1,9 @@
-# Automation 1: refresh today's home battery insights every hour at :45
-alias: Home Battery Insights (today - refresh every hour at :45)
+# Automation 1: refresh today's home battery insights every 5 minutes
+alias: Home Battery Insights (today - refresh every 5 minutes)
 description: ""
 triggers:
   - trigger: time_pattern
-    minutes: "45"
+    minutes: "/5"
   - trigger: homeassistant
     event: start
 conditions: []

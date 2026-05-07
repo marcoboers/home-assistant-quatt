@@ -1,11 +1,11 @@
-alias: Home Battery Energy Flow (year / month / day - refresh every hour at :50)
+alias: Home Battery Energy Flow (year / month / day - refresh every 5 minutes)
 description: >-
   Refreshes home battery energy flow sensors for four scopes: today (no params),
   current month (year+month), current year (year only), and current day as a
-  specific date (year+month+day). All scopes are fetched every hour at :50.
+  specific date (year+month+day). All scopes are fetched every 5 minutes.
 triggers:
   - trigger: time_pattern
-    minutes: "50"
+    minutes: "/5"
   - trigger: homeassistant
     event: start
 conditions: []

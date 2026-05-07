@@ -125,6 +125,10 @@ This integration supports the **Quatt Home Battery** as a separate device that c
 <table>
   <tr>
     <td align="center">
+      <img src="docs/images/quatt_battery_insights_today.png" width="180"><br>
+      <b>Today (charge state)</b>
+    </td>
+    <td align="center">
       <img src="docs/images/quatt_battery_insights_day.png" width="180"><br>
       <b>Day</b>
     </td>
@@ -194,6 +198,8 @@ Example files are included in this repository:
 - Home battery insights:
   - Python script: [`examples/set_home_battery_insights.py`](examples/set_home_battery_insights.py)
   - Automation (today + specific date): [`examples/automation_home_battery_insights.yaml`](examples/automation_home_battery_insights.yaml)
+  - ApexCharts charts (insights):
+    - Today charge state card: [`examples/apexcharts_home_battery_charge_state_day.yaml`](examples/apexcharts_home_battery_charge_state_day.yaml)
 - Home battery energy flow:
   - Python script: [`examples/set_home_battery_energy_flow.py`](examples/set_home_battery_energy_flow.py)
   - Automation (today / day / month / year): [`examples/automation_home_battery_energy_flow.yaml`](examples/automation_home_battery_energy_flow.yaml)
