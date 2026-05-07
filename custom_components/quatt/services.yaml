@@ -92,3 +92,26 @@ get_home_battery_energy_flow:
           min: 1
           max: 31
           mode: box
+
+get_home_battery_savings:
+  name: Get home battery savings
+  description: Retrieves the home battery savings timeseries and aggregated totals (home battery, solar, imbalance and total savings in cents incl/excl VAT). Scope is chosen by which fields you provide - year + month for a month (daily granularity), year alone for a whole year (monthly granularity). No fields returns the current month.
+  fields:
+    year:
+      name: Year
+      description: Year (e.g. 2026). Required when month is provided.
+      example: 2026
+      selector:
+        number:
+          min: 2020
+          max: 2100
+          mode: box
+    month:
+      name: Month
+      description: Month (1-12). Requires year.
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 12
+          mode: box

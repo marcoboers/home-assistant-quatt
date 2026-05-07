@@ -141,6 +141,16 @@ This integration supports the **Quatt Home Battery** as a separate device that c
       <b>Year</b>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/quatt_battery_savings_month.png" width="180"><br>
+      <b>Savings (month)</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/quatt_battery_savings_year.png" width="180"><br>
+      <b>Savings (year)</b>
+    </td>
+  </tr>
 </table>
 
 ### Key Features
@@ -207,6 +217,12 @@ Example files are included in this repository:
     - Day card: [`examples/apexcharts_home_battery_energy_flow_day.yaml`](examples/apexcharts_home_battery_energy_flow_day.yaml)
     - Month card: [`examples/apexcharts_home_battery_energy_flow_month.yaml`](examples/apexcharts_home_battery_energy_flow_month.yaml)
     - Year card: [`examples/apexcharts_home_battery_energy_flow_year.yaml`](examples/apexcharts_home_battery_energy_flow_year.yaml)
+- Home battery savings:
+  - Python script: [`examples/set_home_battery_savings.py`](examples/set_home_battery_savings.py)
+  - Automation (month / year): [`examples/automation_home_battery_savings.yaml`](examples/automation_home_battery_savings.yaml)
+  - ApexCharts charts (savings):
+    - Month card: [`examples/apexcharts_home_battery_savings_month.yaml`](examples/apexcharts_home_battery_savings_month.yaml)
+    - Year card: [`examples/apexcharts_home_battery_savings_year.yaml`](examples/apexcharts_home_battery_savings_year.yaml)
 
 ## Quatt Dashboard Card (Optional - Beta)
 

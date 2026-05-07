@@ -1,0 +1,68 @@
+alias: Home Battery Savings (year / month - refresh every 15 minutes)
+description: >-
+  Refreshes home battery savings sensors for two scopes: current month
+  (year+month) and current year (year only). The savings endpoint only updates
+  once per day, so a 15-minute polling cadence is more than enough.
+triggers:
+  - trigger: time_pattern
+    minutes: "/15"
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - variables:
+      scopes_to_fetch:
+        - Month
+        - Year
+  - repeat:
+      for_each: "{{ scopes_to_fetch }}"
+      sequence:
+        - variables:
+            scope: "{{ repeat.item }}"
+            fetch_year: "{{ now().year }}"
+            fetch_month: >-
+              {% if scope == 'Month' %}{{ now().month }}{% else
+              %}{{ none }}{% endif %}
+            savings_entity_id: |-
+              {% if scope == 'Month' %}
+                sensor.quatt_home_battery_savings_month
+              {% elif scope == 'Year' %}
+                sensor.quatt_home_battery_savings_year
+              {% endif %}
+            savings_valid: false
+        - alias: Repeat max 3 times or data is valid
+          repeat:
+            until:
+              - condition: template
+                value_template: "{{ repeat.index >= 3 or savings_valid }}"
+            sequence:
+              - action: quatt.get_home_battery_savings
+                metadata: {}
+                data: >-
+                  {% set d = {} %}
+                  {% if fetch_year is not none %}{% set d = dict(d, year=fetch_year) %}{% endif %}
+                  {% if fetch_month is not none %}{% set d = dict(d, month=fetch_month) %}{% endif %}
+                  {{ d }}
+                response_variable: savings_response
+              - variables:
+                  savings_valid: >
+                    {% set json_data = savings_response | default({}, true) %}
+                    {{ json_data | length > 0 and 'error' not in json_data }}
+              - alias: Update sensor when data is valid
+                if:
+                  - condition: template
+                    value_template: "{{ savings_valid }}"
+                then:
+                  - action: python_script.set_home_battery_savings
+                    data:
+                      entity_id: "{{ savings_entity_id }}"
+                      savings: "{{ savings_response | tojson }}"
+                      new_state: "{{ now().isoformat() }}"
+                else:
+                  - delay:
+                      milliseconds: 250
+        - delay:
+            milliseconds: 750
+mode: single
+trace:
+  stored_traces: 10

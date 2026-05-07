@@ -302,6 +302,43 @@ class QuattHomeBatteryApiClient(QuattApiClient):
             return data
         return None
 
+    async def get_savings(
+        self,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, Any] | None:
+        """Fetch the savings timeseries + aggregate for a month or year.
+
+        Endpoints:
+          - month: ``/insights/savings/{YYYY}/{MM}``
+          - year:  ``/insights/savings/{YYYY}``
+
+        Without arguments, the current year + current month is returned.
+        """
+        if not self._auth.is_authenticated or not self._installation_id:
+            return None
+
+        if month is not None and year is None:
+            _LOGGER.error("Savings month argument requires year")
+            return None
+
+        if year is None and month is None:
+            today = datetime.now().astimezone()
+            year, month = today.year, today.month
+
+        path = (
+            f"/me/installation/{self._installation_id}/insights/savings"
+        )
+        if year is not None:
+            path += f"/{year:04d}"
+        if month is not None:
+            path += f"/{month:02d}"
+
+        status, data = await self._auth.request("GET", path)
+        if status == 200 and isinstance(data, dict):
+            return data
+        return None
+
     async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Return merged status + savings data for the coordinator.
 

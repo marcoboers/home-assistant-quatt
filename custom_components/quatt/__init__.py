@@ -265,6 +265,47 @@ def _register_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.ONLY,
         )
 
+    if not hass.services.has_service(DOMAIN, "get_home_battery_savings"):
+
+        async def handle_get_home_battery_savings(
+            call: ServiceCall,
+        ) -> ServiceResponse:
+            """Handle the get_home_battery_savings service call."""
+            year = call.data.get("year")
+            month = call.data.get("month")
+
+            home_battery_coordinator = None
+            for coordinators_dict in hass.data[DOMAIN].values():
+                if not isinstance(coordinators_dict, dict):
+                    continue
+                if coordinators_dict.get("home_battery"):
+                    home_battery_coordinator = coordinators_dict["home_battery"]
+                    break
+
+            if not home_battery_coordinator:
+                LOGGER.error(
+                    "No home battery coordinator available for savings service"
+                )
+                return {
+                    "error": "No home battery configured. Pair a Quatt home battery first."
+                }
+
+            savings_data = await home_battery_coordinator.client.get_savings(
+                year=year,
+                month=month,
+            )
+
+            if savings_data:
+                return savings_data
+            return {"error": "Failed to fetch savings data"}
+
+        hass.services.async_register(
+            DOMAIN,
+            "get_home_battery_savings",
+            handle_get_home_battery_savings,
+            supports_response=SupportsResponse.ONLY,
+        )
+
 
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
