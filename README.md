@@ -126,19 +126,21 @@ This integration supports the **Quatt Home Battery** as a separate device that c
   <tr>
     <td align="center">
       <img src="docs/images/quatt_battery_insights_today.png" width="180"><br>
-      <b>Today (charge state)</b>
+      <b>Insights (today)</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/quatt_battery_energy_flow_day.png" width="180"><br>
+      <b>Energy flow (day)</b>
     </td>
     <td align="center">
-      <img src="docs/images/quatt_battery_insights_day.png" width="180"><br>
-      <b>Day</b>
+      <img src="docs/images/quatt_battery_energy_flow_month.png" width="180"><br>
+      <b>Energy flow (month)</b>
     </td>
     <td align="center">
-      <img src="docs/images/quatt_battery_insights_month.png" width="180"><br>
-      <b>Month</b>
-    </td>
-    <td align="center">
-      <img src="docs/images/quatt_battery_insights_year.png" width="180"><br>
-      <b>Year</b>
+      <img src="docs/images/quatt_battery_energy_flow_year.png" width="180"><br>
+      <b>Energy flow (year)</b>
     </td>
   </tr>
   <tr>
