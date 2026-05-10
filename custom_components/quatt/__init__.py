@@ -87,15 +87,9 @@ async def _get_or_create_auth_client(
 
     auth_store = Store(hass, STORAGE_VERSION, REMOTE_AUTH_STORAGE_KEY)
     stored = await auth_store.async_load() or {}
-    auth_client = QuattRemoteAuthClient(
-        async_get_clientsession(hass), store=auth_store
-    )
-    auth_client.load_tokens(
-        stored.get("id_token"), stored.get("refresh_token")
-    )
-    auth_client.load_profile(
-        stored.get("first_name"), stored.get("last_name")
-    )
+    auth_client = QuattRemoteAuthClient(async_get_clientsession(hass), store=auth_store)
+    auth_client.load_tokens(stored.get("id_token"), stored.get("refresh_token"))
+    auth_client.load_profile(stored.get("first_name"), stored.get("last_name"))
     domain_data[_AUTH_CLIENT_DATA_KEY] = auth_client
     return auth_client
 
@@ -134,9 +128,7 @@ async def async_setup(hass: HomeAssistant, _config):
     return True
 
 
-def _register_services(hass: HomeAssistant) -> None:
-    """Register integration services if not already registered."""
-
+def _register_get_cic_insights_service(hass: HomeAssistant) -> None:
     if not hass.services.has_service(DOMAIN, "get_cic_insights"):
 
         async def handle_get_cic_insights(call: ServiceCall) -> ServiceResponse:
@@ -154,8 +146,7 @@ def _register_services(hass: HomeAssistant) -> None:
                     break
 
             if not remote_coordinator:
-                LOGGER.error(
-                    "No remote coordinator available for insights service")
+                LOGGER.error("No remote coordinator available for insights service")
                 return {
                     "error": "No remote connection available. Please configure remote API access."
                 }
@@ -177,6 +168,8 @@ def _register_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.ONLY,
         )
 
+
+def _register_get_home_battery_insights_service(hass: HomeAssistant) -> None:
     if not hass.services.has_service(DOMAIN, "get_home_battery_insights"):
 
         async def handle_get_home_battery_insights(
@@ -222,6 +215,8 @@ def _register_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.ONLY,
         )
 
+
+def _register_get_home_battery_energy_flow_service(hass: HomeAssistant) -> None:
     if not hass.services.has_service(DOMAIN, "get_home_battery_energy_flow"):
 
         async def handle_get_home_battery_energy_flow(
@@ -265,6 +260,8 @@ def _register_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.ONLY,
         )
 
+
+def _register_get_home_battery_savings_service(hass: HomeAssistant) -> None:
     if not hass.services.has_service(DOMAIN, "get_home_battery_savings"):
 
         async def handle_get_home_battery_savings(
@@ -307,6 +304,14 @@ def _register_services(hass: HomeAssistant) -> None:
         )
 
 
+def _register_services(hass: HomeAssistant) -> None:
+    """Register integration services if not already registered."""
+    _register_get_cic_insights_service(hass)
+    _register_get_home_battery_insights_service(hass)
+    _register_get_home_battery_energy_flow_service(hass)
+    _register_get_home_battery_savings_service(hass)
+
+
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
@@ -339,9 +344,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         home_battery_client = QuattHomeBatteryApiClient(
             session, store=store, auth=auth_client
         )
-        home_battery_client.load_installation_id(
-            stored_data.get("installation_id")
-        )
+        home_battery_client.load_installation_id(stored_data.get("installation_id"))
 
         home_battery_coordinator = QuattHomeBatteryDataUpdateCoordinator(
             hass=hass,
@@ -391,8 +394,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             remote_client = QuattCicRemoteApiClient(
                 cic, session, store=store, auth=auth_client
             )
-            remote_client.load_installation_id(
-                stored_data.get("installation_id"))
+            remote_client.load_installation_id(stored_data.get("installation_id"))
             if stored_data.get("installation_id"):
                 LOGGER.debug("Loaded stored installation id for CIC %s", cic)
 
@@ -482,8 +484,7 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Migrate CONF_POWER_SENSOR from data to options
     # Set the unique_id of the cic
-    LOGGER.debug("Migrating config entry from version '%s'",
-                 config_entry.version)
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
 
     # The old version does not have a unique_id so we get the CIC hostname and set it
     # Return that the migration failed in case the retrieval fails
@@ -505,16 +506,14 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         if (hostname_unique_id is not None) and (len(hostname_unique_id) >= 3):
             # Uppercase the first 3 characters CIC-xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx
             # This enables the correct match on DHCP hostname
-            hostname_unique_id = hostname_unique_id[:3].upper(
-            ) + hostname_unique_id[3:]
+            hostname_unique_id = hostname_unique_id[:3].upper() + hostname_unique_id[3:]
 
             new_data = {**config_entry.data}
             new_options = {**config_entry.options}
 
             if CONF_POWER_SENSOR in new_data:
                 # Move the CONF_POWER_SENSOR to the options
-                new_options[CONF_POWER_SENSOR] = new_data.pop(
-                    CONF_POWER_SENSOR)
+                new_options[CONF_POWER_SENSOR] = new_data.pop(CONF_POWER_SENSOR)
 
             # Update the config entry to version 2
             hass.config_entries.async_update_entry(
@@ -535,23 +534,20 @@ async def _migrate_v2_to_v3(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Remove the generic Heatpump device from the config entry data
     # Sensors are now created for the actual devices present in the system
-    LOGGER.debug("Migrating config entry from version '%s'",
-                 config_entry.version)
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
 
     entity_reg = er.async_get(hass)
     device_reg = dr.async_get(hass)
 
     # Clear the old Heatpump device from the device registry
     # This should only be one device, but we loop through all devices
-    devices = dr.async_entries_for_config_entry(
-        device_reg, config_entry.entry_id)
+    devices = dr.async_entries_for_config_entry(device_reg, config_entry.entry_id)
     for device in devices:
         for entity in er.async_entries_for_device(
             entity_reg, device.id, include_disabled_entities=True
         ):
             if entity.platform == DOMAIN:
-                entity_reg.async_update_entity(
-                    entity.entity_id, device_id=None)
+                entity_reg.async_update_entity(entity.entity_id, device_id=None)
 
         # Remove the empty device
         device_reg.async_remove_device(device.id)
@@ -575,16 +571,14 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     # Child device:           (DOMAIN, f"{hub_id}:{device_identifier}") via hub
 
     # include hub_id in device identifiers and entity unique_ids."
-    LOGGER.debug("Migrating config entry from version '%s'",
-                 config_entry.version)
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
 
     entity_reg = er.async_get(hass)
     device_reg = dr.async_get(hass)
 
     hub_id = config_entry.unique_id
     if not hub_id:
-        LOGGER.error(
-            "Cannot migrate v3->v4: config entry unique_id is missing")
+        LOGGER.error("Cannot migrate v3->v4: config entry unique_id is missing")
         return False
 
     # Get the information about the devices for this config entry
@@ -635,7 +629,7 @@ async def _migrate_v3_to_v4(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             if not entity.unique_id.startswith(config_entry.entry_id):
                 continue
 
-            sensor_key = entity.unique_id[len(config_entry.entry_id):]
+            sensor_key = entity.unique_id[len(config_entry.entry_id) :]
             entity_reg.async_update_entity(
                 entity.entity_id,
                 new_unique_id=f"{hub_id}:{device_identifier}:{sensor_key}",
@@ -654,8 +648,7 @@ async def _migrate_v4_to_v5(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     """Migrate v4 entry to v5 entry."""
 
     # No data changes, just bump the version
-    LOGGER.debug("Migrating config entry from version '%s'",
-                 config_entry.version)
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
 
     # Update the config entry to version 5
     hass.config_entries.async_update_entry(
@@ -670,22 +663,24 @@ async def _migrate_v5_to_v6(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     """Migrate v5 entry to v6 entry."""
 
     # Migrate remote token storage key from entry_id-based to CIC-based
-    LOGGER.debug("Migrating config entry from version '%s'",
-                 config_entry.version)
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
 
     # We require a unique_id (no fallbacks).
     if not config_entry.unique_id:
-        LOGGER.error(
-            "Cannot migrate v5->v6: config entry unique_id is missing")
+        LOGGER.error("Cannot migrate v5->v6: config entry unique_id is missing")
         return False
 
     # Always bump the entry version, even if no remote is configured
     if CONF_REMOTE_CIC in config_entry.data:
         old_store = Store(
-            hass, STORAGE_VERSION, f"{REMOTE_STORAGE_KEY_PREFIX}_{config_entry.entry_id}"
+            hass,
+            STORAGE_VERSION,
+            f"{REMOTE_STORAGE_KEY_PREFIX}_{config_entry.entry_id}",
         )
         new_store = Store(
-            hass, STORAGE_VERSION, f"{REMOTE_STORAGE_KEY_PREFIX}_{config_entry.unique_id}"
+            hass,
+            STORAGE_VERSION,
+            f"{REMOTE_STORAGE_KEY_PREFIX}_{config_entry.unique_id}",
         )
 
         new_data = await new_store.async_load()
@@ -714,12 +709,10 @@ async def _migrate_v6_to_v7(hass: HomeAssistant, config_entry: ConfigEntry) -> b
       - one shared auth store (REMOTE_AUTH_STORAGE_KEY) with id_token/refresh_token
       - per-hub stores holding only installation_id
     """
-    LOGGER.debug("Migrating config entry from version '%s'",
-                 config_entry.version)
+    LOGGER.debug("Migrating config entry from version '%s'", config_entry.version)
 
     if not config_entry.unique_id:
-        LOGGER.error(
-            "Cannot migrate v6->v7: config entry unique_id is missing")
+        LOGGER.error("Cannot migrate v6->v7: config entry unique_id is missing")
         return False
 
     auth_store = Store(hass, STORAGE_VERSION, REMOTE_AUTH_STORAGE_KEY)
