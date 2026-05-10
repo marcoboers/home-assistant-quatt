@@ -1,4 +1,4 @@
-alias: Quatt Insights (multi period - refresh every hour at :15)
+alias: CIC Insights (multi period - refresh every hour at :15)
 description: ""
 triggers:
   - trigger: time_pattern
@@ -37,15 +37,15 @@ actions:
               %}all{% endif %}
             insights_entity_id: |-
               {% if period == 'Day' %}
-                sensor.quatt_insights_day
+                sensor.quatt_cic_insights_day
               {% elif period == 'Week' %}
-                sensor.quatt_insights_week
+                sensor.quatt_cic_insights_week
               {% elif period == 'Month' %}
-                sensor.quatt_insights_month
+                sensor.quatt_cic_insights_month
               {% elif period == 'Year' %}
-                sensor.quatt_insights_year
+                sensor.quatt_cic_insights_year
               {% else %}
-                sensor.quatt_insights_all
+                sensor.quatt_cic_insights_all
               {% endif %}
             insights_valid: false
         - alias: Repeat max 3 times or insights are valid
@@ -55,7 +55,7 @@ actions:
                 condition: template
                 value_template: "{{ repeat.index >= 3 or insights_valid }}"
             sequence:
-              - action: quatt.get_insights
+              - action: quatt.get_cic_insights
                 metadata: {}
                 data:
                   from_date: |
@@ -78,14 +78,14 @@ actions:
                     {% else %}
                       {% set local_from = as_local(from_dt).date() | string %}
                       {{ local_from == (expected_from_date | string) }}
-                    {% endif %}           
-              - alias: Update sensor quatt_insights when data is valid
+                    {% endif %}
+              - alias: Update sensor when data is valid
                 if:
                   - condition: template
                     value_template: "{{ insights_valid }}"
                     alias: Valid data? Sometimes invalid data is returned
                 then:
-                  - action: python_script.set_quatt_insights
+                  - action: python_script.set_cic_insights
                     data:
                       entity_id: "{{ insights_entity_id }}"
                       insights: "{{ insights_response | tojson }}"

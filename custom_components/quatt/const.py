@@ -17,6 +17,12 @@ CONF_POWER_SENSOR = "power_sensor"
 CONF_REMOTE_CIC = "cic"
 CONF_LOCAL_CIC = "ip_address"
 
+# Home battery config keys
+CONF_HOME_BATTERY_SERIAL = "home_battery_serial"
+CONF_HOME_BATTERY_UUID = "home_battery_uuid"
+CONF_HOME_BATTERY_CHECK_CODE = "home_battery_check_code"
+CONF_HOME_BATTERY_QR_URL = "home_battery_qr_url"
+
 # Remote API URLs (from kwatt)
 FIREBASE_INSTALLATIONS_URL = "https://firebaseinstallations.googleapis.com/v1/projects/quatt-production/installations"
 FIREBASE_REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/1074628551428/namespaces/firebase:fetch"
@@ -40,9 +46,21 @@ GOOGLE_FIREBASE_CLIENT = (
     "H4sIAAAAAAAAAKtWykhNLCpJSk0sKVayio7VUSpLLSrOzM9TslIyUqoFAFyivEQfAAAA"
 )
 
-# Storage keys for remote connection
-STORAGE_KEY = "quatt_remote_storage"
+# Remote API storage keys.
+#
+# All remote (mobile API) state is persisted under a single prefix so CIC and
+# battery hubs share the same namespace:
+#   quatt_remote_storage_AUTH       -> shared {id_token, refresh_token}
+#   quatt_remote_storage_CIC-xxx    -> per-CIC   {installation_id}
+#   quatt_remote_storage_BAT-xxx    -> per-battery {installation_id}
+#
+# The suffix is always the entry's unique_id; CIC unique_ids are CIC-xxx
+# hostnames and battery unique_ids are the BAT-xxx access-key UUIDs.
+# Auth tokens live in ONE shared store so concurrent refreshes from different
+# coordinators can't race and invalidate each other's refresh token.
 STORAGE_VERSION = 1
+REMOTE_STORAGE_KEY_PREFIX = "quatt_remote_storage"
+REMOTE_AUTH_STORAGE_KEY = f"{REMOTE_STORAGE_KEY_PREFIX}_AUTH"
 
 # System types
 DUO_HEATPUMP_SYSTEM = "Duo heatpump system"
@@ -58,7 +76,11 @@ DEVICE_HEAT_CHARGER_ID = "heat_charger"
 DEVICE_HEATPUMP_1_ID = "heatpump_1"
 DEVICE_HEATPUMP_2_ID = "heatpump_2"
 DEVICE_THERMOSTAT_ID = "thermostat"
-DEVICE_INSIGHTS_ID = "insights"
+DEVICE_CIC_INSIGHTS_ID = "insights"
+DEVICE_HOME_BATTERY_ID = "home_battery"
+DEVICE_HOME_BATTERY_SAVINGS_ID = "home_battery_savings"
+DEVICE_HOME_BATTERY_INSIGHTS_ID = "home_battery_insights"
+DEVICE_HOME_BATTERY_ENERGY_FLOW_ID = "home_battery_energy_flow"
 
 
 class QuattDeviceKind(StrEnum):
@@ -83,10 +105,30 @@ DEVICE_LIST = [
         "id": DEVICE_HEAT_CHARGER_ID,
         "kind": QuattDeviceKind.DEVICE,
     },
-    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID, "kind": QuattDeviceKind.DEVICE},
-    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID, "kind": QuattDeviceKind.DEVICE},
-    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID, "kind": QuattDeviceKind.DEVICE},
-    {"name": "Insights", "id": DEVICE_INSIGHTS_ID, "kind": QuattDeviceKind.SERVICE},
+    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID,
+        "kind": QuattDeviceKind.DEVICE},
+    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID,
+        "kind": QuattDeviceKind.DEVICE},
+    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID,
+        "kind": QuattDeviceKind.DEVICE},
+    {"name": "Insights", "id": DEVICE_CIC_INSIGHTS_ID,
+        "kind": QuattDeviceKind.SERVICE},
+    {"name": "Home battery", "id": DEVICE_HOME_BATTERY_ID, "kind": QuattDeviceKind.HUB},
+    {
+        "name": "Savings",
+        "id": DEVICE_HOME_BATTERY_SAVINGS_ID,
+        "kind": QuattDeviceKind.SERVICE,
+    },
+    {
+        "name": "Insights",
+        "id": DEVICE_HOME_BATTERY_INSIGHTS_ID,
+        "kind": QuattDeviceKind.SERVICE,
+    },
+    {
+        "name": "Energy flow",
+        "id": DEVICE_HOME_BATTERY_ENERGY_FLOW_ID,
+        "kind": QuattDeviceKind.SERVICE,
+    },
 ]
 
 

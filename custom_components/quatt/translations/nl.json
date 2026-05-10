@@ -2,6 +2,14 @@
     "config": {
         "flow_title": "CIC: {name}",
         "step": {
+            "user": {
+                "title": "Quatt apparaat",
+                "description": "Welk type Quatt apparaat wil je toevoegen?",
+                "menu_options": {
+                    "local": "Warmtepomp (CIC)",
+                    "home_battery": "Thuisbatterij"
+                }
+            },
             "local": {
                 "description": "Stel lokale verbinding in met de Quatt warmtepomp.",
                 "data": {
@@ -13,13 +21,43 @@
                     "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
                 }
             },
-            "pair": {
-                "title": "Koppel met het Quatt apparaat",
-                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk op de knop van je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+            "home_battery": {
+                "title": "Koppel met een Quatt thuisbatterij",
+                "menu_options": {
+                    "home_battery_qr": "QR-code scannen",
+                    "home_battery_manual": "Gegevens handmatig invoeren"
+                }
+            },
+            "home_battery_qr": {
+                "title": "Koppelen via QR-code",
+                "description": "Scan de QR-code op de batterij en plak de URL hieronder.\n\n![Locatie QR-code label thuisbatterij](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_qr_url": "QR-code URL"
+                },
+                "data_description": {
+                    "home_battery_qr_url": "Scan de QR-code en kopieer de link:\n- **iOS**: lang indrukken op de QR-suggestie → Link kopiëren\n- **Android**: Google Lens / camera scan → Kopiëren\n- Elke barcode-app (ZXing, Binary Eye) die de ruwe tekst toont"
+                }
+            },
+            "home_battery_manual": {
+                "title": "Handmatig koppelen",
+                "description": "Voer de **UUID**, het **serienummer** en de **controlecode** in die op het label van de batterij staan.\n\n![Locatie label thuisbatterij](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_uuid": "UUID",
+                    "home_battery_serial": "Serienummer",
+                    "home_battery_check_code": "Controlecode"
+                }
+            },
+            "auth": {
+                "title": "Aanmelden bij de Quatt mobiele API",
+                "description": "Voer je naam in om een anoniem account aan te maken bij de Quatt mobiele API. Deze gegevens worden alleen lokaal in Home Assistant opgeslagen en hergebruikt voor alle Quatt apparaten die je toevoegt.",
                 "data": {
                     "first_name": "Voornaam",
                     "last_name": "Achternaam"
                 }
+            },
+            "pair": {
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Druk op de knop van je CIC apparaat om het koppelen te voltooien.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging."
             },
             "confirm": {
                 "description": "Configuratie starten?"
@@ -29,6 +67,8 @@
             "auth": "Authenticatie mislukt. Controleer de inloggegevens.",
             "cannot_connect": "Verbinding met het Quatt-systeem mislukt. Controleer het IP-adres of het netwerk.",
             "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat.",
+            "home_battery_qr_invalid": "Ongeldige QR-code URL. Zorg dat je de volledige URL van de batterij-QR-code kopieert.",
+            "home_battery_pair_failed": "Koppelen van thuisbatterij mislukt. Controleer de toegangssleutel, het serienummer en de controlecode.",
             "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         },
         "abort": {
@@ -54,13 +94,17 @@
                     "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
                 }
             },
-            "pair": {
-                "title": "Koppel met het Quatt apparaat",
-                "description": "Stel externe verbinding in met de Quatt warmtepomp via de mobiele API.\nVoer je naam in en druk op de knop van je CIC apparaat.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging.",
+            "auth": {
+                "title": "Aanmelden bij de Quatt mobiele API",
+                "description": "Voer je naam in om een anoniem account aan te maken bij de Quatt mobiele API. Deze gegevens worden alleen lokaal in Home Assistant opgeslagen en hergebruikt voor alle Quatt apparaten die je toevoegt.",
                 "data": {
                     "first_name": "Voornaam",
                     "last_name": "Achternaam"
                 }
+            },
+            "pair": {
+                "title": "Koppel met het Quatt apparaat",
+                "description": "Druk op de knop van je CIC apparaat om het koppelen te voltooien.\n\n> **{cic}**\n\n![Locatie koppelknop](/quatt_static/pair.png)\nVoltooi het koppelproces binnen 60 seconden.\n\nDruk op 'Verzenden' om het koppelproces te starten en wacht op bevestiging."
             },
             "confirm": {
                 "description": "Configuratie starten?"

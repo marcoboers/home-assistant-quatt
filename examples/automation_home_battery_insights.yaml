@@ -1,0 +1,81 @@
+# Automation 1: refresh today's home battery insights every 5 minutes
+alias: Home Battery Insights (today - refresh every 5 minutes)
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: "/5"
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - alias: Repeat max 3 times or data is valid
+    repeat:
+      until:
+        - condition: template
+          value_template: "{{ repeat.index >= 3 or insights_valid | default(false) }}"
+      sequence:
+        - action: quatt.get_home_battery_insights
+          metadata: {}
+          data: {}
+          response_variable: insights_response
+        - variables:
+            insights_valid: >
+              {% set json_data = insights_response | default({}, true) %}
+              {{ json_data | length > 0 and 'error' not in json_data }}
+        - alias: Update sensor when data is valid
+          if:
+            - condition: template
+              value_template: "{{ insights_valid }}"
+          then:
+            - action: python_script.set_home_battery_insights
+              data:
+                entity_id: sensor.quatt_home_battery_insights_today
+                insights: "{{ insights_response | tojson }}"
+                new_state: "{{ now().isoformat() }}"
+          else:
+            - delay:
+                milliseconds: 250
+mode: single
+trace:
+  stored_traces: 10
+
+---
+
+# Automation 2: fetch home battery insights for a specific date
+# Trigger via Developer Tools > Events with event_type: quatt_fetch_home_battery_insights
+# and event_data: { year: 2026, month: 4, day: 15 }
+alias: Home Battery Insights (specific date - on demand)
+description: >-
+  Fetches home battery insights for a specific date. Fire the event
+  quatt_fetch_home_battery_insights with data { year, month, day } to trigger.
+triggers:
+  - trigger: event
+    event_type: quatt_fetch_home_battery_insights
+conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.event.data.year is defined
+         and trigger.event.data.month is defined
+         and trigger.event.data.day is defined }}
+actions:
+  - variables:
+      fetch_year: "{{ trigger.event.data.year | int }}"
+      fetch_month: "{{ trigger.event.data.month | int }}"
+      fetch_day: "{{ trigger.event.data.day | int }}"
+  - action: quatt.get_home_battery_insights
+    data:
+      year: "{{ fetch_year }}"
+      month: "{{ fetch_month }}"
+      day: "{{ fetch_day }}"
+    response_variable: insights_response
+  - action: python_script.set_home_battery_insights
+    data:
+      entity_id: >-
+        sensor.quatt_home_battery_insights_{{ fetch_year }}_{{
+        '%02d' | format(fetch_month) }}_{{ '%02d' | format(fetch_day) }}
+      insights: "{{ insights_response | tojson }}"
+      new_state: "{{ now().isoformat() }}"
+mode: queued
+max: 5
+trace:
+  stored_traces: 10

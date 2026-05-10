@@ -1,0 +1,79 @@
+alias: Home Battery Energy Flow (year / month / day - refresh every 5 minutes)
+description: >-
+  Refreshes home battery energy flow sensors for four scopes: today (no params),
+  current month (year+month), current year (year only), and current day as a
+  specific date (year+month+day). All scopes are fetched every 5 minutes.
+triggers:
+  - trigger: time_pattern
+    minutes: "/5"
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - variables:
+      scopes_to_fetch:
+        - Today
+        - Day
+        - Month
+        - Year
+  - repeat:
+      for_each: "{{ scopes_to_fetch }}"
+      sequence:
+        - variables:
+            scope: "{{ repeat.item }}"
+            fetch_year: >-
+              {% if scope in ['Day', 'Month', 'Year'] %}{{ now().year }}{% else
+              %}{{ none }}{% endif %}
+            fetch_month: >-
+              {% if scope in ['Day', 'Month'] %}{{ now().month }}{% else
+              %}{{ none }}{% endif %}
+            fetch_day: >-
+              {% if scope == 'Day' %}{{ now().day }}{% else %}{{ none }}{% endif %}
+            flow_entity_id: |-
+              {% if scope == 'Today' %}
+                sensor.quatt_home_battery_energy_flow_today
+              {% elif scope == 'Day' %}
+                sensor.quatt_home_battery_energy_flow_day
+              {% elif scope == 'Month' %}
+                sensor.quatt_home_battery_energy_flow_month
+              {% elif scope == 'Year' %}
+                sensor.quatt_home_battery_energy_flow_year
+              {% endif %}
+            flow_valid: false
+        - alias: Repeat max 3 times or data is valid
+          repeat:
+            until:
+              - condition: template
+                value_template: "{{ repeat.index >= 3 or flow_valid }}"
+            sequence:
+              - action: quatt.get_home_battery_energy_flow
+                metadata: {}
+                data: >-
+                  {% set d = {} %}
+                  {% if fetch_year is not none %}{% set d = dict(d, year=fetch_year) %}{% endif %}
+                  {% if fetch_month is not none %}{% set d = dict(d, month=fetch_month) %}{% endif %}
+                  {% if fetch_day is not none %}{% set d = dict(d, day=fetch_day) %}{% endif %}
+                  {{ d }}
+                response_variable: flow_response
+              - variables:
+                  flow_valid: >
+                    {% set json_data = flow_response | default({}, true) %}
+                    {{ json_data | length > 0 and 'error' not in json_data }}
+              - alias: Update sensor when data is valid
+                if:
+                  - condition: template
+                    value_template: "{{ flow_valid }}"
+                then:
+                  - action: python_script.set_home_battery_energy_flow
+                    data:
+                      entity_id: "{{ flow_entity_id }}"
+                      energy_flow: "{{ flow_response | tojson }}"
+                      new_state: "{{ now().isoformat() }}"
+                else:
+                  - delay:
+                      milliseconds: 250
+        - delay:
+            milliseconds: 750
+mode: single
+trace:
+  stored_traces: 10

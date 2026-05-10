@@ -1,4 +1,4 @@
-"""Remote DataUpdateCoordinator for Quatt integration."""
+"""Remote (mobile API) DataUpdateCoordinator for the Quatt CIC (heatpump)."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 
 from .const import LOGGER
-from .coordinator import QuattDataUpdateCoordinator
+from .coordinator import QuattCicDataUpdateCoordinator
 
 
-class QuattRemoteDataUpdateCoordinator(QuattDataUpdateCoordinator):
-    """Class to manage fetching data from the Remote API."""
+class QuattCicRemoteDataUpdateCoordinator(QuattCicDataUpdateCoordinator):
+    """Class to manage fetching CIC data from the mobile (remote) API."""
 
     config_entry: ConfigEntry
 

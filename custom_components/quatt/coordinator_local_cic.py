@@ -1,4 +1,4 @@
-"""Local DataUpdateCoordinator for Quatt integration."""
+"""Local (HTTP) DataUpdateCoordinator for the Quatt CIC (heatpump)."""
 
 from __future__ import annotations
 
@@ -17,12 +17,12 @@ from .const import (
     GasTariffType,
     SupervisoryControlMode,
 )
-from .coordinator import QuattDataUpdateCoordinator
+from .coordinator import QuattCicDataUpdateCoordinator
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class QuattLocalDataUpdateCoordinator(QuattDataUpdateCoordinator):
-    """Class to manage fetching data from the local API."""
+class QuattCicLocalDataUpdateCoordinator(QuattCicDataUpdateCoordinator):
+    """Class to manage fetching CIC data from the local HTTP API."""
 
     config_entry: ConfigEntry
 

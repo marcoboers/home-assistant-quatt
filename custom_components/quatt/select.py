@@ -70,18 +70,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the select platform."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
-    local_coordinator: QuattDataUpdateCoordinator = coordinators["local"]
-    remote_coordinator: QuattDataUpdateCoordinator = coordinators["remote"]
+    local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
 
     selects: list[QuattSelect] = []
-    selects += await async_setup_entities(
-        hass=hass,
-        coordinator=local_coordinator,
-        entry=entry,
-        remote=False,
-        entity_descriptions=SELECTS,
-        entity_domain=SELECT_DOMAIN,
-    )
+    if local_coordinator is not None:
+        selects += await async_setup_entities(
+            hass=hass,
+            coordinator=local_coordinator,
+            entry=entry,
+            remote=False,
+            entity_descriptions=SELECTS,
+            entity_domain=SELECT_DOMAIN,
+        )
 
     if remote_coordinator:
         selects += await async_setup_entities(

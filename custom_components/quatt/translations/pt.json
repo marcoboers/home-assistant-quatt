@@ -2,6 +2,14 @@
     "config": {
         "flow_title": "CIC: {name}",
         "step": {
+            "user": {
+                "title": "Dispositivo Quatt",
+                "description": "Que tipo de dispositivo Quatt pretende adicionar?",
+                "menu_options": {
+                    "local": "Bomba de calor (CIC)",
+                    "home_battery": "Bateria doméstica"
+                }
+            },
             "local": {
                 "description": "Configurar ligação local à bomba de calor Quatt.",
                 "data": {
@@ -13,19 +21,49 @@
                     "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
                 }
             },
+            "home_battery": {
+                "title": "Emparelhar com uma bateria doméstica Quatt",
+                "menu_options": {
+                    "home_battery_qr": "Digitalizar código QR",
+                    "home_battery_manual": "Introduzir detalhes manualmente"
+                }
+            },
+            "home_battery_qr": {
+                "title": "Emparelhar via código QR",
+                "description": "Digitalize o código QR na bateria e cole o URL abaixo.\n\n![Localização da etiqueta do código QR da bateria](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_qr_url": "URL do código QR"
+                },
+                "data_description": {
+                    "home_battery_qr_url": "Digitalize o código QR e copie o link:\n- **iOS**: prima longamente a sugestão QR → Copiar Link\n- **Android**: Google Lens / câmara → Copiar\n- Qualquer aplicação de código de barras (ZXing, Binary Eye) que mostre o texto em bruto"
+                }
+            },
+            "home_battery_manual": {
+                "title": "Emparelhar manualmente",
+                "description": "Introduza o **UUID**, o **número de série** e o **código de verificação** indicados na etiqueta da bateria.\n\n![Localização da etiqueta de emparelhamento da bateria](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_uuid": "UUID",
+                    "home_battery_serial": "Número de série",
+                    "home_battery_check_code": "Código de verificação"
+                }
+            },
             "add_remote": {
                 "description": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor.",
                 "data": {
                     "add_remote": "Ativar configuração de ligação remota"
                 }
             },
-            "pair": {
-                "title": "Emparelhar com o dispositivo Quatt",
-                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduza o seu nome e pressione o botão do seu dispositivo CIC.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+            "auth": {
+                "title": "Iniciar sessão na API móvel Quatt",
+                "description": "Introduza o seu nome para criar uma conta anónima na API móvel Quatt. Estes dados apenas são guardados localmente no Home Assistant e reutilizados para todos os dispositivos Quatt que adicionar.",
                 "data": {
                     "first_name": "Primeiro nome",
                     "last_name": "Apelido"
                 }
+            },
+            "pair": {
+                "title": "Emparelhar com o dispositivo Quatt",
+                "description": "Pressione o botão do seu dispositivo CIC para concluir o emparelhamento.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação."
             },
             "confirm": {
                 "description": "Deseja iniciar a configuração?"
@@ -35,6 +73,8 @@
             "auth": "Falha na autenticação. Verifique as suas credenciais.",
             "cannot_connect": "Falha ao conectar ao sistema Quatt. Verifique o endereço IP ou a rede.",
             "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos.",
+            "home_battery_qr_invalid": "URL do código QR inválido. Certifique-se de copiar o URL completo do código QR da bateria.",
+            "home_battery_pair_failed": "Falha no emparelhamento da bateria doméstica. Verifique a chave de acesso, o número de série e o código de verificação.",
             "unknown": "Ocorreu um erro inesperado. Tente novamente."
         },
         "abort": {
@@ -60,13 +100,17 @@
                     "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
                 }
             },
-            "pair": {
-                "title": "Emparelhar com o dispositivo Quatt",
-                "description": "Configurar ligação remota à bomba de calor Quatt através da API móvel.\nIntroduza o seu nome e pressione o botão do seu dispositivo CIC.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação.",
+            "auth": {
+                "title": "Iniciar sessão na API móvel Quatt",
+                "description": "Introduza o seu nome para criar uma conta anónima na API móvel Quatt. Estes dados apenas são guardados localmente no Home Assistant e reutilizados para todos os dispositivos Quatt que adicionar.",
                 "data": {
                     "first_name": "Primeiro nome",
                     "last_name": "Apelido"
                 }
+            },
+            "pair": {
+                "title": "Emparelhar com o dispositivo Quatt",
+                "description": "Pressione o botão do seu dispositivo CIC para concluir o emparelhamento.\n\n> **{cic}**\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\nConcluir o emparelhamento em 60 segundos.\n\nPremir 'Enviar' para iniciar o processo de emparelhamento e aguardar confirmação."
             },
             "confirm": {
                 "description": "Deseja iniciar a configuração?"

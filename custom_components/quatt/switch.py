@@ -65,18 +65,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the switch platform."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
-    local_coordinator: QuattDataUpdateCoordinator = coordinators["local"]
-    remote_coordinator: QuattDataUpdateCoordinator = coordinators["remote"]
+    local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
 
     switches: list[QuattSwitch] = []
-    switches += await async_setup_entities(
-        hass=hass,
-        coordinator=local_coordinator,
-        entry=entry,
-        remote=False,
-        entity_descriptions=SWITCHES,
-        entity_domain=SWITCH_DOMAIN,
-    )
+    if local_coordinator is not None:
+        switches += await async_setup_entities(
+            hass=hass,
+            coordinator=local_coordinator,
+            entry=entry,
+            remote=False,
+            entity_descriptions=SWITCHES,
+            entity_domain=SWITCH_DOMAIN,
+        )
 
     if remote_coordinator:
         switches += await async_setup_entities(

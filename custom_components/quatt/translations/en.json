@@ -2,6 +2,14 @@
     "config": {
         "flow_title": "CIC: {name}",
         "step": {
+            "user": {
+                "title": "Quatt device",
+                "description": "What kind of Quatt device do you want to add?",
+                "menu_options": {
+                    "local": "Heatpump (CIC)",
+                    "home_battery": "Home battery"
+                }
+            },
             "local": {
                 "description": "Set up local connection to the Quatt heatpump.",
                 "data": {
@@ -13,13 +21,43 @@
                     "add_remote": "Add remote connectivity through the Quatt mobile API to retrieve additional heatpump data."
                 }
             },
-            "pair": {
-                "title": "Pair with the Quatt device",
-                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nPlease enter your name and press the button on the CIC device.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+            "home_battery": {
+                "title": "Pair with a Quatt home battery",
+                "menu_options": {
+                    "home_battery_qr": "Scan QR code",
+                    "home_battery_manual": "Enter details manually"
+                }
+            },
+            "home_battery_qr": {
+                "title": "Pair via QR code",
+                "description": "Scan the QR code on the battery and paste the URL below.\n\n![Battery QR code label location](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_qr_url": "QR code URL"
+                },
+                "data_description": {
+                    "home_battery_qr_url": "Scan the QR code and copy the link:\n- **iOS**: long-press the QR suggestion → Copy Link\n- **Android**: Google Lens / camera scan → Copy\n- Any barcode app (ZXing, Binary Eye) that shows the raw text"
+                }
+            },
+            "home_battery_manual": {
+                "title": "Pair manually",
+                "description": "Enter the **UUID**, **serial number** and **check code** found on the battery label.\n\n![Battery pairing label location](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_uuid": "UUID",
+                    "home_battery_serial": "Serial number",
+                    "home_battery_check_code": "Check code"
+                }
+            },
+            "auth": {
+                "title": "Sign in to the Quatt mobile API",
+                "description": "Enter your name to create an anonymous account with the Quatt mobile API. These details are only stored locally in Home Assistant and reused for all Quatt devices you add.",
                 "data": {
                     "first_name": "First name",
                     "last_name": "Last name"
                 }
+            },
+            "pair": {
+                "title": "Pair with the Quatt device",
+                "description": "Press the button on your CIC device to complete pairing.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation."
             },
             "confirm": {
                 "description": "Press Submit to confirm setup."
@@ -29,6 +67,8 @@
             "auth": "Authentication failed. Please check your credentials.",
             "cannot_connect": "Cannot connect to your local CIC. Check the IP address.",
             "pairing_timeout": "Pairing timeout. Please try again and press the button on the CIC device within 60 seconds.",
+            "home_battery_qr_invalid": "Invalid QR code URL. Make sure to copy the full URL from the battery QR code.",
+            "home_battery_pair_failed": "Home battery pairing failed. Please check the access key, serial number and check code.",
             "unknown": "An unexpected error occurred. Please try again."
         },
         "abort": {
@@ -60,13 +100,17 @@
                     "cic": "CIC ID"
                 }
             },
-            "pair": {
-                "title": "Pair with the Quatt device",
-                "description": "Set up remote connection to the Quatt heatpump via the mobile API.\nPlease enter your name and press the button on the CIC device.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation.",
+            "auth": {
+                "title": "Sign in to the Quatt mobile API",
+                "description": "Enter your name to create an anonymous account with the Quatt mobile API. These details are only stored locally in Home Assistant and reused for all Quatt devices you add.",
                 "data": {
                     "first_name": "First name",
                     "last_name": "Last name"
                 }
+            },
+            "pair": {
+                "title": "Pair with the Quatt device",
+                "description": "Press the button on your CIC device to complete pairing.\n\n> **{cic}**\n\n![Pairing button location](/quatt_static/pair.png)\nComplete pairing within 60 seconds.\n\nPress 'Submit' to start the pairing process and wait for confirmation."
             },
             "confirm": {
                 "description": "Press Submit to confirm setup."

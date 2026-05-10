@@ -9,20 +9,25 @@ import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 
 from .const import DEVICE_LIST, DOMAIN, QuattDeviceKind
-from .coordinator import QuattDataUpdateCoordinator
+from .coordinator import QuattCicDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entities(
     hass: HomeAssistant,
-    coordinator: QuattDataUpdateCoordinator,
+    coordinator: QuattCicDataUpdateCoordinator,
     entry,
     remote: bool,
     entity_descriptions: dict[str, list],
     entity_domain: str,
 ):
-    """Set up the binary_sensor platform."""
+    """Set up CIC entities on the given platform.
+
+    Only CIC coordinators are accepted because this helper uses the CIC
+    feature-flag methods (``heatpump_1_active``, ``all_electric_active``, ...)
+    to decide which entities apply to the installation.
+    """
     registry = er.async_get(hass)
 
     # Cache the active states

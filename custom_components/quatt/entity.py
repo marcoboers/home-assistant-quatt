@@ -13,7 +13,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.components.number import NumberEntity, NumberEntityDescription
+from homeassistant.components.number import (
+    DEFAULT_MAX_VALUE,
+    DEFAULT_MIN_VALUE,
+    DEFAULT_STEP,
+    NumberEntity,
+    NumberEntityDescription,
+)
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -26,7 +32,8 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
-from .api_remote import QuattRemoteApiClient
+from .api_remote_cic import QuattCicRemoteApiClient
+from .api_remote_home_battery import QuattHomeBatteryApiClient
 from .const import (
     ALL_ELECTRIC_SYSTEM,
     ATTRIBUTION,
@@ -37,7 +44,8 @@ from .const import (
     QuattDeviceKind,
 )
 from .coordinator import QuattDataUpdateCoordinator
-from .coordinator_remote import QuattRemoteDataUpdateCoordinator
+from .coordinator_home_battery import QuattHomeBatteryDataUpdateCoordinator
+from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -209,7 +217,7 @@ class QuattSelect(QuattEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         # Only remote coordinator supports updating settings
-        if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
+        if not isinstance(self.coordinator, QuattCicRemoteDataUpdateCoordinator):
             _LOGGER.error(
                 "Cannot update %s: only available via remote API",
                 self.entity_description.key,
@@ -242,7 +250,7 @@ class QuattSoundSelect(QuattSelect):
         """Perform paired day/night sound level update."""
 
         remote_client = self.coordinator.client
-        if not isinstance(remote_client, QuattRemoteApiClient):
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
             _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
             return False
 
@@ -328,7 +336,7 @@ class QuattSwitch(QuattEntity, SwitchEntity):
     async def _async_set_state(self, state: bool) -> None:
         """Set the switch state."""
         # Only remote coordinator supports updating settings
-        if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
+        if not isinstance(self.coordinator, QuattCicRemoteDataUpdateCoordinator):
             _LOGGER.error(
                 "Cannot update %s: only available via remote API",
                 self.entity_description.key,
@@ -360,7 +368,7 @@ class QuattSettingSwitch(QuattSwitch):
     async def _perform_api_update(self, state: bool) -> bool:
         """Perform boolean setting update."""
         remote_client = self.coordinator.client
-        if not isinstance(remote_client, QuattRemoteApiClient):
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
             _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
             return False
 
@@ -448,7 +456,7 @@ class QuattNumber(QuattEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set the new value."""
         # Only remote coordinator supports updating settings
-        if not isinstance(self.coordinator, QuattRemoteDataUpdateCoordinator):
+        if not isinstance(self.coordinator, QuattCicRemoteDataUpdateCoordinator):
             _LOGGER.error(
                 "Cannot update %s: only available via remote API",
                 self.entity_description.key,
@@ -474,13 +482,84 @@ class QuattNumber(QuattEntity, NumberEntity):
         await self.coordinator.async_request_refresh()
 
 
+class QuattHomeBatterySolarCapacityNumber(QuattNumber):
+    """Number entity for the home battery installation's ``solarCapacitykWp``.
+
+    The value is a flat scalar on the installation record (not wrapped in
+    ``{value,minValue,maxValue,increment}``), so min/max/step come from the
+    entity description instead of the coordinator data.
+    """
+
+    @property
+    def native_value(self) -> float | None:
+        """Read the scalar value directly from the coordinator data."""
+        return self.coordinator.get_value(self.entity_description.key)
+
+    @property
+    def native_min_value(self) -> float:
+        """Use the entity description's min value, else HA's default."""
+        value = self.entity_description.native_min_value
+        return value if value is not None else DEFAULT_MIN_VALUE
+
+    @property
+    def native_max_value(self) -> float:
+        """Use the entity description's max value, else HA's default."""
+        value = self.entity_description.native_max_value
+        return value if value is not None else DEFAULT_MAX_VALUE
+
+    @property
+    def native_step(self) -> float | None:
+        """Use the entity description's step, else HA's default."""
+        value = self.entity_description.native_step
+        return value if value is not None else DEFAULT_STEP
+
+    async def _perform_api_update(self, value: float) -> bool:
+        """Send the PATCH to the home battery installation endpoint."""
+        client = self.coordinator.client
+        if not isinstance(client, QuattHomeBatteryApiClient):
+            _LOGGER.error(
+                "Cannot update %s: home battery client required",
+                self.entity_description.key,
+            )
+            return False
+        return await client.update_solar_capacity(value)
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the new value via the home battery coordinator."""
+        if not isinstance(
+            self.coordinator, QuattHomeBatteryDataUpdateCoordinator
+        ):
+            _LOGGER.error(
+                "Cannot update %s: home battery coordinator required",
+                self.entity_description.key,
+            )
+            raise NotImplementedError(
+                f"Setting {self.entity_description.key} requires a home battery hub"
+            )
+
+        try:
+            success = await self._perform_api_update(value)
+        except Exception as err:
+            _LOGGER.exception("Error updating %s", self.entity_description.key)
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            ) from err
+
+        if not success:
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            )
+
+        await self.coordinator.async_request_refresh()
+
+
 class QuattSettingNumber(QuattNumber):
     """Number entity for Quatt numeric settings stored as {value, minValue, maxValue, increment}."""
 
     async def _perform_api_update(self, value: float) -> bool:
         """Perform numeric setting update."""
         remote_client = self.coordinator.client
-        if not isinstance(remote_client, QuattRemoteApiClient):
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
             _LOGGER.error(
                 "Cannot update %s: remote client required", self.entity_description.key
             )

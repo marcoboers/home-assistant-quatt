@@ -44,11 +44,11 @@ apex_config:
           const now = Date.now();
           const x = w?.globals?.seriesX?.[seriesIndex]?.[dataPointIndex];
           if (typeof x === 'number' && x > now) return '';
-          
+
           return Number(value).toFixed(2) + ' kWh';
-        }   
+        }
 series:
-  - entity: sensor.quatt_insights_all
+  - entity: sensor.quatt_cic_insights_all
     name: Verbruikte elektriciteit
     type: column
     yaxis_id: energy
@@ -79,7 +79,7 @@ series:
         const kwh = (p.hpElectric || 0) / 1000;
         return [ts, Number(kwh.toFixed(2))];
       });
-  - entity: sensor.quatt_insights_all
+  - entity: sensor.quatt_cic_insights_all
     name: Warmte
     type: column
     yaxis_id: energy
@@ -113,7 +113,7 @@ series:
         );
         return [ts, Number(heat.toFixed(2))];
       });
-  - entity: sensor.quatt_insights_all
+  - entity: sensor.quatt_cic_insights_all
     name: CV-ketel
     type: column
     yaxis_id: energy
@@ -144,7 +144,7 @@ series:
         const kwh = (p.boilerHeat || 0) / 1000;
         return [ts, Number(kwh.toFixed(2))];
       });
-  - entity: sensor.quatt_insights_all
+  - entity: sensor.quatt_cic_insights_all
     name: gemiddelde COP
     yaxis_id: energy
     color: "#4faba8"
@@ -165,8 +165,8 @@ series:
       }
 
       const cop = data.averageCOP || 0;
-      return [[Date.now(), cop]];      
-  - entity: sensor.quatt_insights_all
+      return [[Date.now(), cop]];
+  - entity: sensor.quatt_cic_insights_all
     name: warmte door Quatt
     unit: kWh
     yaxis_id: energy
@@ -188,8 +188,8 @@ series:
       }
 
       const kwh = (data.totalHpHeat || 0) / 1000;
-      return [[Date.now(), kwh]];     
-  - entity: sensor.quatt_insights_all
+      return [[Date.now(), kwh]];
+  - entity: sensor.quatt_cic_insights_all
     name: gebruikte elektriciteit
     unit: kWh
     yaxis_id: energy
@@ -211,8 +211,8 @@ series:
       }
 
       const kwh = (data.totalHpElectric || 0) / 1000;
-      return [[Date.now(), kwh]];     
-  - entity: sensor.quatt_insights_all
+      return [[Date.now(), kwh]];
+  - entity: sensor.quatt_cic_insights_all
     name: cv-ketel
     unit: kWh
     yaxis_id: energy
@@ -234,10 +234,10 @@ series:
       }
 
       const kwh = (data.totalBoilerHeat || 0) / 1000;
-      return [[Date.now(), kwh]];      
-  - entity: sensor.quatt_insights_all
+      return [[Date.now(), kwh]];
+  - entity: sensor.quatt_cic_insights_all
     name: geschat gasverbruik
-    unit: m³
+    unit: mï¿½
     yaxis_id: energy
     color: "#ed7344"
     show:

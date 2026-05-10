@@ -1,4 +1,20 @@
-"""Base DataUpdateCoordinator for Quatt integration."""
+"""Base DataUpdateCoordinators for the Quatt integration.
+
+Two levels are provided:
+
+* :class:`QuattDataUpdateCoordinator` - product-neutral abstract base. Only
+  defines shared plumbing (``client``, ``_async_update_data``) and the
+  :meth:`get_value` dot-notation lookup. Suitable for any Quatt product
+  (CIC, home battery, future chill, ...).
+
+* :class:`QuattCicDataUpdateCoordinator` - CIC-specific extension that adds
+  feature-flag helpers (heatpump 1/2 active, all-electric active, boiler
+  OpenTherm). Both the local-API and remote-API CIC coordinators inherit
+  from this.
+
+Non-CIC coordinators should inherit from :class:`QuattDataUpdateCoordinator`
+directly and do **not** need to implement the CIC helpers.
+"""
 
 from abc import ABC, abstractmethod
 from datetime import timedelta
@@ -13,7 +29,7 @@ from .const import CONF_POWER_SENSOR, DOMAIN, LOGGER
 
 
 class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
-    """Abstract base class for Quatt data update coordinators."""
+    """Product-neutral abstract base class for Quatt data update coordinators."""
 
     def __init__(
         self,
@@ -60,6 +76,15 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
         """
 
         raise NotImplementedError
+
+
+class QuattCicDataUpdateCoordinator(QuattDataUpdateCoordinator, ABC):
+    """Abstract base class for CIC (heatpump) data update coordinators.
+
+    Adds the feature-flag helpers used by :func:`entity_setup.async_setup_entities`
+    to decide which CIC entities apply for a given installation. Non-CIC
+    products (home battery, chill) must not inherit from this class.
+    """
 
     @abstractmethod
     def heatpump_1_active(self) -> bool:

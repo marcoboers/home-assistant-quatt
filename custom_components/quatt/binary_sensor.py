@@ -19,8 +19,10 @@ from .const import (
     DEVICE_HEAT_CHARGER_ID,
     DEVICE_HEATPUMP_1_ID,
     DEVICE_HEATPUMP_2_ID,
+    DEVICE_HOME_BATTERY_ID,
     DEVICE_THERMOSTAT_ID,
     DOMAIN,
+    QuattDeviceKind,
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
@@ -344,6 +346,17 @@ BINARY_SENSORS = {
     DEVICE_HEAT_CHARGER_ID: [],
 }
 
+HOME_BATTERY_BINARY_SENSORS: list[QuattBinarySensorEntityDescription] = [
+    QuattBinarySensorEntityDescription(
+        key="connected",
+        name="Connected",
+        icon="mdi:connection",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+]
+
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -351,18 +364,23 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the binary_sensor platform."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
-    local_coordinator: QuattDataUpdateCoordinator = coordinators["local"]
-    remote_coordinator: QuattDataUpdateCoordinator = coordinators["remote"]
+    local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    home_battery_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
+        "home_battery"
+    )
 
     sensors: list[QuattBinarySensor] = []
-    sensors += await async_setup_entities(
-        hass=hass,
-        coordinator=local_coordinator,
-        entry=entry,
-        remote=False,
-        entity_descriptions=BINARY_SENSORS,
-        entity_domain=BINARY_SENSOR_DOMAIN,
-    )
+
+    if local_coordinator is not None:
+        sensors += await async_setup_entities(
+            hass=hass,
+            coordinator=local_coordinator,
+            entry=entry,
+            remote=False,
+            entity_descriptions=BINARY_SENSORS,
+            entity_domain=BINARY_SENSOR_DOMAIN,
+        )
 
     if remote_coordinator:
         sensors += await async_setup_entities(
@@ -373,5 +391,18 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
             entity_descriptions=BINARY_SENSORS,
             entity_domain=BINARY_SENSOR_DOMAIN,
         )
+
+    if home_battery_coordinator is not None:
+        for desc in HOME_BATTERY_BINARY_SENSORS:
+            sensors.append(
+                QuattBinarySensor(
+                    device_name="Home battery",
+                    device_id=DEVICE_HOME_BATTERY_ID,
+                    sensor_key=desc.key,
+                    coordinator=home_battery_coordinator,
+                    entity_description=desc,
+                    device_kind=QuattDeviceKind.HUB,
+                )
+            )
 
     async_add_devices(sensors)

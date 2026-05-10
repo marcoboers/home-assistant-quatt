@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+from urllib.parse import urlparse
 
 import voluptuous as vol
 
@@ -33,9 +34,14 @@ from .api import (
     QuattApiClientCommunicationError,
     QuattApiClientError,
 )
-from .api_local import QuattLocalApiClient
-from .api_remote import QuattRemoteApiClient
+from .api_local_cic import QuattCicLocalApiClient
+from .api_remote_cic import QuattCicRemoteApiClient
+from .api_remote_home_battery import QuattHomeBatteryApiClient
 from .const import (
+    CONF_HOME_BATTERY_CHECK_CODE,
+    CONF_HOME_BATTERY_QR_URL,
+    CONF_HOME_BATTERY_SERIAL,
+    CONF_HOME_BATTERY_UUID,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     CONF_REMOTE_CIC,
@@ -48,12 +54,16 @@ from .const import (
     REMOTE_CONF_SCAN_INTERVAL,
     REMOTE_MAX_SCAN_INTERVAL,
     REMOTE_MIN_SCAN_INTERVAL,
-    STORAGE_KEY,
+    REMOTE_STORAGE_KEY_PREFIX,
     STORAGE_VERSION,
 )
 
 CONF_FIRST_NAME = "first_name"
 CONF_LAST_NAME = "last_name"
+
+# After the shared auth step succeeds, route to one of these follow-up steps.
+_AFTER_AUTH_PAIR_CIC = "pair"
+_AFTER_AUTH_HOME_BATTERY = "home_battery_pair"
 
 
 async def _async_register_static_resources(hass: HomeAssistant) -> None:
@@ -78,31 +88,139 @@ async def _async_register_static_resources(hass: HomeAssistant) -> None:
     hass.data[f"_{DOMAIN}_static_registered"] = True
 
 
+async def _async_resolve_default_names(flow) -> tuple[str, str]:
+    """Pick defaults for the first/last-name form.
+
+    Prefers previously stored names on the shared auth client, falls back to
+    the current Home Assistant user's display name.
+    """
+    # Local import to avoid a circular import at module load time.
+    from . import _get_or_create_auth_client  # noqa: PLC0415
+
+    auth = await _get_or_create_auth_client(flow.hass)
+    if auth.first_name or auth.last_name:
+        return auth.first_name or "", auth.last_name or ""
+
+    user_id = flow.context.get("user_id")
+    if user_id:
+        user = await flow.hass.auth.async_get_user(user_id)
+        if user and user.name:
+            parts = user.name.split(" ", 1)
+            return (
+                parts[0] if len(parts) > 0 else "",
+                parts[1] if len(parts) > 1 else "",
+            )
+
+    return "", ""
+
+
+async def _async_step_auth_common(
+    flow,
+    user_input: dict | None = None,
+) -> ConfigFlowResult:
+    """Shared auth step: ask first/last name, run signup, save tokens+names.
+
+    Skipped automatically when the shared auth client already has valid tokens
+    and a stored profile. On success, routes to ``flow._after_auth_step`` which
+    handles the device-specific pairing follow-up.
+    """
+    await _async_register_static_resources(flow.hass)
+
+    # Local import to avoid a circular import at module load time.
+    from . import _get_or_create_auth_client  # noqa: PLC0415
+
+    auth = await _get_or_create_auth_client(flow.hass)
+
+    # Fast path: tokens + profile already stored. A refresh confirms the
+    # tokens are still usable before we proceed to pairing.
+    if (
+        user_input is None
+        and auth.is_authenticated
+        and auth.first_name
+        and auth.last_name
+        and await auth.refresh_token()
+    ):
+        await auth.save_tokens()
+        return await _async_continue_after_auth(flow)
+
+    _errors: dict[str, str] = {}
+    if user_input is not None:
+        first_name = user_input[CONF_FIRST_NAME].strip()
+        last_name = user_input[CONF_LAST_NAME].strip()
+        if await auth.ensure_authenticated(
+            first_name=first_name, last_name=last_name
+        ):
+            return await _async_continue_after_auth(flow)
+        _errors["base"] = "auth"
+
+    default_first, default_last = await _async_resolve_default_names(flow)
+
+    return flow.async_show_form(
+        step_id="auth",
+        data_schema=vol.Schema(
+            {
+                vol.Required(
+                    CONF_FIRST_NAME,
+                    default=(user_input or {}).get(CONF_FIRST_NAME, default_first),
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+                vol.Required(
+                    CONF_LAST_NAME,
+                    default=(user_input or {}).get(CONF_LAST_NAME, default_last),
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
+                ),
+            }
+        ),
+        errors=_errors,
+    )
+
+
+async def _async_continue_after_auth(flow) -> ConfigFlowResult:
+    """Dispatch to the device-specific step after the auth step finishes."""
+    target = getattr(flow, "_after_auth_step", _AFTER_AUTH_PAIR_CIC)
+    if target == _AFTER_AUTH_HOME_BATTERY:
+        return await flow.async_step_home_battery()
+    return await flow.async_step_pair()
+
+
 async def _async_step_pair_common(
     flow,
     config_update: bool,
     user_input: dict | None = None,
 ) -> ConfigFlowResult:
-    """Handle pairing step in config and options flow."""
-    # Ensure static resources are registered for use in the form
+    """Handle the CIC pairing confirmation + handshake.
+
+    By the time this step runs the shared auth client is already authenticated
+    (see :func:`_async_step_auth_common`), so this step only needs to confirm
+    the user is ready to press the button and then complete the CIC-specific
+    pairing handshake.
+    """
     await _async_register_static_resources(flow.hass)
 
-    _errors = {}
+    _errors: dict[str, str] = {}
     if user_input is not None:
-        # User confirmed they are ready to pair
         session = async_create_clientsession(flow.hass)
 
         # Use the HA-assigned unique_id as stable store key.
         # - Config flow: flow.unique_id
         # - Options flow: flow.config_entry.unique_id
         store_key = flow.config_entry.unique_id if config_update else flow.unique_id
-        store = Store(flow.hass, STORAGE_VERSION, f"{STORAGE_KEY}_{store_key}")
-        api = QuattRemoteApiClient(flow.cic_name, session, store=store)
+        store = Store(
+            flow.hass,
+            STORAGE_VERSION,
+            f"{REMOTE_STORAGE_KEY_PREFIX}_{store_key}",
+        )
+        # Local import to avoid a circular import at module load time.
+        from . import _get_or_create_auth_client  # noqa: PLC0415
 
-        first_name = user_input[CONF_FIRST_NAME]
-        last_name = user_input[CONF_LAST_NAME]
+        auth = await _get_or_create_auth_client(flow.hass)
+        api = QuattCicRemoteApiClient(
+            flow.cic_name, session, store=store, auth=auth
+        )
 
-        if not await api.authenticate(first_name=first_name, last_name=last_name):
+        if not await api.authenticate():
             _errors["base"] = "pairing_timeout"
         else:
             if not config_update:
@@ -124,39 +242,9 @@ async def _async_step_pair_common(
             await flow.hass.config_entries.async_reload(flow.config_entry.entry_id)
             return flow.async_create_entry(title="", data={})
 
-    # Try to auto-fill names from Home Assistant user
-    default_first_name = ""
-    default_last_name = ""
-
-    # Optional: try to prefill with HA user name (if available - rarely used)
-    # No try-except needed because async_get_user returns None if user not found
-    user_id = flow.context.get("user_id")
-    if user_id:
-        user = await flow.hass.auth.async_get_user(user_id)
-        if user and user.name:
-            # Split on first space
-            name_parts = user.name.split(" ", 1)
-            default_first_name = name_parts[0] if len(name_parts) > 0 else ""
-            default_last_name = name_parts[1] if len(name_parts) > 1 else ""
-
     return flow.async_show_form(
         step_id="pair",
-        data_schema=vol.Schema(
-            {
-                vol.Required(
-                    CONF_FIRST_NAME,
-                    default=(user_input or {}).get(CONF_FIRST_NAME, default_first_name),
-                ): selector.TextSelector(
-                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
-                ),
-                vol.Required(
-                    CONF_LAST_NAME,
-                    default=(user_input or {}).get(CONF_LAST_NAME, default_last_name),
-                ): selector.TextSelector(
-                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT),
-                ),
-            }
-        ),
+        data_schema=vol.Schema({}),
         errors=_errors,
         description_placeholders={
             "cic": flow.cic_name,
@@ -168,7 +256,7 @@ async def _async_get_cic_name(
     hass: HomeAssistant, ip_address: str, retry_on_client_error: bool = False
 ) -> str:
     """Validate device and return the CIC id/name (system.hostName)."""
-    client = QuattLocalApiClient(
+    client = QuattCicLocalApiClient(
         ip_address=ip_address,
         session=async_create_clientsession(hass),
     )
@@ -176,17 +264,36 @@ async def _async_get_cic_name(
     return data["system"]["hostName"]
 
 
+def _parse_battery_qr_url(url: str) -> tuple[str, str, str] | None:
+    """Parse battery QR URL and return (uuid, serial, check_code) or None.
+
+    Expected: https://app.quatt.io/battery/{uuid}/{serial}/{checkCode}/{macAddress}
+    """
+    try:
+        parsed = urlparse(url.strip())
+        if parsed.netloc != "app.quatt.io":
+            return None
+        parts = [p for p in parsed.path.split("/") if p]
+        if len(parts) < 4 or parts[0] != "battery":
+            return None
+        return parts[1], parts[2], parts[3]
+    except Exception:  # noqa: BLE001
+        return None
+
+
 # pylint: disable=abstract-method
 class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Quatt."""
 
-    VERSION = 6
+    VERSION = 7
 
     def __init__(self) -> None:
         """Initialize a Quatt flow."""
         self.ip_address: str | None = None
         self.cic_name: str | None = None
         self.connection_type: str | None = None
+        self._after_auth_step: str = _AFTER_AUTH_PAIR_CIC
+        self._home_battery_auth_done: bool = False
 
     def is_valid_ip(self, ip_str) -> bool:
         """Check for valid ip."""
@@ -202,8 +309,11 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         self,
         user_input: dict | None = None,
     ) -> ConfigFlowResult:
-        """Handle a flow initialized by the user - start with local setup."""
-        return await self.async_step_local()
+        """Handle a flow initialized by the user - pick heatpump or home battery."""
+        return self.async_show_menu(
+            step_id="user",
+            menu_options=["local", "home_battery"],
+        )
 
     async def async_step_local(
         self,
@@ -237,8 +347,9 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                     self.ip_address = user_input[CONF_LOCAL_CIC]
 
                     if user_input.get("add_remote", False):
-                        # User wants to add remote API
-                        return await self.async_step_pair()
+                        # Route through shared auth before the CIC pair step
+                        self._after_auth_step = _AFTER_AUTH_PAIR_CIC
+                        return await self.async_step_auth()
 
                     # User doesn't want remote API, create entry with local only
                     return self.async_create_entry(
@@ -269,11 +380,143 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
+    async def async_step_auth(self, user_input=None) -> ConfigFlowResult:
+        """Shared auth step - asks first/last name and runs the signup flow."""
+        return await _async_step_auth_common(self, user_input=user_input)
+
     async def async_step_pair(self, user_input=None) -> ConfigFlowResult:
         """Handle pairing step in the config flow."""
         return await _async_step_pair_common(
             self, config_update=False, user_input=user_input
         )
+
+    async def async_step_home_battery(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Route through auth then show pairing method menu."""
+        if not getattr(self, "_home_battery_auth_done", False):
+            self._after_auth_step = _AFTER_AUTH_HOME_BATTERY
+            self._home_battery_auth_done = True
+            return await self.async_step_auth()
+
+        return self.async_show_menu(
+            step_id="home_battery",
+            menu_options=["home_battery_qr", "home_battery_manual"],
+        )
+
+    async def async_step_home_battery_qr(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Pair via QR code URL (single-field step)."""
+        await _async_register_static_resources(self.hass)
+
+        _errors: dict[str, str] = {}
+        if user_input is not None:
+            qr_url = user_input[CONF_HOME_BATTERY_QR_URL].strip()
+            parsed = _parse_battery_qr_url(qr_url)
+            if parsed is None:
+                _errors[CONF_HOME_BATTERY_QR_URL] = "home_battery_qr_invalid"
+            else:
+                uuid, serial, check_code = parsed
+                error = await self._async_pair_home_battery(uuid, serial, check_code)
+                if error:
+                    _errors["base"] = error
+                else:
+                    return self.async_create_entry(
+                        title=uuid, data={CONF_HOME_BATTERY_SERIAL: serial}
+                    )
+
+        return self.async_show_form(
+            step_id="home_battery_qr",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_HOME_BATTERY_QR_URL,
+                        default=(user_input or {}).get(CONF_HOME_BATTERY_QR_URL, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(type=selector.TextSelectorType.URL)
+                    ),
+                }
+            ),
+            errors=_errors,
+        )
+
+    async def async_step_home_battery_manual(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Pair by entering UUID / serial / check-code manually."""
+        await _async_register_static_resources(self.hass)
+
+        _errors: dict[str, str] = {}
+        if user_input is not None:
+            uuid = user_input[CONF_HOME_BATTERY_UUID].strip()
+            serial = user_input[CONF_HOME_BATTERY_SERIAL].strip()
+            check_code = user_input[CONF_HOME_BATTERY_CHECK_CODE].strip()
+
+            error = await self._async_pair_home_battery(uuid, serial, check_code)
+            if error:
+                _errors["base"] = error
+            else:
+                return self.async_create_entry(
+                    title=uuid, data={CONF_HOME_BATTERY_SERIAL: serial}
+                )
+
+        prev = user_input or {}
+        return self.async_show_form(
+            step_id="home_battery_manual",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_HOME_BATTERY_UUID,
+                        default=prev.get(CONF_HOME_BATTERY_UUID, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                    ),
+                    vol.Required(
+                        CONF_HOME_BATTERY_SERIAL,
+                        default=prev.get(CONF_HOME_BATTERY_SERIAL, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                    ),
+                    vol.Required(
+                        CONF_HOME_BATTERY_CHECK_CODE,
+                        default=prev.get(CONF_HOME_BATTERY_CHECK_CODE, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                    ),
+                }
+            ),
+            errors=_errors,
+        )
+
+    async def _async_pair_home_battery(
+        self, uuid: str, serial: str, check_code: str
+    ) -> str | None:
+        """Attempt pairing via the remote API. Returns an error key or None on success."""
+        # The access-key UUID (already ``BAT-...`` prefixed) serves as the
+        # stable unique id, so the per-hub store key stays uniform with
+        # CIC entries: quatt_remote_storage_{unique_id}.
+        await self.async_set_unique_id(uuid)
+        self._abort_if_unique_id_configured()
+
+        session = async_create_clientsession(self.hass)
+        store = Store(
+            self.hass,
+            STORAGE_VERSION,
+            f"{REMOTE_STORAGE_KEY_PREFIX}_{uuid}",
+        )
+        # Local import to avoid a circular import at module load time.
+        from . import _get_or_create_auth_client  # noqa: PLC0415
+
+        auth = await _get_or_create_auth_client(self.hass)
+        client = QuattHomeBatteryApiClient(session, store=store, auth=auth)
+
+        success = await client.authenticate_and_pair(
+            access_key_uuid=uuid,
+            serial_number=serial,
+            check_code=check_code,
+        )
+        return None if success else "home_battery_pair_failed"
 
     async def async_step_dhcp(
         self, discovery_info: DhcpServiceInfo
@@ -394,9 +637,17 @@ class QuattOptionsFlowHandler(OptionsFlow):
     def __init__(self) -> None:
         """Initialize options flow."""
         self.cic_name: str | None = None
+        self._after_auth_step: str = _AFTER_AUTH_PAIR_CIC
 
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
+        # Home battery entries use a simpler options form
+        if (
+            CONF_HOME_BATTERY_SERIAL in self.config_entry.data
+            and CONF_LOCAL_CIC not in self.config_entry.data
+        ):
+            return await self._async_step_init_home_battery(user_input)
+
         _errors = {}
 
         # Retrieve the current value of CONF_POWER_SENSOR from options
@@ -430,8 +681,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
                     _errors["base"] = "unknown"
                 else:
                     if self.cic_name is not None:
-                        # User wants to add remote API
-                        return await self.async_step_pair()
+                        # Route through shared auth before the CIC pair step
+                        self._after_auth_step = _AFTER_AUTH_PAIR_CIC
+                        return await self.async_step_auth()
             else:
                 return self.async_create_entry(title="", data=user_input)
 
@@ -484,8 +736,38 @@ class QuattOptionsFlowHandler(OptionsFlow):
             errors=_errors,
         )
 
+    async def async_step_auth(self, user_input=None) -> ConfigFlowResult:
+        """Shared auth step in the options flow."""
+        return await _async_step_auth_common(self, user_input=user_input)
+
     async def async_step_pair(self, user_input=None) -> ConfigFlowResult:
         """Handle pairing step in the options flow."""
         return await _async_step_pair_common(
             self, config_update=True, user_input=user_input
+        )
+
+    async def _async_step_init_home_battery(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Options form for a stand-alone home battery hub."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        schema_dict = {
+            vol.Required(
+                REMOTE_CONF_SCAN_INTERVAL,
+                default=self.config_entry.options.get(
+                    REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=REMOTE_MIN_SCAN_INTERVAL,
+                    max=REMOTE_MAX_SCAN_INTERVAL,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            ),
+        }
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(schema_dict),
         )

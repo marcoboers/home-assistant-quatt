@@ -1,4 +1,4 @@
-"""Local Quatt API Client."""
+"""Local (HTTP) Quatt CIC API client."""
 
 from __future__ import annotations
 
@@ -17,15 +17,15 @@ RETRY_ATTEMPTS = 3  # Number of retries on ServerDisconnectedError
 _LOGGER = logging.getLogger(__name__)
 
 
-class QuattLocalApiClient(QuattApiClient):
-    """Quatt Local API Client."""
+class QuattCicLocalApiClient(QuattApiClient):
+    """Quatt CIC Local API client (direct HTTP to the CIC device)."""
 
     def __init__(
         self,
         ip_address: str,
         session: aiohttp.ClientSession,
     ) -> None:
-        """Quatt Local API Client."""
+        """Quatt CIC Local API client."""
         self._ip_address = ip_address
         self._session = session
 

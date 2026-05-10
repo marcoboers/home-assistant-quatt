@@ -1,9 +1,9 @@
 {
     "name": "marcoboers/home_assistant_quatt",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.10-bullseye",
+    "image": "mcr.microsoft.com/devcontainers/python:3.13-trixie",
     "postCreateCommand": "scripts/setup",
-    "forwardPorts": [
-        8123
+    "appPort": [
+        "8123:8123"
     ],
     "customizations": {
         "vscode": {
