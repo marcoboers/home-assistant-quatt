@@ -27,6 +27,7 @@ from homeassistant.core import HomeAssistant
 from .const import (
     DEVICE_BOILER_ID,
     DEVICE_CIC_ID,
+    DEVICE_CIC_INSIGHTS_ID,
     DEVICE_FLOWMETER_ID,
     DEVICE_HEAT_BATTERY_ID,
     DEVICE_HEAT_CHARGER_ID,
@@ -36,7 +37,6 @@ from .const import (
     DEVICE_HOME_BATTERY_ID,
     DEVICE_HOME_BATTERY_INSIGHTS_ID,
     DEVICE_HOME_BATTERY_SAVINGS_ID,
-    DEVICE_CIC_INSIGHTS_ID,
     DEVICE_THERMOSTAT_ID,
     DOMAIN,
     QuattDeviceKind,
@@ -1202,7 +1202,7 @@ def _savings_money_sensor(
     name: str,
     *,
     icon: str = "mdi:currency-eur",
-    state_class: SensorStateClass = SensorStateClass.TOTAL_INCREASING,
+    state_class: SensorStateClass = SensorStateClass.TOTAL,
     enabled: bool = True,
     diagnostic: bool = False,
 ) -> QuattSensorEntityDescription:
@@ -1268,26 +1268,22 @@ HOME_BATTERY_SAVINGS_SENSORS: list[QuattSensorEntityDescription] = [
         enabled=False,
         diagnostic=True,
     ),
-    # Yesterday (reset daily → MEASUREMENT state class)
+    # Yesterday (daily totals)
     _savings_money_sensor(
         "savings.yesterday.totalSavingsEurInclVat",
         "Yesterday total savings",
-        state_class=SensorStateClass.MEASUREMENT,
     ),
     _savings_money_sensor(
         "savings.yesterday.homeBatterySavingsEurInclVat",
         "Yesterday home battery savings",
-        state_class=SensorStateClass.MEASUREMENT,
     ),
     _savings_money_sensor(
         "savings.yesterday.solarSavingsEurInclVat",
         "Yesterday solar savings",
-        state_class=SensorStateClass.MEASUREMENT,
     ),
     _savings_money_sensor(
         "savings.yesterday.imbalanceSavingsEurInclVat",
         "Yesterday imbalance savings",
-        state_class=SensorStateClass.MEASUREMENT,
     ),
     QuattSensorEntityDescription(
         key="savings.cumulative.avgVatPercent",
@@ -1454,7 +1450,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
     local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
-    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
+        "cic_remote"
+    )
     home_battery_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
         "home_battery"
     )
