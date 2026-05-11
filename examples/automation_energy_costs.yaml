@@ -1,0 +1,70 @@
+alias: Energy Costs (day / year - refresh every 15 minutes)
+description: >-
+  Refreshes Quatt Energy cost sensors for two scopes: today's hourly cost
+  drilldown (year+month+day) and the current year's monthly cost aggregate
+  (year only). Cost updates follow the usage cadence (~15 minutes).
+triggers:
+  - trigger: time_pattern
+    minutes: "/15"
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - variables:
+      scopes_to_fetch:
+        - Day
+        - Year
+  - repeat:
+      for_each: "{{ scopes_to_fetch }}"
+      sequence:
+        - variables:
+            scope: "{{ repeat.item }}"
+            fetch_year: "{{ now().year }}"
+            fetch_month: >-
+              {% if scope == 'Day' %}{{ now().month }}{% else %}{{ none }}{% endif %}
+            fetch_day: >-
+              {% if scope == 'Day' %}{{ now().day }}{% else %}{{ none }}{% endif %}
+            costs_entity_id: |-
+              {% if scope == 'Day' %}
+                sensor.quatt_energy_costs_day
+              {% elif scope == 'Year' %}
+                sensor.quatt_energy_costs_year
+              {% endif %}
+            costs_valid: false
+        - alias: Repeat max 3 times or data is valid
+          repeat:
+            until:
+              - condition: template
+                value_template: "{{ repeat.index >= 3 or costs_valid }}"
+            sequence:
+              - action: quatt.get_energy_costs
+                metadata: {}
+                data: >-
+                  {% set d = {} %}
+                  {% if fetch_year is not none %}{% set d = dict(d, year=fetch_year) %}{% endif %}
+                  {% if fetch_month is not none %}{% set d = dict(d, month=fetch_month) %}{% endif %}
+                  {% if fetch_day is not none %}{% set d = dict(d, day=fetch_day) %}{% endif %}
+                  {{ d }}
+                response_variable: costs_response
+              - variables:
+                  costs_valid: >
+                    {% set json_data = costs_response | default({}, true) %}
+                    {{ json_data | length > 0 and 'error' not in json_data }}
+              - alias: Update sensor when data is valid
+                if:
+                  - condition: template
+                    value_template: "{{ costs_valid }}"
+                then:
+                  - action: python_script.set_energy_costs
+                    data:
+                      entity_id: "{{ costs_entity_id }}"
+                      costs: "{{ costs_response | tojson }}"
+                      new_state: "{{ now().isoformat() }}"
+                else:
+                  - delay:
+                      milliseconds: 250
+        - delay:
+            milliseconds: 750
+mode: single
+trace:
+  stored_traces: 10

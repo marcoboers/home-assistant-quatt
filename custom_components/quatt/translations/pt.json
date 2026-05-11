@@ -7,7 +7,8 @@
                 "description": "Que tipo de dispositivo Quatt pretende adicionar?",
                 "menu_options": {
                     "local": "Bomba de calor (CIC)",
-                    "home_battery": "Bateria doméstica"
+                    "home_battery": "Bateria doméstica",
+                    "energy": "Energia (mijnenergie)"
                 }
             },
             "local": {
@@ -67,6 +68,14 @@
             },
             "confirm": {
                 "description": "Deseja iniciar a configuração?"
+            },
+            "energy": {
+                "title": "Iniciar sessão em mijnenergie.quatt.io",
+                "description": "Introduza o endereço de e-mail e a palavra-passe que utiliza em https://mijnenergie.quatt.io. As credenciais são guardadas apenas localmente no Home Assistant e usadas para manter a sessão activa.",
+                "data": {
+                    "energy_username": "Endereço de e-mail",
+                    "energy_password": "Palavra-passe"
+                }
             }
         },
         "error": {
@@ -75,6 +84,7 @@
             "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos.",
             "home_battery_qr_invalid": "URL do código QR inválido. Certifique-se de copiar o URL completo do código QR da bateria.",
             "home_battery_pair_failed": "Falha no emparelhamento da bateria doméstica. Verifique a chave de acesso, o número de série e o código de verificação.",
+            "energy_no_ean": "Sessão iniciada, mas não foi devolvido nenhum contador de energia (EAN). Abra https://mijnenergie.quatt.io uma vez num browser para concluir o onboarding e tente novamente.",
             "unknown": "Ocorreu um erro inesperado. Tente novamente."
         },
         "abort": {
@@ -91,13 +101,15 @@
                     "scan_interval": "Intervalo de atualização local (segundos)",
                     "remote_scan_interval": "Intervalo de atualização da API móvel remota (minutos)",
                     "power_sensor": "Sensor de potência (opcional)",
-                    "add_remote": "Ativar configuração de ligação remota"
+                    "add_remote": "Ativar configuração de ligação remota",
+                    "energy_password": "Palavra-passe Quatt Energy"
                 },
                 "data_description": {
                     "scan_interval": "Número de segundos entre pedidos de dados à Quatt.",
                     "remote_scan_interval": "Número de minutos entre pedidos de dados através da API móvel da Quatt.",
                     "power_sensor": "Sensor de energia externo que mede o consumo atual da Quatt.",
-                    "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor."
+                    "add_remote": "Adicionar conectividade remota através da API móvel da Quatt para obter dados adicionais da bomba de calor.",
+                    "energy_password": "Actualize apenas se alterou a sua palavra-passe em mijnenergie.quatt.io."
                 }
             },
             "auth": {
@@ -120,6 +132,7 @@
             "auth": "Falha na autenticação. Verifique as suas credenciais.",
             "cannot_connect": "Falha ao conectar ao sistema Quatt. Verifique o endereço IP ou a rede.",
             "pairing_timeout": "Tempo limite de emparelhamento. Tentar novamente e pressionar o botão no dispositivo CIC dentro de 60 segundos.",
+            "energy_no_ean": "Sessão iniciada, mas não foi devolvido nenhum contador de energia (EAN).",
             "unknown": "Ocorreu um erro inesperado. Tente novamente."
         }
     }

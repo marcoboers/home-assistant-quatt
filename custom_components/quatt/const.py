@@ -23,6 +23,21 @@ CONF_HOME_BATTERY_UUID = "home_battery_uuid"
 CONF_HOME_BATTERY_CHECK_CODE = "home_battery_check_code"
 CONF_HOME_BATTERY_QR_URL = "home_battery_qr_url"
 
+# Quatt Energy (mijnenergie) config keys
+CONF_ENERGY_USERNAME = "energy_username"
+CONF_ENERGY_PASSWORD = "energy_password"
+
+# Quatt Energy API
+QUATT_ENERGY_BASE_URL = "https://mijnenergie.quatt.io"
+# The mobile site treats unknown user-agents differently; mimic a real device.
+QUATT_ENERGY_USER_AGENT = (
+    "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/148.0.0.0 Mobile Safari/537.36"
+)
+# Unique-id prefix for Energy hub entries (matches CIC-/BAT- convention).
+ENERGY_UNIQUE_ID_PREFIX = "ENG-"
+
 # Remote API URLs (from kwatt)
 FIREBASE_INSTALLATIONS_URL = "https://firebaseinstallations.googleapis.com/v1/projects/quatt-production/installations"
 FIREBASE_REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/1074628551428/namespaces/firebase:fetch"
@@ -81,6 +96,7 @@ DEVICE_HOME_BATTERY_ID = "home_battery"
 DEVICE_HOME_BATTERY_SAVINGS_ID = "home_battery_savings"
 DEVICE_HOME_BATTERY_INSIGHTS_ID = "home_battery_insights"
 DEVICE_HOME_BATTERY_ENERGY_FLOW_ID = "home_battery_energy_flow"
+DEVICE_ENERGY_ID = "energy"
 
 
 class QuattDeviceKind(StrEnum):
@@ -129,6 +145,7 @@ DEVICE_LIST = [
         "id": DEVICE_HOME_BATTERY_ENERGY_FLOW_ID,
         "kind": QuattDeviceKind.SERVICE,
     },
+    {"name": "Energy", "id": DEVICE_ENERGY_ID, "kind": QuattDeviceKind.HUB},
 ]
 
 

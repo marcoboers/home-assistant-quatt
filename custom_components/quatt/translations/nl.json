@@ -7,7 +7,8 @@
                 "description": "Welk type Quatt apparaat wil je toevoegen?",
                 "menu_options": {
                     "local": "Warmtepomp (CIC)",
-                    "home_battery": "Thuisbatterij"
+                    "home_battery": "Thuisbatterij",
+                    "energy": "Energie (mijnenergie)"
                 }
             },
             "local": {
@@ -61,6 +62,14 @@
             },
             "confirm": {
                 "description": "Configuratie starten?"
+            },
+            "energy": {
+                "title": "Inloggen op mijnenergie.quatt.io",
+                "description": "Voer het e-mailadres en wachtwoord in dat je gebruikt op https://mijnenergie.quatt.io. De inloggegevens worden alleen lokaal in Home Assistant opgeslagen en gebruikt om de sessie actief te houden.",
+                "data": {
+                    "energy_username": "E-mailadres",
+                    "energy_password": "Wachtwoord"
+                }
             }
         },
         "error": {
@@ -69,6 +78,7 @@
             "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat.",
             "home_battery_qr_invalid": "Ongeldige QR-code URL. Zorg dat je de volledige URL van de batterij-QR-code kopieert.",
             "home_battery_pair_failed": "Koppelen van thuisbatterij mislukt. Controleer de toegangssleutel, het serienummer en de controlecode.",
+            "energy_no_ean": "Inloggen is gelukt, maar er is geen energiemeter (EAN) teruggegeven. Open https://mijnenergie.quatt.io eenmaal in een browser om de onboarding af te ronden en probeer het opnieuw.",
             "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         },
         "abort": {
@@ -85,13 +95,15 @@
                     "scan_interval": "Lokaal update-interval (seconden)",
                     "remote_scan_interval": "Externe mobiele API update-interval (minuten)",
                     "power_sensor": "Vermogenssensor (optioneel)",
-                    "add_remote": "Externe verbinding inschakelen"
+                    "add_remote": "Externe verbinding inschakelen",
+                    "energy_password": "Quatt Energy wachtwoord"
                 },
                 "data_description": {
                     "scan_interval": "Aantal seconden tussen het opvragen van informatie van de Quatt.",
                     "remote_scan_interval": "Aantal minuten tussen het opvragen van gegevens via de mobiele Quatt API.",
                     "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet.",
-                    "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen."
+                    "add_remote": "Voeg externe connectiviteit toe via de Quatt mobiele API om extra gegevens van de warmtepomp op te halen.",
+                    "energy_password": "Vul alleen in als je je wachtwoord op mijnenergie.quatt.io hebt gewijzigd."
                 }
             },
             "auth": {
@@ -114,6 +126,7 @@
             "auth": "Authenticatie mislukt. Controleer de inloggegevens.",
             "cannot_connect": "Verbinding met het Quatt-systeem mislukt. Controleer het IP-adres of het netwerk.",
             "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat.",
+            "energy_no_ean": "Inloggen is gelukt, maar er is geen energiemeter (EAN) teruggegeven.",
             "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         }
     }

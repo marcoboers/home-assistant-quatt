@@ -28,6 +28,7 @@ from .const import (
     DEVICE_BOILER_ID,
     DEVICE_CIC_ID,
     DEVICE_CIC_INSIGHTS_ID,
+    DEVICE_ENERGY_ID,
     DEVICE_FLOWMETER_ID,
     DEVICE_HEAT_BATTERY_ID,
     DEVICE_HEAT_CHARGER_ID,
@@ -1442,6 +1443,16 @@ HOME_BATTERY_ENERGY_FLOW_SENSORS: list[QuattSensorEntityDescription] = [
 ]
 
 
+ENERGY_SENSORS: list[QuattSensorEntityDescription] = [
+    QuattSensorEntityDescription(
+        key="ean",
+        name="EAN",
+        icon="mdi:identifier",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+]
+
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -1456,6 +1467,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     home_battery_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
         "home_battery"
     )
+    energy_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("energy")
 
     sensors: list[QuattSensor] = []
 
@@ -1522,6 +1534,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
                     coordinator=home_battery_coordinator,
                     entity_description=desc,
                     device_kind=QuattDeviceKind.SERVICE,
+                )
+            )
+
+    if energy_coordinator is not None:
+        for desc in ENERGY_SENSORS:
+            sensors.append(
+                QuattSensor(
+                    device_name="Energy",
+                    device_id=DEVICE_ENERGY_ID,
+                    sensor_key=desc.key,
+                    coordinator=energy_coordinator,
+                    entity_description=desc,
+                    device_kind=QuattDeviceKind.HUB,
                 )
             )
 
