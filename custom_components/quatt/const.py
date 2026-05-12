@@ -81,6 +81,7 @@ DEVICE_HOME_BATTERY_ID = "home_battery"
 DEVICE_HOME_BATTERY_SAVINGS_ID = "home_battery_savings"
 DEVICE_HOME_BATTERY_INSIGHTS_ID = "home_battery_insights"
 DEVICE_HOME_BATTERY_ENERGY_FLOW_ID = "home_battery_energy_flow"
+DEVICE_CHILL_ID = "chill"
 
 
 class QuattDeviceKind(StrEnum):
@@ -95,6 +96,7 @@ DEVICE_LIST = [
     {"name": "Boiler", "id": DEVICE_BOILER_ID, "kind": QuattDeviceKind.DEVICE},
     {"name": "CIC", "id": DEVICE_CIC_ID, "kind": QuattDeviceKind.HUB},
     {"name": "Flowmeter", "id": DEVICE_FLOWMETER_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Chill", "id": DEVICE_CHILL_ID, "kind": QuattDeviceKind.DEVICE},
     {
         "name": "Heat battery",
         "id": DEVICE_HEAT_BATTERY_ID,
@@ -105,14 +107,10 @@ DEVICE_LIST = [
         "id": DEVICE_HEAT_CHARGER_ID,
         "kind": QuattDeviceKind.DEVICE,
     },
-    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID,
-        "kind": QuattDeviceKind.DEVICE},
-    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID,
-        "kind": QuattDeviceKind.DEVICE},
-    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID,
-        "kind": QuattDeviceKind.DEVICE},
-    {"name": "Insights", "id": DEVICE_CIC_INSIGHTS_ID,
-        "kind": QuattDeviceKind.SERVICE},
+    {"name": "Heatpump 1", "id": DEVICE_HEATPUMP_1_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Heatpump 2", "id": DEVICE_HEATPUMP_2_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Thermostat", "id": DEVICE_THERMOSTAT_ID, "kind": QuattDeviceKind.DEVICE},
+    {"name": "Insights", "id": DEVICE_CIC_INSIGHTS_ID, "kind": QuattDeviceKind.SERVICE},
     {"name": "Home battery", "id": DEVICE_HOME_BATTERY_ID, "kind": QuattDeviceKind.HUB},
     {
         "name": "Savings",

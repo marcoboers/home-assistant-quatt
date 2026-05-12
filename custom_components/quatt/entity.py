@@ -3,15 +3,24 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 import logging
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
+)
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityDescription,
+    ClimateEntityFeature,
+    HVACMode,
 )
 from homeassistant.components.number import (
     DEFAULT_MAX_VALUE,
@@ -27,6 +36,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import PRECISION_TENTHS, UnitOfTemperature
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -49,6 +59,93 @@ from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+CHILL_SENTENCE_CASE_KEYS = {"color", "fanMode", "mode", "status", "updateState"}
+
+
+def _format_chill_sentence_case(value: str) -> str:
+    """Format Quatt Chill enum text as sentence case."""
+    text = value.replace("_", " ").lower()
+    return text[:1].upper() + text[1:]
+
+
+class QuattChillApiEnum(str, Enum):
+    """Base class for Quatt Chill API enum values."""
+
+    @classmethod
+    def from_api_value(cls, value: Any):
+        """Return the enum member for a case-insensitive API value."""
+        if not isinstance(value, str):
+            return None
+
+        normalized_value = value.upper()
+        for item in cls:
+            if item.value == normalized_value:
+                return item
+        return None
+
+    @classmethod
+    def from_display_value(cls, value: str):
+        """Return the enum member for a display value."""
+        normalized_value = value.replace(" ", "_").upper()
+        return cls.from_api_value(normalized_value)
+
+    @property
+    def display_value(self) -> str:
+        """Return the Home Assistant display value."""
+        return _format_chill_sentence_case(self.value)
+
+
+class QuattChillFanMode(QuattChillApiEnum):
+    """Quatt Chill fan mode values."""
+
+    HIGH = "HIGH"
+    NORMAL = "NORMAL"
+    LOW = "LOW"
+
+
+class QuattChillMode(QuattChillApiEnum):
+    """Quatt Chill mode values."""
+
+    COOLING = "COOLING"
+    HEATING = "HEATING"
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return the matching Home Assistant HVAC mode."""
+        return HVACMode.COOL if self == QuattChillMode.COOLING else HVACMode.HEAT
+
+
+class QuattChillStatus(QuattChillApiEnum):
+    """Quatt Chill status values."""
+
+    OFF = "OFF"
+    OFFLINE = "OFFLINE"
+    COOLING = "COOLING"
+    HEATING = "HEATING"
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return the matching Home Assistant HVAC mode."""
+        if self in {QuattChillStatus.OFF, QuattChillStatus.OFFLINE}:
+            return HVACMode.OFF
+        return HVACMode.COOL if self == QuattChillStatus.COOLING else HVACMode.HEAT
+
+
+def _format_chill_enum_value(key: str, value: str) -> str:
+    """Format a Quatt Chill enum text value for Home Assistant."""
+    enum_class: type[QuattChillApiEnum] | None = {
+        "fanMode": QuattChillFanMode,
+        "mode": QuattChillMode,
+        "status": QuattChillStatus,
+    }.get(key)
+
+    if enum_class:
+        if enum_value := enum_class.from_api_value(value):
+            return enum_value.display_value
+        _LOGGER.debug("Unknown Chill %s value: %s", key, value)
+
+    return _format_chill_sentence_case(value)
+
 
 class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
     """QuattEntity class."""
@@ -63,6 +160,7 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         device_kind: QuattDeviceKind,
+        unique_id_key: str | None = None,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
@@ -77,7 +175,7 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
 
         self._device_name = device_name
         self._device_id = device_id
-        self._attr_unique_id = f"{self._hub_id}:{device_id}:{sensor_key}"
+        self._attr_unique_id = f"{self._hub_id}:{device_id}:{unique_id_key or sensor_key}"
 
         attach_to_hub = device_kind == QuattDeviceKind.HUB
         is_service_device = device_kind == QuattDeviceKind.SERVICE
@@ -100,6 +198,28 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
                 entry_type=DeviceEntryType.SERVICE if is_service_device else None,
             )
 
+    def _current_chill_index(self) -> int | None:
+        """Return the current Chill list index for this entity's device."""
+        chills = self.coordinator.get_value("chills", [])
+        if not isinstance(chills, list):
+            return None
+
+        for index, chill in enumerate(chills):
+            if isinstance(chill, dict) and chill.get("uuid") == self._device_id:
+                return index
+
+        return None
+
+    @staticmethod
+    def _chill_key_at_index(key: str, index: int) -> str:
+        """Return a Chill coordinator key for the current response-list index."""
+        key_parts = key.split(".", 2)
+        if len(key_parts) < 2 or key_parts[0] != "chills":
+            return key
+        if len(key_parts) == 2:
+            return f"chills.{index}"
+        return f"chills.{index}.{key_parts[2]}"
+
 
 class QuattSensor(QuattEntity, SensorEntity):
     """Quatt Sensor class."""
@@ -114,7 +234,14 @@ class QuattSensor(QuattEntity, SensorEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -134,6 +261,36 @@ class QuattSensor(QuattEntity, SensorEntity):
             value = dt_util.parse_datetime(value)
 
         return value
+
+
+class QuattChillSensor(QuattSensor):
+    """Quatt Chill sensor class."""
+
+    @property
+    def native_value(self) -> StateType | date | datetime | Decimal:
+        """Return the native value of the Chill sensor."""
+        chill_index = self._current_chill_index()
+        if chill_index is None:
+            return None
+
+        value = self.coordinator.get_value(
+            self._chill_key_at_index(self.entity_description.key, chill_index)
+        )
+
+        if value is None:
+            return None
+
+        if self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
+            value = dt_util.parse_datetime(value)
+
+        if not isinstance(value, str):
+            return value
+
+        key = self.entity_description.key.rsplit(".", 1)[-1]
+        if key not in CHILL_SENTENCE_CASE_KEYS:
+            return value
+
+        return _format_chill_enum_value(key, value)
 
 
 class QuattSystemSensor(QuattSensor):
@@ -162,7 +319,14 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the binary_sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -174,6 +338,20 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if the binary_sensor is on."""
         return self.coordinator.get_value(self.entity_description.key)
+
+
+class QuattChillBinarySensor(QuattBinarySensor):
+    """Quatt Chill binary sensor class."""
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the Chill binary sensor is on."""
+        chill_index = self._current_chill_index()
+        if chill_index is None:
+            return False
+        return self.coordinator.get_value(
+            self._chill_key_at_index(self.entity_description.key, chill_index)
+        )
 
 
 class QuattSelect(QuattEntity, SelectEntity):
@@ -189,7 +367,14 @@ class QuattSelect(QuattEntity, SelectEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the select class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -251,7 +436,9 @@ class QuattSoundSelect(QuattSelect):
 
         remote_client = self.coordinator.client
         if not isinstance(remote_client, QuattCicRemoteApiClient):
-            _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
+            _LOGGER.error(
+                "Cannot update %s: remote client required", self.entity_description.key
+            )
             return False
 
         # Get current values for both sound levels
@@ -296,7 +483,14 @@ class QuattSwitch(QuattEntity, SwitchEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the switch class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -369,7 +563,9 @@ class QuattSettingSwitch(QuattSwitch):
         """Perform boolean setting update."""
         remote_client = self.coordinator.client
         if not isinstance(remote_client, QuattCicRemoteApiClient):
-            _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
+            _LOGGER.error(
+                "Cannot update %s: remote client required", self.entity_description.key
+            )
             return False
 
         # Convert dot notation to nested object structure
@@ -404,7 +600,14 @@ class QuattNumber(QuattEntity, NumberEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the number class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -526,9 +729,7 @@ class QuattHomeBatterySolarCapacityNumber(QuattNumber):
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the new value via the home battery coordinator."""
-        if not isinstance(
-            self.coordinator, QuattHomeBatteryDataUpdateCoordinator
-        ):
+        if not isinstance(self.coordinator, QuattHomeBatteryDataUpdateCoordinator):
             _LOGGER.error(
                 "Cannot update %s: home battery coordinator required",
                 self.entity_description.key,
@@ -546,9 +747,7 @@ class QuattHomeBatterySolarCapacityNumber(QuattNumber):
             ) from err
 
         if not success:
-            raise RuntimeError(
-                f"Failed to update {self.entity_description.key}"
-            )
+            raise RuntimeError(f"Failed to update {self.entity_description.key}")
 
         await self.coordinator.async_request_refresh()
 
@@ -604,6 +803,7 @@ class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSensor
+    quatt_unique_id_key: str | None = None
 
 
 class QuattBinarySensorEntityDescription(
@@ -613,6 +813,7 @@ class QuattBinarySensorEntityDescription(
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattBinarySensor
+    quatt_unique_id_key: str | None = None
 
 
 class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
@@ -620,6 +821,7 @@ class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSelect
+    quatt_unique_id_key: str | None = None
 
 
 class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=True):
@@ -627,6 +829,7 @@ class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSwitch
+    quatt_unique_id_key: str | None = None
 
 
 class QuattNumberEntityDescription(NumberEntityDescription, frozen_or_thawed=True):
@@ -634,3 +837,297 @@ class QuattNumberEntityDescription(NumberEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattNumber
+    quatt_unique_id_key: str | None = None
+
+
+class QuattClimateEntityDescription(ClimateEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt climate entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: type[QuattEntity] = ClimateEntity
+    quatt_unique_id_key: str | None = None
+
+
+class QuattChillClimate(QuattEntity, ClimateEntity):
+    """Climate entity for Quatt chill devices."""
+
+    _attr_fan_modes = [fan_mode.display_value for fan_mode in QuattChillFanMode]
+    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.COOL, HVACMode.OFF]
+    _attr_name = None
+    _attr_precision = PRECISION_TENTHS
+    _attr_target_temperature_step = 1.0
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
+    )
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattClimateEntityDescription,
+        device_kind: QuattDeviceKind,
+    ) -> None:
+        """Initialize the chill climate entity."""
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
+        self.entity_description = entity_description
+
+    @property
+    def chill_index(self) -> int | None:
+        """Return the current Chill list index for this climate entity."""
+        return self._current_chill_index()
+
+    def _chill_value(self, key: str) -> Any:
+        """Return a value from the current Chill data."""
+        chill_index = self.chill_index
+        if chill_index is None:
+            return None
+        return self.coordinator.get_value(f"chills.{chill_index}.{key}")
+
+    def _async_set_chill_values(self, updates: Mapping[str, Any]) -> None:
+        """Optimistically update the cached chill values."""
+        chill_index = self.chill_index
+        if chill_index is None:
+            return
+
+        data = deepcopy(self.coordinator.data)
+        current_node = data
+        if isinstance(current_node, dict) and "result" in current_node:
+            current_node = current_node["result"]
+
+        if not isinstance(current_node, dict):
+            return
+
+        chills = current_node.get("chills")
+        if not isinstance(chills, list) or chill_index >= len(chills):
+            return
+
+        chill = chills[chill_index]
+        if not isinstance(chill, dict):
+            return
+
+        for value_path, value in updates.items():
+            node = chill
+            parts = value_path.split(".")
+            for part in parts[:-1]:
+                child = node.setdefault(part, {})
+                if not isinstance(child, dict):
+                    return
+                node = child
+            node[parts[-1]] = value
+
+        self.coordinator.async_set_updated_data(data)
+
+    @staticmethod
+    def _status_to_hvac_mode(status: Any, source: str) -> HVACMode | None:
+        """Convert a Quatt Chill status or mode value to an HVAC mode."""
+        if chill_status := QuattChillStatus.from_api_value(status):
+            return chill_status.hvac_mode
+        if chill_mode := QuattChillMode.from_api_value(status):
+            return chill_mode.hvac_mode
+        if isinstance(status, str):
+            _LOGGER.debug("Unknown Chill %s value: %s", source, status)
+        return None
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return the current HVAC mode."""
+        status = self._chill_value("status")
+        if hvac_mode := self._status_to_hvac_mode(status, "status"):
+            return hvac_mode
+
+        is_on = self._chill_value("isOn.value")
+        if not is_on:
+            return HVACMode.OFF
+
+        mode = self._chill_value("mode")
+        if hvac_mode := self._status_to_hvac_mode(mode, "mode"):
+            return hvac_mode
+
+        return HVACMode.OFF
+
+    @property
+    def current_temperature(self) -> float | None:
+        """Return the current temperature."""
+        return self._chill_value("ambientTemperature")
+
+    @property
+    def target_temperature(self) -> float | None:
+        """Return the target temperature."""
+        hvac_mode = self.hvac_mode
+        if hvac_mode == HVACMode.OFF:
+            mode = self._chill_value("mode")
+            hvac_mode = self._status_to_hvac_mode(mode, "mode")
+
+        if hvac_mode == HVACMode.COOL:
+            return self._chill_value("coolingTargetTemperature")
+        if hvac_mode == HVACMode.HEAT:
+            return self._chill_value("heatingTargetTemperature")
+        return None
+
+    @property
+    def target_temperature_high(self) -> float | None:
+        """Return the maximum target temperature."""
+        return self._chill_value("maxTargetTemperature")
+
+    @property
+    def target_temperature_low(self) -> float | None:
+        """Return the minimum target temperature."""
+        return self._chill_value("minTargetTemperature")
+
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum temperature."""
+        min_temp = self._chill_value("minTargetTemperature")
+        return float(min_temp) if min_temp is not None else 5.0
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum temperature."""
+        max_temp = self._chill_value("maxTargetTemperature")
+        return float(max_temp) if max_temp is not None else 40.0
+
+    @property
+    def temperature_unit(self) -> str:
+        """Return the unit of measurement."""
+        return UnitOfTemperature.CELSIUS
+
+    @property
+    def fan_mode(self) -> str | None:
+        """Return the current fan mode."""
+        fan_mode = self._chill_value("fanMode")
+        if isinstance(fan_mode, str):
+            return _format_chill_enum_value("fanMode", fan_mode)
+        return None
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set the HVAC mode."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
+            raise NotImplementedError("HVAC mode setting requires remote API")
+
+        chill_uuid = self._chill_value("uuid")
+        if not chill_uuid:
+            raise RuntimeError("Cannot find chill UUID")
+
+        if hvac_mode == HVACMode.OFF:
+            data = {"type": "SET_ON_OFF", "on": False}
+            _LOGGER.debug("Turning off chill %s: %s", chill_uuid, data)
+            success = await remote_client.update_chill_action(chill_uuid, data)
+            if not success:
+                raise RuntimeError(f"Failed to set HVAC mode to {hvac_mode}")
+
+            self._async_set_chill_values(
+                {
+                    "isOn.value": False,
+                    "status": QuattChillStatus.OFF.value,
+                }
+            )
+            return
+
+        if hvac_mode == HVACMode.COOL:
+            chill_mode = QuattChillMode.COOLING
+            chill_status = QuattChillStatus.COOLING
+        elif hvac_mode == HVACMode.HEAT:
+            chill_mode = QuattChillMode.HEATING
+            chill_status = QuattChillStatus.HEATING
+        else:
+            raise ValueError(f"Unsupported HVAC mode: {hvac_mode}")
+
+        if self.hvac_mode == HVACMode.OFF:
+            data = {"type": "SET_ON_OFF", "on": True}
+            _LOGGER.debug("Turning on chill %s: %s", chill_uuid, data)
+            success = await remote_client.update_chill_action(chill_uuid, data)
+            if not success:
+                raise RuntimeError(f"Failed to set HVAC mode to {hvac_mode}")
+            self._async_set_chill_values({"isOn.value": True})
+
+        data = {"type": "SET_MODE", "mode": chill_mode.value}
+        _LOGGER.debug("Setting HVAC mode for chill %s: %s", chill_uuid, data)
+        success = await remote_client.update_chill_action(chill_uuid, data)
+        if not success:
+            raise RuntimeError(f"Failed to set HVAC mode to {hvac_mode}")
+
+        self._async_set_chill_values(
+            {
+                "isOn.value": True,
+                "mode": chill_mode.value,
+                "status": chill_status.value,
+            }
+        )
+
+    async def async_set_fan_mode(self, fan_mode: str) -> None:
+        """Set the fan mode."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
+            raise NotImplementedError("Fan mode setting requires remote API")
+
+        chill_fan_mode = QuattChillFanMode.from_display_value(fan_mode)
+        if chill_fan_mode is None:
+            raise ValueError(f"Unsupported fan mode: {fan_mode}")
+
+        chill_uuid = self._chill_value("uuid")
+        if not chill_uuid:
+            raise RuntimeError("Cannot find chill UUID")
+
+        data = {"type": "SET_FAN_MODE", "fanMode": chill_fan_mode.value}
+        _LOGGER.debug("Setting fan mode for chill %s: %s", chill_uuid, data)
+        success = await remote_client.update_chill_action(chill_uuid, data)
+        if success:
+            self._async_set_chill_values({"fanMode": chill_fan_mode.value})
+        else:
+            raise RuntimeError(f"Failed to set fan mode to {fan_mode}")
+
+    async def async_set_temperature(self, **kwargs) -> None:
+        """Set the target temperature."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
+            raise NotImplementedError("Temperature setting requires remote API")
+
+        temperature = kwargs.get("temperature")
+        if temperature is None:
+            return
+        temperature = int(round(temperature))
+
+        chill_uuid = self._chill_value("uuid")
+        if not chill_uuid:
+            raise RuntimeError("Cannot find chill UUID")
+
+        hvac_mode = self.hvac_mode
+        if hvac_mode == HVACMode.OFF:
+            mode = self._chill_value("mode")
+            hvac_mode = self._status_to_hvac_mode(mode, "mode")
+
+        if hvac_mode == HVACMode.COOL:
+            data = {
+                "type": "SET_COOLING_TARGET_TEMPERATURE",
+                "coolingTargetTemperature": temperature,
+            }
+        elif hvac_mode == HVACMode.HEAT:
+            data = {
+                "type": "SET_HEATING_TARGET_TEMPERATURE",
+                "heatingTargetTemperature": temperature,
+            }
+        else:
+            raise RuntimeError(f"Unknown chill mode: {hvac_mode}")
+
+        _LOGGER.debug("Setting target temperature for chill %s: %s", chill_uuid, data)
+        success = await remote_client.update_chill_action(chill_uuid, data)
+        if success:
+            self._async_set_chill_values(
+                {
+                    "coolingTargetTemperature"
+                    if hvac_mode == HVACMode.COOL
+                    else "heatingTargetTemperature": temperature
+                }
+            )
+        else:
+            raise RuntimeError(f"Failed to set temperature to {temperature}")

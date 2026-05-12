@@ -77,7 +77,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
     local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
-    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
+        "cic_remote"
+    )
     home_battery_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
         "home_battery"
     )

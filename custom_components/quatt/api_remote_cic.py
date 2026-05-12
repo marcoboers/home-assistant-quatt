@@ -89,9 +89,7 @@ class QuattCicRemoteApiClient(QuattApiClient):
                     await self._auth.save_tokens()
                     cic_data = await self.get_cic_data()
                     if cic_data:
-                        _LOGGER.info(
-                            "Successfully authenticated with refreshed token"
-                        )
+                        _LOGGER.info("Successfully authenticated with refreshed token")
                         return True
 
                 # Existing tokens no longer usable - reset and fall through
@@ -210,6 +208,33 @@ class QuattCicRemoteApiClient(QuattApiClient):
             return data
         return None
 
+    async def get_chills(
+        self,
+        installation_id: str | None = None,
+        retry_on_403: bool = True,
+    ) -> list[dict[str, Any]] | None:
+        """Fetch chill device data for the installation."""
+        if not self._auth.is_authenticated:
+            return None
+
+        installation_id = installation_id or self._installation_id
+        if not installation_id:
+            _LOGGER.debug("No installation ID available, skipping chill data fetch")
+            return None
+
+        status, data = await self._auth.request(
+            "GET",
+            f"/me/installation/{installation_id}/devices/chills",
+            retry_on_auth_error=retry_on_403,
+        )
+        if status == 200 and isinstance(data, dict):
+            result = data.get("result")
+            if isinstance(result, dict):
+                chills = result.get("chills")
+                if isinstance(chills, list):
+                    return chills
+        return None
+
     async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Get data for the coordinator (CIC feed + insights)."""
         cic_data = await self.get_cic_data()
@@ -218,8 +243,23 @@ class QuattCicRemoteApiClient(QuattApiClient):
 
         result = cic_data.get("result", {})
 
+        installation_id = self._installation_id or result.get("installationId")
+
+        if not installation_id:
+            _LOGGER.debug(
+                "No installation ID available, skipping chills and insights fetch"
+            )
+            return result
+
+        if result.get("hasChills"):
+            chills = await self.get_chills(installation_id=installation_id)
+            if chills is not None:
+                result["chills"] = chills
+
         if not self._installation_id:
-            _LOGGER.debug("No installation ID available, skipping insights fetch")
+            _LOGGER.debug(
+                "No persisted installation ID available, skipping insights fetch"
+            )
             return result
 
         insights_data = await self.get_insights()
@@ -265,9 +305,7 @@ class QuattCicRemoteApiClient(QuattApiClient):
         if status == 200 and isinstance(data, dict):
             result = data.get("result", {})
             fetched_at = datetime.now(timezone.utc)  # noqa: UP017
-            expires_at = fetched_at + timedelta(
-                minutes=INSIGHTS_REMOTE_SCAN_INTERVAL
-            )
+            expires_at = fetched_at + timedelta(minutes=INSIGHTS_REMOTE_SCAN_INTERVAL)
             self._insights_cache[key] = (expires_at, result)
 
             # Cleanup expired cache entries (keeps memory bounded over time)
@@ -300,4 +338,28 @@ class QuattCicRemoteApiClient(QuattApiClient):
             _LOGGER.debug("CIC settings updated successfully: %s", settings)
             return True
         _LOGGER.error("CIC settings update failed with status %s", status)
+        return False
+
+    async def update_chill_action(self, chill_uuid: str, data: dict[str, Any]) -> bool:
+        """Update chill device action."""
+        if not self._auth.is_authenticated:
+            _LOGGER.error("Cannot update chill action: not authenticated")
+            return False
+
+        if not self._installation_id:
+            _LOGGER.error("Cannot update chill action: no installation ID")
+            return False
+
+        status, _data = await self._auth.request(
+            "POST",
+            f"/me/installation/{self._installation_id}/devices/chills/{chill_uuid}/actions",
+            json_body=data,
+            expected_statuses=(200, 201, 204),
+        )
+        if status in (200, 201, 204):
+            _LOGGER.debug(
+                "Chill action updated successfully: %s for %s", data, chill_uuid
+            )
+            return True
+        _LOGGER.error("Chill action update failed with status %s", status)
         return False

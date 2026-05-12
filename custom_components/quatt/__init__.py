@@ -17,6 +17,7 @@ from homeassistant.core import (
     ServiceCall,
     ServiceResponse,
     SupportsResponse,
+    callback,
 )
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
@@ -59,6 +60,7 @@ from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
+    Platform.CLIMATE,
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
@@ -312,6 +314,44 @@ def _register_services(hass: HomeAssistant) -> None:
     _register_get_home_battery_savings_service(hass)
 
 
+@callback
+def _sync_chill_device_names(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    remote_coordinator: QuattCicRemoteDataUpdateCoordinator,
+) -> None:
+    """Update Chill device names in the device registry from the latest API data."""
+    chill_list = remote_coordinator.get_value("chills", [])
+    if not isinstance(chill_list, list):
+        return
+
+    device_reg = dr.async_get(hass)
+    hub_id = (entry.unique_id or entry.entry_id).strip()
+
+    for chill in chill_list:
+        if not isinstance(chill, dict):
+            continue
+
+        chill_uuid = chill.get("uuid")
+        chill_name = chill.get("name")
+        if not chill_uuid or not chill_name:
+            continue
+
+        device = device_reg.async_get_device(
+            identifiers={(DOMAIN, f"{hub_id}:{chill_uuid}")}
+        )
+        if device is None or device.name == chill_name:
+            continue
+
+        LOGGER.info(
+            "Updating Chill device name for %s from %s to %s",
+            chill_uuid,
+            device.name,
+            chill_name,
+        )
+        device_reg.async_update_device(device.id, name=chill_name)
+
+
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up this integration using UI."""
@@ -420,6 +460,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = coordinators
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    if (remote_coordinator := coordinators.get("cic_remote")) is not None:
+        entry.async_on_unload(
+            remote_coordinator.async_add_listener(
+                lambda: _sync_chill_device_names(hass, entry, remote_coordinator)
+            )
+        )
+
     # On update of the options reload the entry which reloads the coordinator
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
