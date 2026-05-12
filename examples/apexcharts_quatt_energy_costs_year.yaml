@@ -1,0 +1,149 @@
+type: custom:apexcharts-card
+graph_span: 366d
+span:
+  start: year
+update_interval: 15m
+header:
+  show: true
+  title: Stroomkosten dit jaar
+  show_states: true
+  colorize_states: true
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  plotOptions:
+    bar:
+      columnWidth: 0%
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 12
+    labels:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const months = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+          return months[new Date(ts).getMonth()];
+        }
+  yaxis:
+    labels:
+      formatter: |
+        EVAL:(value) => '€ ' + Number(value).toFixed(0)
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const s = d.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+    "y":
+      formatter: |
+        EVAL:(value) => {
+          if (value == null) return '-';
+          return '€ ' + Number(value).toFixed(2).replace('.', ',');
+        }
+series:
+  - entity: sensor.quatt_energy_costs_year
+    name: Kosten
+    type: column
+    color: "#3498db"
+    stroke_width: 4
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const s = d.elecCostsData || '';
+      if (!s) return [];
+      const yr = Number(d.selectedYear) || new Date().getFullYear();
+      const monthMap = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
+      const regex = /\{y:([-\d.]+|null),\s*name:'(\w+)'/g;
+      const out = [];
+      let m;
+      while ((m = regex.exec(s)) !== null) {
+        if (m[1] === 'null') continue;
+        const idx = monthMap[m[2]];
+        if (idx == null) continue;
+        const ts = new Date(yr, idx, 15, 12, 0, 0).getTime();
+        out.push([ts, Number(Number(m[1]).toFixed(2))]);
+      }
+      return out;
+  - entity: sensor.quatt_energy_costs_year
+    name: totaal
+    unit: €
+    color: "#3498db"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const s = d.elecCostsData || '';
+      const regex = /\{y:([-\d.]+|null),/g;
+      let sum = 0;
+      let m;
+      while ((m = regex.exec(s)) !== null) {
+        if (m[1] === 'null') continue;
+        sum += Number(m[1]);
+      }
+      return [[Date.now(), Number(sum.toFixed(2))]];
+  - entity: sensor.quatt_energy_costs_year
+    name: hoogst
+    unit: €
+    color: "#e74c3c"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const s = d.elecCostsData || '';
+      const regex = /\{y:([-\d.]+|null),/g;
+      let best = null;
+      let m;
+      while ((m = regex.exec(s)) !== null) {
+        if (m[1] === 'null') continue;
+        const v = Number(m[1]);
+        if (best == null || v > best) best = v;
+      }
+      return [[Date.now(), Number((best || 0).toFixed(2))]];
+  - entity: sensor.quatt_energy_costs_year
+    name: laagst
+    unit: €
+    color: "#27ae60"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const s = d.elecCostsData || '';
+      const regex = /\{y:([-\d.]+|null),/g;
+      let best = null;
+      let m;
+      while ((m = regex.exec(s)) !== null) {
+        if (m[1] === 'null') continue;
+        const v = Number(m[1]);
+        if (best == null || v < best) best = v;
+      }
+      return [[Date.now(), Number((best || 0).toFixed(2))]];

@@ -1,0 +1,127 @@
+type: custom:apexcharts-card
+graph_span: 24h
+span:
+  start: day
+  offset: "-2d"
+update_interval: 15m
+header:
+  show: true
+  title: Stroomkosten per uur (eergisteren)
+  show_states: true
+  colorize_states: true
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  plotOptions:
+    bar:
+      columnWidth: 0%
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 12
+    labels:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          if (d.getMinutes() !== 0) return '';
+          return d.getHours().toString().padStart(2, '0') + ':00';
+        }
+  yaxis:
+    labels:
+      formatter: |
+        EVAL:(value) => '€ ' + Number(value).toFixed(2)
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const end = new Date(ts + 60 * 60 * 1000);
+          const fmt = (x) => x.toLocaleTimeString('nl-NL', {
+            hour: '2-digit', minute: '2-digit', hour12: false,
+          });
+          return fmt(d) + ' - ' + fmt(end);
+        }
+    "y":
+      formatter: |
+        EVAL:(value) => {
+          if (value == null) return '-';
+          return '€ ' + Number(value).toFixed(4).replace('.', ',');
+        }
+series:
+  - entity: sensor.quatt_energy_costs_day
+    name: Kosten
+    type: column
+    color: "#3498db"
+    stroke_width: 4
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const pts = (d.amounts_total && d.amounts_total.data) || [];
+      if (!pts.length) return [];
+      const id = (d.amounts_total && d.amounts_total.id) || '';
+      const m = id.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (!m) return [];
+      const yr = Number(m[1]), mo = Number(m[2]), dd = Number(m[3]);
+      return pts.map(p => {
+        const [hh, mm] = String(p.name).split(':').map(Number);
+        const ts = new Date(yr, mo - 1, dd, hh, mm || 0, 0).getTime();
+        return [ts, Number(Number(p.y).toFixed(4))];
+      });
+  - entity: sensor.quatt_energy_costs_day
+    name: totaal
+    unit: €
+    color: "#3498db"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const v = (d.totals && d.totals.dayAmount) || 0;
+      return [[Date.now(), Number(Number(v).toFixed(2))]];
+  - entity: sensor.quatt_energy_costs_day
+    name: afname
+    unit: €
+    color: "#888888"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const v = (d.totals && d.totals.dayUsageAmount) || 0;
+      return [[Date.now(), Number(Number(v).toFixed(2))]];
+  - entity: sensor.quatt_energy_costs_day
+    name: invoeding
+    unit: €
+    color: "#27ae60"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const v = (d.totals && d.totals.dayProdAmount) || 0;
+      return [[Date.now(), Number(Number(v).toFixed(2))]];

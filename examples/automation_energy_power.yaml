@@ -1,8 +1,9 @@
 alias: Energy Power (day / year - refresh every 15 minutes)
 description: >-
-  Refreshes Quatt Energy power (usage) sensors for two scopes: today's hourly
-  drilldown (year+month+day) and the current year's monthly aggregate (year
-  only). The portal updates measurements roughly every 15 minutes.
+  Refreshes Quatt Energy power (usage) sensors for two scopes: the hourly
+  drilldown of two days ago (year+month+day) and the current year's monthly
+  aggregate (year only). The day scope is lagged because the portal does not
+  expose today's measurements yet. The portal updates roughly every 15 minutes.
 triggers:
   - trigger: time_pattern
     minutes: "/15"
@@ -19,11 +20,9 @@ actions:
       sequence:
         - variables:
             scope: "{{ repeat.item }}"
-            fetch_year: "{{ now().year }}"
-            fetch_month: >-
-              {% if scope == 'Day' %}{{ now().month }}{% else %}{{ none }}{% endif %}
-            fetch_day: >-
-              {% if scope == 'Day' %}{{ now().day }}{% else %}{{ none }}{% endif %}
+            fetch_year: "{{ (now() - timedelta(days=2)).year if scope == 'Day' else now().year }}"
+            fetch_month: "{{ (now() - timedelta(days=2)).month if scope == 'Day' else none }}"
+            fetch_day: "{{ (now() - timedelta(days=2)).day if scope == 'Day' else none }}"
             power_entity_id: |-
               {% if scope == 'Day' %}
                 sensor.quatt_energy_power_day

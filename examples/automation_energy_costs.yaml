@@ -1,8 +1,10 @@
 alias: Energy Costs (day / year - refresh every 15 minutes)
 description: >-
-  Refreshes Quatt Energy cost sensors for two scopes: today's hourly cost
-  drilldown (year+month+day) and the current year's monthly cost aggregate
-  (year only). Cost updates follow the usage cadence (~15 minutes).
+  Refreshes Quatt Energy cost sensors for two scopes: the hourly cost
+  drilldown of two days ago (year+month+day) and the current year's monthly
+  cost aggregate (year only). The day scope is lagged because the portal
+  does not expose today's costs yet. Cost updates follow the usage cadence
+  (~15 minutes).
 triggers:
   - trigger: time_pattern
     minutes: "/15"
@@ -19,11 +21,9 @@ actions:
       sequence:
         - variables:
             scope: "{{ repeat.item }}"
-            fetch_year: "{{ now().year }}"
-            fetch_month: >-
-              {% if scope == 'Day' %}{{ now().month }}{% else %}{{ none }}{% endif %}
-            fetch_day: >-
-              {% if scope == 'Day' %}{{ now().day }}{% else %}{{ none }}{% endif %}
+            fetch_year: "{{ (now() - timedelta(days=2)).year if scope == 'Day' else now().year }}"
+            fetch_month: "{{ (now() - timedelta(days=2)).month if scope == 'Day' else none }}"
+            fetch_day: "{{ (now() - timedelta(days=2)).day if scope == 'Day' else none }}"
             costs_entity_id: |-
               {% if scope == 'Day' %}
                 sensor.quatt_energy_costs_day
@@ -55,10 +55,44 @@ actions:
                   - condition: template
                     value_template: "{{ costs_valid }}"
                 then:
+                  - variables:
+                      slim_costs: >-
+                        {% if scope == 'Day' %}
+                          {% set ns = namespace(rows=[]) %}
+                          {% for p in costs_response.amounts_total.data | default([]) %}
+                          {% set ns.rows = ns.rows + [{'y': p.y, 'name': p.name}] %}
+                          {% endfor %}
+                          {{ {
+                            'amounts_total': {
+                              'id': costs_response.amounts_total.id | default(''),
+                              'data': ns.rows
+                            },
+                            'totals': costs_response.totals | default({})
+                          } | tojson }}
+                        {% else %}
+                          {% set elec = costs_response.adminDrilldownDays.electricity | default({}) %}
+                          {% set ns = namespace(months={}) %}
+                          {% for mk, mv in elec.items() %}
+                          {% set day_ns = namespace(days={}) %}
+                          {% for dk, dv in mv.items() %}
+                          {% set day_ns.days = day_ns.days | combine({dk: {
+                            'date': dv.date,
+                            'day_usage_amount': dv.day_usage_amount,
+                            'day_prod_amount': dv.day_prod_amount
+                          }}) %}
+                          {% endfor %}
+                          {% set ns.months = ns.months | combine({mk: day_ns.days}) %}
+                          {% endfor %}
+                          {{ {
+                            'selectedYear': costs_response.selectedYear | default(''),
+                            'elecCostsData': costs_response.elecCostsData | default(''),
+                            'adminDrilldownDays': {'electricity': ns.months}
+                          } | tojson }}
+                        {% endif %}
                   - action: python_script.set_energy_costs
                     data:
                       entity_id: "{{ costs_entity_id }}"
-                      costs: "{{ costs_response | tojson }}"
+                      costs: "{{ slim_costs }}"
                       new_state: "{{ now().isoformat() }}"
                 else:
                   - delay:

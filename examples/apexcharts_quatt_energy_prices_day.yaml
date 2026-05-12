@@ -1,0 +1,221 @@
+type: custom:apexcharts-card
+graph_span: 24h
+span:
+  start: day
+update_interval: 5m
+header:
+  show: true
+  title: Stroomprijs vandaag
+  show_states: true
+  colorize_states: true
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  plotOptions:
+    bar:
+      columnWidth: 95%
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 12
+    labels:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          if (d.getMinutes() !== 0) return '';
+          return d.getHours().toString().padStart(2, '0') + ':00';
+        }
+  yaxis:
+    labels:
+      formatter: |
+        EVAL:(value) => '€ ' + Number(value).toFixed(2)
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const end = new Date(ts + 15 * 60 * 1000);
+          const fmt = (x) => x.toLocaleTimeString('nl-NL', {
+            hour: '2-digit', minute: '2-digit', hour12: false,
+          });
+          return fmt(d) + ' - ' + fmt(end);
+        }
+    "y":
+      formatter: |
+        EVAL:(value) => {
+          if (value == null) return '-';
+          return '€ ' + Number(value).toFixed(4).replace('.', ',') + ' / kWh';
+        }
+series:
+  - entity: sensor.quatt_energy_prices_day
+    name: Gemiddelde
+    type: line
+    color: "#3498db"
+    stroke_width: 2
+    curve: straight
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const avg = (d.pricesAvg && d.pricesAvg.priceAvg) || 0;
+      const pts = (d.prices && d.prices.data) || [];
+      if (!pts.length) return [];
+      const first = new Date(String(pts[0].date).replace(' ', 'T')).getTime();
+      const last = new Date(String(pts[pts.length - 1].date).replace(' ', 'T')).getTime() + 15 * 60 * 1000;
+      return [[first, Number(avg.toFixed(4))], [last, Number(avg.toFixed(4))]];
+  - entity: sensor.quatt_energy_prices_day
+    name: Prijs
+    type: column
+    color: "#888888"
+    stroke_width: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const pts = (d.prices && d.prices.data) || [];
+      const valid = pts.filter(p => p && p.date && p.price_type === 'positive');
+      if (!valid.length) return [];
+      const ys = valid.map(p => p.y);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      return pts.map(p => {
+        const ts = new Date(String(p.date).replace(' ', 'T')).getTime();
+        if (p.price_type !== 'positive') return [ts, null];
+        if (p.y === minY || p.y === maxY) return [ts, null];
+        return [ts, Number(p.y.toFixed(4))];
+      });
+  - entity: sensor.quatt_energy_prices_day
+    name: Goedkoopst
+    type: column
+    color: "#27ae60"
+    stroke_width: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const pts = (d.prices && d.prices.data) || [];
+      const valid = pts.filter(p => p && p.date && p.price_type === 'positive');
+      if (!valid.length) return [];
+      const minY = Math.min(...valid.map(p => p.y));
+      return pts.map(p => {
+        const ts = new Date(String(p.date).replace(' ', 'T')).getTime();
+        if (p.price_type !== 'positive' || p.y !== minY) return [ts, null];
+        return [ts, Number(p.y.toFixed(4))];
+      });
+  - entity: sensor.quatt_energy_prices_day
+    name: Duurst
+    type: column
+    color: "#e74c3c"
+    stroke_width: 2
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const pts = (d.prices && d.prices.data) || [];
+      const valid = pts.filter(p => p && p.date && p.price_type === 'positive');
+      if (!valid.length) return [];
+      const maxY = Math.max(...valid.map(p => p.y));
+      return pts.map(p => {
+        const ts = new Date(String(p.date).replace(' ', 'T')).getTime();
+        if (p.price_type !== 'positive' || p.y !== maxY) return [ts, null];
+        return [ts, Number(p.y.toFixed(4))];
+      });
+  - entity: sensor.quatt_energy_prices_day
+    name: huidig
+    unit: € / kWh
+    color: "#ffffff"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 4
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const pts = (d.prices && d.prices.data) || [];
+      const now = Date.now();
+      let cur = null;
+      for (const p of pts) {
+        if (!p || !p.date) continue;
+        const ts = new Date(String(p.date).replace(' ', 'T')).getTime();
+        if (ts <= now && p.price_type === 'positive') cur = p;
+      }
+      if (!cur) return [[now, 0]];
+      return [[now, Number(cur.y.toFixed(4))]];
+  - entity: sensor.quatt_energy_prices_day
+    name: gemiddeld
+    unit: € / kWh
+    color: "#3498db"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 4
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      return [[Date.now(), Number(((d.pricesAvg && d.pricesAvg.priceAvg) || 0).toFixed(4))]];
+  - entity: sensor.quatt_energy_prices_day
+    name: laagst
+    unit: € / kWh
+    color: "#27ae60"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 4
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const pts = ((d.prices && d.prices.data) || []).filter(p => p && p.price_type === 'positive');
+      if (!pts.length) return [[Date.now(), 0]];
+      const m = pts.reduce((a, b) => a.y < b.y ? a : b);
+      return [[Date.now(), Number(m.y.toFixed(4))]];
+  - entity: sensor.quatt_energy_prices_day
+    name: hoogst
+    unit: € / kWh
+    color: "#e74c3c"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 4
+    data_generator: |
+      const raw = entity.attributes.prices_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const pts = ((d.prices && d.prices.data) || []).filter(p => p && p.price_type === 'positive');
+      if (!pts.length) return [[Date.now(), 0]];
+      const m = pts.reduce((a, b) => a.y > b.y ? a : b);
+      return [[Date.now(), Number(m.y.toFixed(4))]];
