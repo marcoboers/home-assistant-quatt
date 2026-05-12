@@ -33,6 +33,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
 from .api_remote_cic import QuattCicRemoteApiClient
+from .api_remote_energy import QuattEnergyApiClient
 from .api_remote_home_battery import QuattHomeBatteryApiClient
 from .const import (
     ALL_ELECTRIC_SYSTEM,
@@ -146,6 +147,54 @@ class QuattSystemSensor(QuattSensor):
             DUO_HEATPUMP_SYSTEM: self.coordinator.heatpump_2_active(),
             ALL_ELECTRIC_SYSTEM: self.coordinator.all_electric_active(),
             OPENTHERM_SYSTEM: self.coordinator.is_boiler_opentherm(),
+        }
+
+
+class QuattEnergyCurrentPriceSensor(QuattSensor):
+    """Current quarter-hour energy price with period attributes."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose period bounds + product/date for templating."""
+        return {
+            "period_start": self.coordinator.get_value("prices.current.periodStart"),
+            "period_end": self.coordinator.get_value("prices.current.periodEnd"),
+            "period_label": self.coordinator.get_value("prices.current.name"),
+            "time_window": self.coordinator.get_value("prices.current.window"),
+            "product": self.coordinator.get_value("prices.product"),
+            "date": self.coordinator.get_value("prices.date"),
+        }
+
+
+class QuattEnergyCheapestPriceSensor(QuattSensor):
+    """Cheapest quarter-hour energy price today, with its timestamp."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the cheapest-slot timestamp + product/date."""
+        return {
+            "time": self.coordinator.get_value("prices.cheapest.time"),
+            "time_end": self.coordinator.get_value("prices.cheapest.timeEnd"),
+            "time_label": self.coordinator.get_value("prices.cheapest.name"),
+            "time_window": self.coordinator.get_value("prices.cheapest.window"),
+            "product": self.coordinator.get_value("prices.product"),
+            "date": self.coordinator.get_value("prices.date"),
+        }
+
+
+class QuattEnergyMostExpensivePriceSensor(QuattSensor):
+    """Most expensive quarter-hour energy price today, with its timestamp."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the most-expensive-slot timestamp + product/date."""
+        return {
+            "time": self.coordinator.get_value("prices.mostExpensive.time"),
+            "time_end": self.coordinator.get_value("prices.mostExpensive.timeEnd"),
+            "time_label": self.coordinator.get_value("prices.mostExpensive.name"),
+            "time_window": self.coordinator.get_value("prices.mostExpensive.window"),
+            "product": self.coordinator.get_value("prices.product"),
+            "date": self.coordinator.get_value("prices.date"),
         }
 
 
@@ -389,6 +438,51 @@ class QuattSettingSwitch(QuattSwitch):
 
         _LOGGER.debug("Updating CIC setting: %s", settings)
         return await remote_client.update_cic_settings(settings)
+
+
+class QuattEnergyPriceFlagSwitch(QuattSwitch):
+    """Switch backing a Quatt Energy price-display flag (VAT / tax / markup).
+
+    The entity_description.key maps to the corresponding API client kwarg
+    (``include_vat``/``include_tax``/``include_markup``). State lives on the
+    client - persisted in the per-hub Store - so toggling does not require
+    an entry reload. After updating the flag the coordinator is refreshed
+    so the next call to the prices endpoint immediately reflects the new
+    set of surcharges.
+    """
+
+    @property
+    def is_on(self) -> bool:
+        """Read the current flag value from the API client."""
+        client = self.coordinator.client
+        if not isinstance(client, QuattEnergyApiClient):
+            return False
+        return bool(getattr(client, self.entity_description.key))
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Enable the flag."""
+        await self._async_apply(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Disable the flag."""
+        await self._async_apply(False)
+
+    async def _async_apply(self, value: bool) -> None:
+        client = self.coordinator.client
+        if not isinstance(client, QuattEnergyApiClient):
+            raise TypeError(
+                "QuattEnergyPriceFlagSwitch requires a Quatt Energy client",
+            )
+        changed = await client.set_price_flags(**{self.entity_description.key: value})
+        # Always write the optimistic state back to HA so the UI snaps even
+        # if the value was already correct (e.g. re-applying defaults).
+        self.async_write_ha_state()
+        if changed:
+            await self.coordinator.async_request_refresh()
+
+    async def _perform_api_update(self, state: bool) -> bool:
+        """Unused - turn_on/off override the base ``QuattSwitch`` flow."""
+        raise NotImplementedError
 
 
 class QuattNumber(QuattEntity, NumberEntity):

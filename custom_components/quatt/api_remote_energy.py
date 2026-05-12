@@ -21,7 +21,7 @@ alive while Home Assistant is running, callers periodically call
 
 from __future__ import annotations
 
-from datetime import date as date_cls, datetime
+from datetime import date as date_cls, datetime, timedelta
 import logging
 import re
 import time
@@ -64,21 +64,35 @@ class QuattEnergyApiClient(QuattApiClient):
         username: str,
         password: str,
         store=None,
+        include_vat: bool = True,
+        include_tax: bool = True,
+        include_markup: bool = True,
     ) -> None:
         """Initialize the Energy API client.
 
         The provided ``session`` MUST be an isolated client session (not the
         shared HA one) because the auth flow relies on the laravel session
         cookie surviving across requests for this user only.
+
+        ``include_vat``/``include_tax``/``include_markup`` map directly to the
+        ``vat``/``tax``/``markup`` query params on the prices endpoint; they
+        control whether the returned prices include the corresponding
+        surcharge. Defaults match the portal's "everything on" preset.
         """
         self._session = session
         self._username = username
         self._password = password
         self._store = store
+        self._include_vat = include_vat
+        self._include_tax = include_tax
+        self._include_markup = include_markup
 
         self._csrf_token: str | None = None
         self._session_id: str | None = None
         self._ean: str | None = None
+        # Today's raw prices payload, cached to avoid hammering the portal on
+        # every coordinator tick - the API publishes new prices once a day.
+        self._today_prices_cache: tuple[datetime, dict[str, Any]] | None = None
 
     # ------------------------------------------------------------------ #
     # State accessors
@@ -109,23 +123,80 @@ class QuattEnergyApiClient(QuattApiClient):
         """Return True when a successful login has produced a session id."""
         return self._csrf_token is not None and self._session_id is not None
 
+    @property
+    def include_vat(self) -> bool:
+        """Whether the portal should include VAT in returned prices."""
+        return self._include_vat
+
+    @property
+    def include_tax(self) -> bool:
+        """Whether the portal should include energy tax in returned prices."""
+        return self._include_tax
+
+    @property
+    def include_markup(self) -> bool:
+        """Whether the portal should include the supplier markup in prices."""
+        return self._include_markup
+
+    async def set_price_flags(
+        self,
+        include_vat: bool | None = None,
+        include_tax: bool | None = None,
+        include_markup: bool | None = None,
+    ) -> bool:
+        """Update one or more price-display flags.
+
+        Returns True if any flag actually changed. On change the cached daily
+        prices are dropped so the next coordinator tick fetches fresh prices
+        with the new params, and the new flags are persisted to the per-hub
+        store.
+        """
+        changed = False
+        if include_vat is not None and include_vat != self._include_vat:
+            self._include_vat = include_vat
+            changed = True
+        if include_tax is not None and include_tax != self._include_tax:
+            self._include_tax = include_tax
+            changed = True
+        if include_markup is not None and include_markup != self._include_markup:
+            self._include_markup = include_markup
+            changed = True
+        if changed:
+            self._today_prices_cache = None
+            await self._save_state()
+        return changed
+
     def load_state(
         self,
         csrf_token: str | None,
         session_id: str | None,
         ean: str | None,
+        include_vat: bool | None = None,
+        include_tax: bool | None = None,
+        include_markup: bool | None = None,
     ) -> None:
-        """Restore previously persisted state from this hub's store."""
+        """Restore previously persisted state from this hub's store.
+
+        The ``include_*`` flags only override the in-memory defaults when
+        non-None, so a fresh install (empty store) keeps the True/True/True
+        defaults set by ``__init__``.
+        """
         self._csrf_token = csrf_token
         self._session_id = session_id
         self._ean = ean
+        if include_vat is not None:
+            self._include_vat = bool(include_vat)
+        if include_tax is not None:
+            self._include_tax = bool(include_tax)
+        if include_markup is not None:
+            self._include_markup = bool(include_markup)
 
     async def _save_state(self) -> None:
         """Persist the current state to this hub's store.
 
         Cookies live in-memory only (the aiohttp cookie jar is not persisted),
-        but storing csrf/session/ean lets us survive restarts gracefully and
-        is also what step 2 will read for service calls.
+        but storing csrf/session/ean/flags lets us survive restarts with the
+        user's preferences intact.
         """
         if not self._store:
             return
@@ -133,6 +204,9 @@ class QuattEnergyApiClient(QuattApiClient):
         existing["csrf_token"] = self._csrf_token
         existing["session_id"] = self._session_id
         existing["ean"] = self._ean
+        existing["include_vat"] = self._include_vat
+        existing["include_tax"] = self._include_tax
+        existing["include_markup"] = self._include_markup
         await self._store.async_save(existing)
 
     # ------------------------------------------------------------------ #
@@ -195,15 +269,61 @@ class QuattEnergyApiClient(QuattApiClient):
     async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Coordinator entry point - keep auth alive and surface state.
 
-        Step 1 only exposes the EAN and the rotating auth identifiers; the
-        real timeseries calls are added in step 2.
+        Returns the rotating auth identifiers, the meter EAN, and (when
+        available) a summary of today's quarter-hourly prices used by the
+        price sensors. The raw prices response is cached - see
+        :meth:`_get_today_prices_cached` - so the per-minute auth tick
+        doesn't translate into per-minute price polling.
         """
         await self.refresh()
-        return {
+        data: dict[str, Any] = {
             "ean": self._ean,
             "csrfToken": self._csrf_token,
             "sessionId": self._session_id,
         }
+
+        prices = await self._get_today_prices_cached()
+        if prices:
+            summary = _summarize_today_prices(prices)
+            if summary is not None:
+                data["prices"] = summary
+
+        return data
+
+    async def _get_today_prices_cached(self) -> dict[str, Any] | None:
+        """Return today's prices payload, cached for ~60 minutes.
+
+        Prices are published once per day so a long-lived cache is safe and
+        much friendlier than the coordinator's 1-minute base cadence. If a
+        fresh fetch fails we fall back to the last cached payload (even when
+        it is past its TTL) so sensors don't go ``unavailable`` on a hiccup.
+
+        Only proper dict payloads are cached - the portal sometimes responds
+        with a JSON-encoded string on transient auth issues, and caching that
+        would poison every subsequent tick.
+        """
+        now = datetime.now().astimezone()
+        if self._today_prices_cache and self._today_prices_cache[0] > now:
+            return self._today_prices_cache[1]
+
+        try:
+            response = await self.get_prices(period="day", product="electricity")
+        except QuattApiClientError as err:
+            _LOGGER.debug("Today prices fetch failed: %s", err)
+            response = None
+
+        if not isinstance(response, dict):
+            if response is not None:
+                _LOGGER.debug(
+                    "Today prices response was not a dict (%s); discarding",
+                    type(response).__name__,
+                )
+            if self._today_prices_cache is not None:
+                return self._today_prices_cache[1]
+            return None
+
+        self._today_prices_cache = (now + timedelta(minutes=60), response)
+        return response
 
     # ------------------------------------------------------------------ #
     # Internal HTTP helpers
@@ -314,6 +434,9 @@ class QuattEnergyApiClient(QuattApiClient):
         year: int | None = None,
         month: int | None = None,
         day: int | None = None,
+        include_vat: bool | None = None,
+        include_tax: bool | None = None,
+        include_markup: bool | None = None,
     ) -> dict[str, Any] | None:
         """Fetch tariff price data from ``/webapp/api/get-prices-data``.
 
@@ -322,6 +445,11 @@ class QuattEnergyApiClient(QuattApiClient):
         convention it must be the first of the chosen month, so missing
         month/day default to ``01`` automatically. Day-period queries default
         to today.
+
+        ``include_vat``/``include_tax``/``include_markup`` default to the
+        client-level flags (set via :meth:`set_price_flags`) but can be
+        overridden per-call - the service action passes explicit values so
+        users can probe the API without touching their stored preferences.
         """
         _validate_choice("period", period, PRICES_PERIODS)
         _validate_choice("product", product, PRODUCTS)
@@ -333,14 +461,20 @@ class QuattEnergyApiClient(QuattApiClient):
             # Month/year queries: the portal expects the first of the month.
             target = _build_date(today, year, month, 1).replace(day=1)
 
+        effective_vat = self._include_vat if include_vat is None else include_vat
+        effective_tax = self._include_tax if include_tax is None else include_tax
+        effective_markup = (
+            self._include_markup if include_markup is None else include_markup
+        )
+
         params = {
             "suppname": "quatt",
             "product": product,
             "date": target.strftime("%d-%m-%Y"),
             "period": period,
-            "vat": "true",
-            "tax": "true",
-            "markup": "true",
+            "vat": _bool_param(effective_vat),
+            "tax": _bool_param(effective_tax),
+            "markup": _bool_param(effective_markup),
             "drilldown_key": "_drilldown",
         }
         return await self._api_get_json(
@@ -524,11 +658,32 @@ class QuattEnergyApiClient(QuattApiClient):
                             f"{path} returned {status}: {text[:200]}",
                         )
                     try:
-                        return await response.json(content_type=None)
+                        data = await response.json(content_type=None)
                     except (aiohttp.ContentTypeError, ValueError) as err:
                         raise QuattApiClientError(
                             f"{path} returned non-JSON body: {err}",
                         ) from err
+
+                    # The portal answers 200 OK with body "Token mismatch!"
+                    # (literally a JSON-encoded string) when the CSRF or
+                    # session is rejected, so handle it like a 401.
+                    if _is_token_mismatch(data):
+                        if attempt == 0:
+                            _LOGGER.debug(
+                                "Quatt Energy token rejected on %s (body=%r), "
+                                "re-authenticating",
+                                path,
+                                data,
+                            )
+                            self._csrf_token = None
+                            self._session_id = None
+                            continue
+                        raise QuattApiClientAuthenticationError(
+                            f"Quatt Energy token still rejected after retry "
+                            f"({path}, body={data!r})",
+                        )
+
+                    return data
             except (aiohttp.ClientError, TimeoutError) as err:
                 raise QuattApiClientCommunicationError(
                     f"Quatt Energy network error on {path}: {err}",
@@ -597,6 +752,134 @@ def _extract_session_id(html: str) -> str | None:
     """Return the value of the ``const sessionId = '...'`` JS literal."""
     match = _RE_SESSION_ID_CONST.search(html)
     return match.group(1) if match else None
+
+
+def _summarize_today_prices(payload: Any) -> dict[str, Any] | None:
+    """Reduce the day's quarter-hourly prices to current/min/max/avg.
+
+    Input is the raw ``/webapp/api/get-prices-data?period=day`` response;
+    entries are quarter-hour slots with ``y`` (EUR/kWh) and ``date``
+    (``YYYY-MM-DD HH:MM:SS`` in local time). Slots run 00:00 through 23:45,
+    each covering 15 minutes.
+
+    The portal occasionally returns a JSON-encoded string instead of an
+    object (transient auth state); we treat any non-dict payload as "no
+    data available" rather than letting it crash the coordinator.
+    """
+    if not isinstance(payload, dict):
+        return None
+    prices_section = payload.get("prices")
+    if not isinstance(prices_section, dict):
+        return None
+    raw = prices_section.get("data")
+    if not isinstance(raw, list) or not raw:
+        return None
+
+    parsed: list[tuple[datetime, float, str]] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        y = entry.get("y")
+        date_str = entry.get("date")
+        if not isinstance(y, int | float) or not isinstance(date_str, str):
+            continue
+        try:
+            ts = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        label = entry.get("name") if isinstance(entry.get("name"), str) else None
+        parsed.append((ts, float(y), label or ts.strftime("%H:%M")))
+
+    if not parsed:
+        return None
+
+    parsed.sort(key=lambda item: item[0])
+
+    cheapest = min(parsed, key=lambda item: item[1])
+    most_expensive = max(parsed, key=lambda item: item[1])
+
+    # Compare against a naive local "now" because the API timestamps are
+    # naive local time (no timezone info attached).
+    now = datetime.now().replace(microsecond=0)
+
+    current: tuple[datetime, float, str] | None = None
+    for index, item in enumerate(parsed):
+        slot_start = item[0]
+        slot_end = (
+            parsed[index + 1][0]
+            if index + 1 < len(parsed)
+            else slot_start + timedelta(minutes=15)
+        )
+        if slot_start <= now < slot_end:
+            current = item
+            break
+    if current is None:
+        # Outside the day window (e.g. data is stale or we're between days):
+        # use the closest past slot, falling back to the first slot.
+        past = [item for item in parsed if item[0] <= now]
+        current = past[-1] if past else parsed[0]
+
+    cur_ts, cur_price, cur_name = current
+    cur_end = cur_ts + timedelta(minutes=15)
+    cheap_ts, cheap_price, cheap_name = cheapest
+    cheap_end = cheap_ts + timedelta(minutes=15)
+    exp_ts, exp_price, exp_name = most_expensive
+    exp_end = exp_ts + timedelta(minutes=15)
+
+    # Prefer the API-provided average; fall back to a computed mean.
+    prices_avg_section = payload.get("pricesAvg") or {}
+    day_average = prices_avg_section.get("priceAvg")
+    if not isinstance(day_average, int | float):
+        day_average = sum(item[1] for item in parsed) / len(parsed)
+
+    return {
+        "current": {
+            "price": round(cur_price, 6),
+            "periodStart": cur_ts.isoformat(),
+            "periodEnd": cur_end.isoformat(),
+            "name": cur_name,
+            "window": f"{cur_name}-{cur_end.strftime('%H:%M')}",
+        },
+        "cheapest": {
+            "price": round(cheap_price, 6),
+            "time": cheap_ts.isoformat(),
+            "timeEnd": cheap_end.isoformat(),
+            "name": cheap_name,
+            "window": f"{cheap_name}-{cheap_end.strftime('%H:%M')}",
+        },
+        "mostExpensive": {
+            "price": round(exp_price, 6),
+            "time": exp_ts.isoformat(),
+            "timeEnd": exp_end.isoformat(),
+            "name": exp_name,
+            "window": f"{exp_name}-{exp_end.strftime('%H:%M')}",
+        },
+        "dayAverage": round(float(day_average), 6),
+        "product": prices_section.get("product"),
+        "date": prices_section.get("date"),
+    }
+
+
+def _bool_param(value: bool) -> str:
+    """Serialise a boolean for the portal's query string (``true``/``false``)."""
+    return "true" if value else "false"
+
+
+def _is_token_mismatch(data: Any) -> bool:
+    """Detect the portal's 200-OK-but-unauthorized response.
+
+    Known shape so far is a bare JSON string ``"Token mismatch!"``. We also
+    accept a dict carrying the same message (``error``/``message`` keys) in
+    case the portal ever wraps it.
+    """
+    if isinstance(data, str):
+        return "token mismatch" in data.strip().lower()
+    if isinstance(data, dict):
+        for key in ("error", "message", "msg"):
+            value = data.get(key)
+            if isinstance(value, str) and "token mismatch" in value.lower():
+                return True
+    return False
 
 
 def _validate_choice(name: str, value: str, allowed: tuple[str, ...]) -> None:

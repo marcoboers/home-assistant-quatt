@@ -458,10 +458,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             password=entry.data[CONF_ENERGY_PASSWORD],
             store=store,
         )
+        # Price-display flags are persisted in the per-hub Store next to the
+        # auth identifiers, so toggling them via the dedicated switches does
+        # not require an entry reload (which would tear down every sensor).
         energy_client.load_state(
             csrf_token=stored_data.get("csrf_token"),
             session_id=stored_data.get("session_id"),
             ean=stored_data.get("ean"),
+            include_vat=stored_data.get("include_vat"),
+            include_tax=stored_data.get("include_tax"),
+            include_markup=stored_data.get("include_markup"),
         )
 
         energy_coordinator = QuattEnergyDataUpdateCoordinator(

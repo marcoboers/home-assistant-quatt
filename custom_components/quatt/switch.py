@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from .const import (
     DEVICE_BOILER_ID,
     DEVICE_CIC_ID,
+    DEVICE_ENERGY_ID,
     DEVICE_FLOWMETER_ID,
     DEVICE_HEAT_BATTERY_ID,
     DEVICE_HEAT_CHARGER_ID,
@@ -17,15 +18,38 @@ from .const import (
     DEVICE_HEATPUMP_2_ID,
     DEVICE_THERMOSTAT_ID,
     DOMAIN,
+    QuattDeviceKind,
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
+    QuattEnergyPriceFlagSwitch,
     QuattFeatureFlags,
     QuattSettingSwitch,
     QuattSwitch,
     QuattSwitchEntityDescription,
 )
 from .entity_setup import async_setup_entities
+
+ENERGY_SWITCHES: list[QuattSwitchEntityDescription] = [
+    QuattSwitchEntityDescription(
+        key="include_vat",
+        name="Include VAT",
+        icon="mdi:percent",
+        quatt_entity_class=QuattEnergyPriceFlagSwitch,
+    ),
+    QuattSwitchEntityDescription(
+        key="include_tax",
+        name="Include energy tax",
+        icon="mdi:cash-multiple",
+        quatt_entity_class=QuattEnergyPriceFlagSwitch,
+    ),
+    QuattSwitchEntityDescription(
+        key="include_markup",
+        name="Include supplier markup",
+        icon="mdi:cash-plus",
+        quatt_entity_class=QuattEnergyPriceFlagSwitch,
+    ),
+]
 
 SWITCHES = {
     # The HUB CIC sensor must be created first to ensure the HUB device is present
@@ -67,6 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
     local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
     remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    energy_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("energy")
 
     switches: list[QuattSwitch] = []
     if local_coordinator is not None:
@@ -88,5 +113,18 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
             entity_descriptions=SWITCHES,
             entity_domain=SWITCH_DOMAIN,
         )
+
+    if energy_coordinator is not None:
+        for desc in ENERGY_SWITCHES:
+            switches.append(
+                desc.quatt_entity_class(
+                    device_name="Energy",
+                    device_id=DEVICE_ENERGY_ID,
+                    sensor_key=desc.key,
+                    coordinator=energy_coordinator,
+                    entity_description=desc,
+                    device_kind=QuattDeviceKind.HUB,
+                )
+            )
 
     async_add_devices(switches)

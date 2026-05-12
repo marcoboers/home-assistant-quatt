@@ -44,6 +44,9 @@ from .const import (
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
+    QuattEnergyCheapestPriceSensor,
+    QuattEnergyCurrentPriceSensor,
+    QuattEnergyMostExpensivePriceSensor,
     QuattFeatureFlags,
     QuattSensor,
     QuattSensorEntityDescription,
@@ -1450,6 +1453,41 @@ ENERGY_SENSORS: list[QuattSensorEntityDescription] = [
         icon="mdi:identifier",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    QuattSensorEntityDescription(
+        key="prices.current.price",
+        name="Current energy price",
+        icon="mdi:cash",
+        native_unit_of_measurement="EUR/kWh",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=4,
+        quatt_entity_class=QuattEnergyCurrentPriceSensor,
+    ),
+    QuattSensorEntityDescription(
+        key="prices.cheapest.price",
+        name="Cheapest energy price today",
+        icon="mdi:trending-down",
+        native_unit_of_measurement="EUR/kWh",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=4,
+        quatt_entity_class=QuattEnergyCheapestPriceSensor,
+    ),
+    QuattSensorEntityDescription(
+        key="prices.mostExpensive.price",
+        name="Most expensive energy price today",
+        icon="mdi:trending-up",
+        native_unit_of_measurement="EUR/kWh",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=4,
+        quatt_entity_class=QuattEnergyMostExpensivePriceSensor,
+    ),
+    QuattSensorEntityDescription(
+        key="prices.dayAverage",
+        name="Average energy price today",
+        icon="mdi:chart-line",
+        native_unit_of_measurement="EUR/kWh",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=4,
+    ),
 ]
 
 
@@ -1540,7 +1578,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     if energy_coordinator is not None:
         for desc in ENERGY_SENSORS:
             sensors.append(
-                QuattSensor(
+                desc.quatt_entity_class(
                     device_name="Energy",
                     device_id=DEVICE_ENERGY_ID,
                     sensor_key=desc.key,

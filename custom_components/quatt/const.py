@@ -27,6 +27,16 @@ CONF_HOME_BATTERY_QR_URL = "home_battery_qr_url"
 CONF_ENERGY_USERNAME = "energy_username"
 CONF_ENERGY_PASSWORD = "energy_password"
 
+# Quatt Energy price-display toggles (stored in entry options). They map
+# 1:1 to the ``vat``/``tax``/``markup`` query params on the prices API,
+# so flipping them changes the prices the portal returns on the next call.
+CONF_ENERGY_INCLUDE_VAT = "energy_include_vat"
+CONF_ENERGY_INCLUDE_TAX = "energy_include_tax"
+CONF_ENERGY_INCLUDE_MARKUP = "energy_include_markup"
+DEFAULT_ENERGY_INCLUDE_VAT = True
+DEFAULT_ENERGY_INCLUDE_TAX = True
+DEFAULT_ENERGY_INCLUDE_MARKUP = True
+
 # Quatt Energy API
 QUATT_ENERGY_BASE_URL = "https://mijnenergie.quatt.io"
 # The mobile site treats unknown user-agents differently; mimic a real device.
