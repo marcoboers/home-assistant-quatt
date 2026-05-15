@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.core import HomeAssistant
 
@@ -23,8 +21,8 @@ from .entity import (
     QuattFeatureFlags,
     QuattSelect,
     QuattSelectEntityDescription,
-    QuattSoundSelect,
 )
+from .entity_select import QuattSoundSelect
 from .entity_setup import async_setup_entities
 
 # Sound level options
@@ -63,15 +61,15 @@ SELECTS = {
     DEVICE_THERMOSTAT_ID: [],
 }
 
-_LOGGER = logging.getLogger(__name__)
-
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the select platform."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
     local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
-    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
+        "cic_remote"
+    )
 
     selects: list[QuattSelect] = []
     if local_coordinator is not None:
