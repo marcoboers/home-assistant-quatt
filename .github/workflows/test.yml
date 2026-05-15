@@ -1,0 +1,39 @@
+name: "Test"
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  pytest:
+    name: "Pytest"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v6.0.2"
+
+      - name: "Checkout Home Assistant core"
+        uses: "actions/checkout@v6.0.2"
+        with:
+          repository: "home-assistant/core"
+          path: "core"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: "Install requirements"
+        run: |
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install -r core/requirements_test.txt
+
+      - name: "Run"
+        env:
+          HA_CORE_PATH: "${{ github.workspace }}/core"
+        run: ./scripts/test
