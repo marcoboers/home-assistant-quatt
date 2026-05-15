@@ -24,11 +24,10 @@ from .const import (
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
     QuattFeatureFlags,
-    QuattHomeBatterySolarCapacityNumber,
     QuattNumber,
     QuattNumberEntityDescription,
-    QuattSettingNumber,
 )
+from .entity_number import QuattHomeBatterySolarCapacityNumber, QuattSettingNumber
 from .entity_setup import async_setup_entities
 
 HOME_BATTERY_NUMBERS: list[QuattNumberEntityDescription] = [

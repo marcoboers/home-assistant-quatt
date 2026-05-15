@@ -21,8 +21,8 @@ from .entity import (
     QuattFeatureFlags,
     QuattSelect,
     QuattSelectEntityDescription,
-    QuattSoundSelect,
 )
+from .entity_select import QuattSoundSelect
 from .entity_setup import async_setup_entities
 
 # Sound level options

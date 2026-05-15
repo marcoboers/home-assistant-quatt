@@ -21,10 +21,10 @@ from .const import (
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
     QuattFeatureFlags,
-    QuattSettingSwitch,
     QuattSwitch,
     QuattSwitchEntityDescription,
 )
+from .entity_switch import QuattSettingSwitch
 from .entity_setup import async_setup_entities
 
 SWITCHES = {

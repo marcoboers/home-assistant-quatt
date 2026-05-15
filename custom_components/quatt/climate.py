@@ -18,10 +18,10 @@ from .const import (
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
-    QuattChillClimate,
     QuattClimateEntityDescription,
     QuattFeatureFlags,
 )
+from .entity_climate import QuattChillClimate
 from .entity_setup import async_setup_entities, create_chill_entity_descriptions
 
 CLIMATES = {

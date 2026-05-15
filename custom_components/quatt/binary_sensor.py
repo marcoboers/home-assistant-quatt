@@ -28,9 +28,9 @@ from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
     QuattBinarySensor,
     QuattBinarySensorEntityDescription,
-    QuattChillBinarySensor,
     QuattFeatureFlags,
 )
+from .entity_binary_sensor import QuattChillBinarySensor
 from .entity_setup import async_setup_entities, create_chill_entity_descriptions
 
 

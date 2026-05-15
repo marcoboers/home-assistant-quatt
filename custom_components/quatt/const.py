@@ -24,8 +24,14 @@ CONF_HOME_BATTERY_CHECK_CODE = "home_battery_check_code"
 CONF_HOME_BATTERY_QR_URL = "home_battery_qr_url"
 
 # Remote API URLs (from kwatt)
-FIREBASE_INSTALLATIONS_URL = "https://firebaseinstallations.googleapis.com/v1/projects/quatt-production/installations"
-FIREBASE_REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/1074628551428/namespaces/firebase:fetch"
+FIREBASE_INSTALLATIONS_URL = (
+    "https://firebaseinstallations.googleapis.com/v1/projects/"
+    "quatt-production/installations"
+)
+FIREBASE_REMOTE_CONFIG_URL = (
+    "https://firebaseremoteconfig.googleapis.com/v1/projects/"
+    "1074628551428/namespaces/firebase:fetch"
+)
 FIREBASE_SIGNUP_URL = (
     "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser"
 )
