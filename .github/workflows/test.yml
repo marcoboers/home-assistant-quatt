@@ -31,7 +31,7 @@ jobs:
       - name: "Install requirements"
         run: |
           python3 -m pip install -r requirements.txt
-          python3 -m pip install -r core/requirements_test.txt
+          python3 -m pip install -r core/requirements_test_all.txt
 
       - name: "Run"
         env:
