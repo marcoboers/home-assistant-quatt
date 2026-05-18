@@ -10,6 +10,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 
 from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
@@ -19,7 +20,7 @@ from custom_components.quatt.climate import (
     CLIMATES,
     create_chill_climate_entity_descriptions,
 )
-from custom_components.quatt.const import DOMAIN, QuattDeviceKind
+from custom_components.quatt.const import DOMAIN, DEVICE_CIC_ID, QuattDeviceKind
 from custom_components.quatt.entity_setup import (
     async_setup_entities,
     create_chill_entity_descriptions,
@@ -160,14 +161,20 @@ async def test_async_setup_entities_removes_obsolete_chill_device(
     )
 
     assert entities == []
-    assert device_registry.async_get_device(
-        identifiers={(DOMAIN, f"{config_entry.unique_id}:uuid-gone")}
-    ) is None
-    assert entity_registry.async_get_entity_id(
-        CLIMATE_DOMAIN,
-        DOMAIN,
-        f"{config_entry.unique_id}:uuid-gone:chills",
-    ) is None
+    assert (
+        device_registry.async_get_device(
+            identifiers={(DOMAIN, f"{config_entry.unique_id}:uuid-gone")}
+        )
+        is None
+    )
+    assert (
+        entity_registry.async_get_entity_id(
+            CLIMATE_DOMAIN,
+            DOMAIN,
+            f"{config_entry.unique_id}:uuid-gone:chills",
+        )
+        is None
+    )
 
 
 async def test_sync_chill_device_names_updates_registry_name(
@@ -188,3 +195,13 @@ async def test_sync_chill_device_names_updates_registry_name(
     _sync_chill_device_names(hass, config_entry, coordinator)
 
     assert device_registry.async_get(device.id).name == "Bedroom chill"
+
+
+async def test_max_water_temperature_number_has_device_class() -> None:
+    """The Max water temperature number sensor should be classified as temperature."""
+    from custom_components.quatt.number import NUMBERS
+
+    description = NUMBERS[DEVICE_CIC_ID][0]
+
+    assert description.key == "chMaxWaterTemperature"
+    assert description.device_class == NumberDeviceClass.TEMPERATURE
