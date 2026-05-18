@@ -6,6 +6,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 import logging
 from typing import Any
 
@@ -13,13 +14,12 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.components.number import (
-    DEFAULT_MAX_VALUE,
-    DEFAULT_MIN_VALUE,
-    DEFAULT_STEP,
-    NumberEntity,
-    NumberEntityDescription,
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityDescription,
+    HVACMode,
 )
+from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -32,23 +32,98 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import homeassistant.util.dt as dt_util
 
-from .api_remote_cic import QuattCicRemoteApiClient
-from .api_remote_energy import QuattEnergyApiClient
-from .api_remote_home_battery import QuattHomeBatteryApiClient
-from .const import (
-    ALL_ELECTRIC_SYSTEM,
-    ATTRIBUTION,
-    DOMAIN,
-    DUO_HEATPUMP_SYSTEM,
-    NAME,
-    OPENTHERM_SYSTEM,
-    QuattDeviceKind,
-)
+from .const import ATTRIBUTION, DOMAIN, NAME, QuattDeviceKind
 from .coordinator import QuattDataUpdateCoordinator
-from .coordinator_home_battery import QuattHomeBatteryDataUpdateCoordinator
 from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+CHILL_SENTENCE_CASE_KEYS = {"color", "fanMode", "mode", "status", "updateState"}
+
+
+def _format_chill_sentence_case(value: str) -> str:
+    """Format Quatt Chill enum text as sentence case."""
+    text = value.replace("_", " ").lower()
+    return text[:1].upper() + text[1:]
+
+
+class QuattChillApiEnum(str, Enum):
+    """Base class for Quatt Chill API enum values."""
+
+    @classmethod
+    def from_api_value(cls, value: Any):
+        """Return the enum member for a case-insensitive API value."""
+        if not isinstance(value, str):
+            return None
+
+        normalized_value = value.upper()
+        for item in cls:
+            if item.value == normalized_value:
+                return item
+        return None
+
+    @classmethod
+    def from_display_value(cls, value: str):
+        """Return the enum member for a display value."""
+        normalized_value = value.replace(" ", "_").upper()
+        return cls.from_api_value(normalized_value)
+
+    @property
+    def display_value(self) -> str:
+        """Return the Home Assistant display value."""
+        return _format_chill_sentence_case(self.value)
+
+
+class QuattChillFanMode(QuattChillApiEnum):
+    """Quatt Chill fan mode values."""
+
+    HIGH = "HIGH"
+    NORMAL = "NORMAL"
+    LOW = "LOW"
+
+
+class QuattChillMode(QuattChillApiEnum):
+    """Quatt Chill mode values."""
+
+    COOLING = "COOLING"
+    HEATING = "HEATING"
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return the matching Home Assistant HVAC mode."""
+        return HVACMode.COOL if self == QuattChillMode.COOLING else HVACMode.HEAT
+
+
+class QuattChillStatus(QuattChillApiEnum):
+    """Quatt Chill status values."""
+
+    OFF = "OFF"
+    OFFLINE = "OFFLINE"
+    COOLING = "COOLING"
+    HEATING = "HEATING"
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return the matching Home Assistant HVAC mode."""
+        if self in {QuattChillStatus.OFF, QuattChillStatus.OFFLINE}:
+            return HVACMode.OFF
+        return HVACMode.COOL if self == QuattChillStatus.COOLING else HVACMode.HEAT
+
+
+def _format_chill_enum_value(key: str, value: str) -> str:
+    """Format a Quatt Chill enum text value for Home Assistant."""
+    enum_class: type[QuattChillApiEnum] | None = {
+        "fanMode": QuattChillFanMode,
+        "mode": QuattChillMode,
+        "status": QuattChillStatus,
+    }.get(key)
+
+    if enum_class:
+        if enum_value := enum_class.from_api_value(value):
+            return enum_value.display_value
+        _LOGGER.debug("Unknown Chill %s value: %s", key, value)
+
+    return _format_chill_sentence_case(value)
 
 
 class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
@@ -64,6 +139,7 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         sensor_key: str,
         coordinator: QuattDataUpdateCoordinator,
         device_kind: QuattDeviceKind,
+        unique_id_key: str | None = None,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
@@ -78,7 +154,9 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
 
         self._device_name = device_name
         self._device_id = device_id
-        self._attr_unique_id = f"{self._hub_id}:{device_id}:{sensor_key}"
+        self._attr_unique_id = (
+            f"{self._hub_id}:{device_id}:{unique_id_key or sensor_key}"
+        )
 
         attach_to_hub = device_kind == QuattDeviceKind.HUB
         is_service_device = device_kind == QuattDeviceKind.SERVICE
@@ -101,6 +179,28 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
                 entry_type=DeviceEntryType.SERVICE if is_service_device else None,
             )
 
+    def _current_chill_index(self) -> int | None:
+        """Return the current Chill list index for this entity's device."""
+        chills = self.coordinator.get_value("chills", [])
+        if not isinstance(chills, list):
+            return None
+
+        for index, chill in enumerate(chills):
+            if isinstance(chill, dict) and chill.get("uuid") == self._device_id:
+                return index
+
+        return None
+
+    @staticmethod
+    def _chill_key_at_index(key: str, index: int) -> str:
+        """Return a Chill coordinator key for the current response-list index."""
+        key_parts = key.split(".", 2)
+        if len(key_parts) < 2 or key_parts[0] != "chills":
+            return key
+        if len(key_parts) == 2:
+            return f"chills.{index}"
+        return f"chills.{index}.{key_parts[2]}"
+
 
 class QuattSensor(QuattEntity, SensorEntity):
     """Quatt Sensor class."""
@@ -115,7 +215,14 @@ class QuattSensor(QuattEntity, SensorEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -137,67 +244,6 @@ class QuattSensor(QuattEntity, SensorEntity):
         return value
 
 
-class QuattSystemSensor(QuattSensor):
-    """Quatt System Sensor class."""
-
-    @property
-    def extra_state_attributes(self) -> dict[str, bool]:
-        """Expose Quatt feature flags as state attributes."""
-        return {
-            DUO_HEATPUMP_SYSTEM: self.coordinator.heatpump_2_active(),
-            ALL_ELECTRIC_SYSTEM: self.coordinator.all_electric_active(),
-            OPENTHERM_SYSTEM: self.coordinator.is_boiler_opentherm(),
-        }
-
-
-class QuattEnergyCurrentPriceSensor(QuattSensor):
-    """Current quarter-hour energy price with period attributes."""
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose period bounds + product/date for templating."""
-        return {
-            "period_start": self.coordinator.get_value("prices.current.periodStart"),
-            "period_end": self.coordinator.get_value("prices.current.periodEnd"),
-            "period_label": self.coordinator.get_value("prices.current.name"),
-            "time_window": self.coordinator.get_value("prices.current.window"),
-            "product": self.coordinator.get_value("prices.product"),
-            "date": self.coordinator.get_value("prices.date"),
-        }
-
-
-class QuattEnergyCheapestPriceSensor(QuattSensor):
-    """Cheapest quarter-hour energy price today, with its timestamp."""
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose the cheapest-slot timestamp + product/date."""
-        return {
-            "time": self.coordinator.get_value("prices.cheapest.time"),
-            "time_end": self.coordinator.get_value("prices.cheapest.timeEnd"),
-            "time_label": self.coordinator.get_value("prices.cheapest.name"),
-            "time_window": self.coordinator.get_value("prices.cheapest.window"),
-            "product": self.coordinator.get_value("prices.product"),
-            "date": self.coordinator.get_value("prices.date"),
-        }
-
-
-class QuattEnergyMostExpensivePriceSensor(QuattSensor):
-    """Most expensive quarter-hour energy price today, with its timestamp."""
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose the most-expensive-slot timestamp + product/date."""
-        return {
-            "time": self.coordinator.get_value("prices.mostExpensive.time"),
-            "time_end": self.coordinator.get_value("prices.mostExpensive.timeEnd"),
-            "time_label": self.coordinator.get_value("prices.mostExpensive.name"),
-            "time_window": self.coordinator.get_value("prices.mostExpensive.window"),
-            "product": self.coordinator.get_value("prices.product"),
-            "date": self.coordinator.get_value("prices.date"),
-        }
-
-
 class QuattBinarySensor(QuattEntity, BinarySensorEntity):
     """Quatt BinarySensor class."""
 
@@ -211,7 +257,14 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the binary_sensor class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -238,7 +291,14 @@ class QuattSelect(QuattEntity, SelectEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the select class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -292,46 +352,6 @@ class QuattSelect(QuattEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
 
-class QuattSoundSelect(QuattSelect):
-    """Select entity for Quatt sound level configuration."""
-
-    async def _perform_api_update(self, option: str) -> bool:
-        """Perform paired day/night sound level update."""
-
-        remote_client = self.coordinator.client
-        if not isinstance(remote_client, QuattCicRemoteApiClient):
-            _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
-            return False
-
-        # Get current values for both sound levels
-        day_level = self.coordinator.get_value("dayMaxSoundLevel")
-        night_level = self.coordinator.get_value("nightMaxSoundLevel")
-
-        # Update the value that changed
-        if self.entity_description.key == "dayMaxSoundLevel":
-            day_level = option
-        elif self.entity_description.key == "nightMaxSoundLevel":
-            night_level = option
-
-        # Validate that we have both values
-        if not day_level or not night_level:
-            _LOGGER.error(
-                "Cannot update sound level: missing current values (day=%s, night=%s)",
-                day_level,
-                night_level,
-            )
-            return False
-
-        # Send both values to the API
-        settings = {
-            "dayMaxSoundLevel": day_level,
-            "nightMaxSoundLevel": night_level,
-        }
-
-        _LOGGER.debug("Updating CIC sound levels: %s", settings)
-        return await remote_client.update_cic_settings(settings)
-
-
 class QuattSwitch(QuattEntity, SwitchEntity):
     """Quatt Switch class."""
 
@@ -345,7 +365,14 @@ class QuattSwitch(QuattEntity, SwitchEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the switch class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -411,80 +438,6 @@ class QuattSwitch(QuattEntity, SwitchEntity):
         await self.coordinator.async_request_refresh()
 
 
-class QuattSettingSwitch(QuattSwitch):
-    """Switch entity for Quatt boolean settings."""
-
-    async def _perform_api_update(self, state: bool) -> bool:
-        """Perform boolean setting update."""
-        remote_client = self.coordinator.client
-        if not isinstance(remote_client, QuattCicRemoteApiClient):
-            _LOGGER.error("Cannot update %s: remote client required", self.entity_description.key)
-            return False
-
-        # Convert dot notation to nested object structure
-        key_parts = self.entity_description.key.split(".")
-
-        # Build nested dictionary from dot notation
-        settings = {}
-        current = settings
-        for i, part in enumerate(key_parts):
-            if i == len(key_parts) - 1:
-                # Last part - set the actual value
-                current[part] = state
-            else:
-                # Intermediate part - create nested dict
-                current[part] = {}
-                current = current[part]
-
-        _LOGGER.debug("Updating CIC setting: %s", settings)
-        return await remote_client.update_cic_settings(settings)
-
-
-class QuattEnergyPriceFlagSwitch(QuattSwitch):
-    """Switch backing a Quatt Energy price-display flag (VAT / tax / markup).
-
-    The entity_description.key maps to the corresponding API client kwarg
-    (``include_vat``/``include_tax``/``include_markup``). State lives on the
-    client - persisted in the per-hub Store - so toggling does not require
-    an entry reload. After updating the flag the coordinator is refreshed
-    so the next call to the prices endpoint immediately reflects the new
-    set of surcharges.
-    """
-
-    @property
-    def is_on(self) -> bool:
-        """Read the current flag value from the API client."""
-        client = self.coordinator.client
-        if not isinstance(client, QuattEnergyApiClient):
-            return False
-        return bool(getattr(client, self.entity_description.key))
-
-    async def async_turn_on(self, **kwargs) -> None:
-        """Enable the flag."""
-        await self._async_apply(True)
-
-    async def async_turn_off(self, **kwargs) -> None:
-        """Disable the flag."""
-        await self._async_apply(False)
-
-    async def _async_apply(self, value: bool) -> None:
-        client = self.coordinator.client
-        if not isinstance(client, QuattEnergyApiClient):
-            raise TypeError(
-                "QuattEnergyPriceFlagSwitch requires a Quatt Energy client",
-            )
-        changed = await client.set_price_flags(**{self.entity_description.key: value})
-        # Always write the optimistic state back to HA so the UI snaps even
-        # if the value was already correct (e.g. re-applying defaults).
-        self.async_write_ha_state()
-        if changed:
-            await self.coordinator.async_request_refresh()
-
-    async def _perform_api_update(self, state: bool) -> bool:
-        """Unused - turn_on/off override the base ``QuattSwitch`` flow."""
-        raise NotImplementedError
-
-
 class QuattNumber(QuattEntity, NumberEntity):
     """Quatt Number class."""
 
@@ -498,7 +451,14 @@ class QuattNumber(QuattEntity, NumberEntity):
         device_kind: QuattDeviceKind,
     ) -> None:
         """Initialize the number class."""
-        super().__init__(device_name, device_id, sensor_key, coordinator, device_kind)
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
         self.entity_description = entity_description
 
     @property
@@ -576,112 +536,6 @@ class QuattNumber(QuattEntity, NumberEntity):
         await self.coordinator.async_request_refresh()
 
 
-class QuattHomeBatterySolarCapacityNumber(QuattNumber):
-    """Number entity for the home battery installation's ``solarCapacitykWp``.
-
-    The value is a flat scalar on the installation record (not wrapped in
-    ``{value,minValue,maxValue,increment}``), so min/max/step come from the
-    entity description instead of the coordinator data.
-    """
-
-    @property
-    def native_value(self) -> float | None:
-        """Read the scalar value directly from the coordinator data."""
-        return self.coordinator.get_value(self.entity_description.key)
-
-    @property
-    def native_min_value(self) -> float:
-        """Use the entity description's min value, else HA's default."""
-        value = self.entity_description.native_min_value
-        return value if value is not None else DEFAULT_MIN_VALUE
-
-    @property
-    def native_max_value(self) -> float:
-        """Use the entity description's max value, else HA's default."""
-        value = self.entity_description.native_max_value
-        return value if value is not None else DEFAULT_MAX_VALUE
-
-    @property
-    def native_step(self) -> float | None:
-        """Use the entity description's step, else HA's default."""
-        value = self.entity_description.native_step
-        return value if value is not None else DEFAULT_STEP
-
-    async def _perform_api_update(self, value: float) -> bool:
-        """Send the PATCH to the home battery installation endpoint."""
-        client = self.coordinator.client
-        if not isinstance(client, QuattHomeBatteryApiClient):
-            _LOGGER.error(
-                "Cannot update %s: home battery client required",
-                self.entity_description.key,
-            )
-            return False
-        return await client.update_solar_capacity(value)
-
-    async def async_set_native_value(self, value: float) -> None:
-        """Set the new value via the home battery coordinator."""
-        if not isinstance(
-            self.coordinator, QuattHomeBatteryDataUpdateCoordinator
-        ):
-            _LOGGER.error(
-                "Cannot update %s: home battery coordinator required",
-                self.entity_description.key,
-            )
-            raise NotImplementedError(
-                f"Setting {self.entity_description.key} requires a home battery hub"
-            )
-
-        try:
-            success = await self._perform_api_update(value)
-        except Exception as err:
-            _LOGGER.exception("Error updating %s", self.entity_description.key)
-            raise RuntimeError(
-                f"Failed to update {self.entity_description.key}"
-            ) from err
-
-        if not success:
-            raise RuntimeError(
-                f"Failed to update {self.entity_description.key}"
-            )
-
-        await self.coordinator.async_request_refresh()
-
-
-class QuattSettingNumber(QuattNumber):
-    """Number entity for Quatt numeric settings stored as {value, minValue, maxValue, increment}."""
-
-    async def _perform_api_update(self, value: float) -> bool:
-        """Perform numeric setting update."""
-        remote_client = self.coordinator.client
-        if not isinstance(remote_client, QuattCicRemoteApiClient):
-            _LOGGER.error(
-                "Cannot update %s: remote client required", self.entity_description.key
-            )
-            return False
-
-        # Preserve integer type when the step is whole-number
-        step = self.native_step
-        if step is not None and float(step).is_integer() and float(value).is_integer():
-            payload_value: int | float = int(value)
-        else:
-            payload_value = value
-
-        # Convert dot notation to nested object structure ending at ".value"
-        key_parts = self.entity_description.key.split(".") + ["value"]
-
-        settings: dict[str, Any] = {}
-        current = settings
-        for i, part in enumerate(key_parts):
-            if i == len(key_parts) - 1:
-                current[part] = payload_value
-            else:
-                current[part] = {}
-                current = current[part]
-
-        _LOGGER.debug("Updating CIC setting: %s", settings)
-        return await remote_client.update_cic_settings(settings)
-
-
 @dataclass(frozen=True)
 class QuattFeatureFlags:
     """Quatt feature flags used an entity."""
@@ -698,6 +552,7 @@ class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSensor
+    quatt_unique_id_key: str | None = None
 
 
 class QuattBinarySensorEntityDescription(
@@ -707,6 +562,7 @@ class QuattBinarySensorEntityDescription(
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattBinarySensor
+    quatt_unique_id_key: str | None = None
 
 
 class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
@@ -714,6 +570,7 @@ class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSelect
+    quatt_unique_id_key: str | None = None
 
 
 class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=True):
@@ -721,6 +578,7 @@ class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSwitch
+    quatt_unique_id_key: str | None = None
 
 
 class QuattNumberEntityDescription(NumberEntityDescription, frozen_or_thawed=True):
@@ -728,3 +586,12 @@ class QuattNumberEntityDescription(NumberEntityDescription, frozen_or_thawed=Tru
 
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattNumber
+    quatt_unique_id_key: str | None = None
+
+
+class QuattClimateEntityDescription(ClimateEntityDescription, frozen_or_thawed=True):
+    """A class that describes Quatt climate entities."""
+
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: type[QuattEntity] = ClimateEntity
+    quatt_unique_id_key: str | None = None

@@ -22,13 +22,12 @@ from .const import (
 )
 from .coordinator import QuattDataUpdateCoordinator
 from .entity import (
-    QuattEnergyPriceFlagSwitch,
     QuattFeatureFlags,
-    QuattSettingSwitch,
     QuattSwitch,
     QuattSwitchEntityDescription,
 )
 from .entity_setup import async_setup_entities
+from .entity_switch import QuattEnergyPriceFlagSwitch, QuattSettingSwitch
 
 ENERGY_SWITCHES: list[QuattSwitchEntityDescription] = [
     QuattSwitchEntityDescription(
@@ -90,7 +89,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
     local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
-    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
+        "cic_remote"
+    )
     energy_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("energy")
 
     switches: list[QuattSwitch] = []

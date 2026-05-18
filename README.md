@@ -10,7 +10,7 @@
 
 _Unofficial integration for Quatt Heat Pump and Quatt Home Battery._
 
-This integration covers the **local CIC JSON API** (heat pump telemetry) plus a number of optional features built on top of the **Quatt mobile API** (additional remote sensors, home battery support, dashboard card, ApexCharts usage graphs).
+This integration covers the **local CIC JSON API** (heat pump telemetry) plus a number of optional features built on top of the **Quatt mobile API** (additional remote sensors, home battery support, chill support, dashboard card, ApexCharts usage graphs).
 
 ## Table of contents
 
@@ -149,6 +149,7 @@ All sensors from the local API feed are available. In addition, the following co
 A number of features in this integration are built on top of the **Quatt mobile API** and the **Quatt Energy portal**, which were reverse-engineered from the official Quatt mobile app and web portal:
 
 - [Remote Mobile API](#remote-mobile-api)
+- [Chill](#chill)
 - [Home battery](#home-battery)
 - [Quatt Energy](#quatt-energy)
 - [Dashboard card](#dashboard-card)
@@ -166,6 +167,8 @@ The **Dashboard card** and the **Usage graphs with ApexCharts** examples are add
 
 The Remote Mobile API extends the local CIC integration with additional sensors and controls that are only available through the Quatt mobile API. It is **opt-in**: the integration works fully with only the local API.
 
+It also adds support for **Quatt Chill** devices when they are present on your installation.
+
 ### Additional sensors via remote API
 
 Only sensors that are not already provided by the local API are added — no duplicates.
@@ -173,6 +176,7 @@ Only sensors that are not already provided by the local API are added — no dup
 - **Connectivity status**: WiFi SSID, WiFi/LTE/cable connection status
 - **Energy pricing**: Electricity prices (standard, day, night), gas prices, and night time schedule configuration
 - **Sound control**: Silent mode status, day/night max sound levels, and sound schedule configuration
+- **Quatt Chill support**: Climate control for heating/cooling, target temperature and fan mode, plus Chill status and diagnostic sensors
 - **Heat battery metrics** (All-Electric only): Serial number, status, size, charge percentage
 - **Enhanced heat pump data**: Compressor frequency (actual and demand), minimum/rated/expected power, water pump level, ODU type, on/off status, Modbus slave ID
 - **Installation details**: Installation date, insights start date, Quatt build version, installation name, location (zip code, country), and order number
@@ -203,6 +207,11 @@ The Remote Mobile API can be enabled either while adding the CIC for the first t
 4. Sign in to the Quatt mobile API (see [Quatt mobile API sign-in](#quatt-mobile-api-sign-in))
 5. **Within 60 seconds**, press the physical button on your CIC to complete pairing
 6. The integration reloads with the remote API sensors and controls available
+
+## Chill
+
+- **Climate control**: A climate entity for Quatt Chill devices with heating, cooling, target temperature and fan mode control.
+- **Status and diagnostics**: Chill mode, fan mode, ambient temperature, status and update-state sensors.
 
 ## Home battery
 

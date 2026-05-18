@@ -30,7 +30,8 @@ from .entity import (
     QuattBinarySensorEntityDescription,
     QuattFeatureFlags,
 )
-from .entity_setup import async_setup_entities
+from .entity_binary_sensor import QuattChillBinarySensor
+from .entity_setup import async_setup_entities, create_chill_entity_descriptions
 
 
 def create_heatpump_sensor_entity_descriptions(
@@ -346,6 +347,35 @@ BINARY_SENSORS = {
     DEVICE_HEAT_CHARGER_ID: [],
 }
 
+
+def create_chill_binary_sensor_entity_descriptions(
+    index: int,
+) -> list[QuattBinarySensorEntityDescription]:
+    """Create binary sensor entity descriptions for a chill device."""
+    return [
+        QuattBinarySensorEntityDescription(
+            name="Power",
+            key=f"chills.{index}.isOn.value",
+            icon="mdi:power",
+            device_class=BinarySensorDeviceClass.POWER,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
+            ),
+            quatt_entity_class=QuattChillBinarySensor,
+        ),
+        QuattBinarySensorEntityDescription(
+            name="Water tank warning",
+            key=f"chills.{index}.hasWaterTankLevelWarning",
+            icon="mdi:water-alert",
+            device_class=BinarySensorDeviceClass.PROBLEM,
+            quatt_features=QuattFeatureFlags(
+                mobile_api=True,
+            ),
+            quatt_entity_class=QuattChillBinarySensor,
+        ),
+    ]
+
+
 HOME_BATTERY_BINARY_SENSORS: list[QuattBinarySensorEntityDescription] = [
     QuattBinarySensorEntityDescription(
         key="connected",
@@ -365,7 +395,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     coordinators = hass.data[DOMAIN][entry.entry_id]
 
     local_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_local")
-    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("cic_remote")
+    remote_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
+        "cic_remote"
+    )
     home_battery_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
         "home_battery"
     )
@@ -383,13 +415,23 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
         )
 
     if remote_coordinator:
+        entity_descriptions, device_names, device_kinds = (
+            create_chill_entity_descriptions(
+                remote_coordinator,
+                BINARY_SENSORS,
+                create_chill_binary_sensor_entity_descriptions,
+            )
+        )
+
         sensors += await async_setup_entities(
             hass=hass,
             coordinator=remote_coordinator,
             entry=entry,
             remote=True,
-            entity_descriptions=BINARY_SENSORS,
+            entity_descriptions=entity_descriptions,
             entity_domain=BINARY_SENSOR_DOMAIN,
+            device_names=device_names,
+            device_kinds=device_kinds,
         )
 
     if home_battery_coordinator is not None:
