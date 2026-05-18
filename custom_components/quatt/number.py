@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.number import DOMAIN as NUMBER_DOMAIN, NumberMode
+from homeassistant.components.number import (
+    DOMAIN as NUMBER_DOMAIN,
+    NumberDeviceClass,
+    NumberMode,
+)
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
@@ -52,6 +56,7 @@ NUMBERS = {
             name="Max water temperature",
             icon="mdi:thermometer-high",
             native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+            device_class=NumberDeviceClass.TEMPERATURE,
             mode=NumberMode.BOX,
             quatt_features=QuattFeatureFlags(
                 mobile_api=True,
