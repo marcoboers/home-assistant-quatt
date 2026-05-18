@@ -603,6 +603,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=_errors,
+            description_placeholders={"portal_url": "mijnenergie.quatt.io"},
         )
 
     async def async_step_dhcp(

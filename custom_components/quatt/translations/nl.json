@@ -65,7 +65,7 @@
             },
             "energy": {
                 "title": "Inloggen op mijnenergie.quatt.io",
-                "description": "Voer het e-mailadres en wachtwoord in dat je gebruikt op https://mijnenergie.quatt.io. De inloggegevens worden alleen lokaal in Home Assistant opgeslagen en gebruikt om de sessie actief te houden.",
+                "description": "Voer het e-mailadres en wachtwoord in dat je gebruikt op {portal_url}. De inloggegevens worden alleen lokaal in Home Assistant opgeslagen en gebruikt om de sessie actief te houden.",
                 "data": {
                     "energy_username": "E-mailadres",
                     "energy_password": "Wachtwoord"
@@ -78,7 +78,7 @@
             "pairing_timeout": "Koppeling timeout. Probeer het opnieuw en druk binnen 60 seconden op de knop op het CIC-apparaat.",
             "home_battery_qr_invalid": "Ongeldige QR-code URL. Zorg dat je de volledige URL van de batterij-QR-code kopieert.",
             "home_battery_pair_failed": "Koppelen van thuisbatterij mislukt. Controleer de toegangssleutel, het serienummer en de controlecode.",
-            "energy_no_ean": "Inloggen is gelukt, maar er is geen energiemeter (EAN) teruggegeven. Open https://mijnenergie.quatt.io eenmaal in een browser om de onboarding af te ronden en probeer het opnieuw.",
+            "energy_no_ean": "Inloggen is gelukt, maar er is geen energiemeter (EAN) teruggegeven. Open het Quatt energieportaal eenmaal in een browser om de onboarding af te ronden en probeer het opnieuw.",
             "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         },
         "abort": {
