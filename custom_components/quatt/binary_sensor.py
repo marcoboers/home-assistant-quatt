@@ -62,6 +62,7 @@ def create_heatpump_sensor_entity_descriptions(
         QuattBinarySensorEntityDescription(
             name="Defrost",
             key=f"{prefix}.computedDefrost",
+            computed_key=f"{prefix}.computed_defrost",
             translation_key="hp_silentModeStatus",
             icon="mdi:snowflake",
             quatt_features=QuattFeatureFlags(

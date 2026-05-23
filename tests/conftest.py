@@ -15,8 +15,11 @@ import pytest_asyncio
 
 from homeassistant.core import HomeAssistant
 
+QUATT_PATH = Path(__file__).resolve().parents[1]
 CORE_PATH = Path(os.environ.get("HA_CORE_PATH", "/workspaces/core"))
 CORE_TESTS_PATH = CORE_PATH / "tests"
+if str(QUATT_PATH) not in sys.path:
+    sys.path.insert(0, str(QUATT_PATH))
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

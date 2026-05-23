@@ -201,6 +201,15 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
             return f"chills.{index}"
         return f"chills.{index}.{key_parts[2]}"
 
+    def _get_current_value(
+        self,
+        entity_description: QuattEntityDescriptionMixin,
+    ) -> Any:
+        """Return the entity state from computed or raw coordinator data."""
+        if entity_description.computed_key is not None:
+            return self.coordinator.get_computed_value(entity_description.computed_key)
+        return self.coordinator.get_value(entity_description.raw_value_key)
+
 
 class QuattSensor(QuattEntity, SensorEntity):
     """Quatt Sensor class."""
@@ -233,7 +242,7 @@ class QuattSensor(QuattEntity, SensorEntity):
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
         """Return the native value of the sensor."""
-        value = self.coordinator.get_value(self.entity_description.key)
+        value = self._get_current_value(self.entity_description)
 
         if value is None:
             return None
@@ -275,7 +284,7 @@ class QuattBinarySensor(QuattEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the binary_sensor is on."""
-        return self.coordinator.get_value(self.entity_description.key)
+        return self._get_current_value(self.entity_description)
 
 
 class QuattSelect(QuattEntity, SelectEntity):
@@ -309,7 +318,7 @@ class QuattSelect(QuattEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         """Return the current selected option."""
-        return self.coordinator.get_value(self.entity_description.key)
+        return self._get_current_value(self.entity_description)
 
     def select_option(self, option: str) -> None:
         """Implement required base class method but do not use it (async handled separately)."""
@@ -383,7 +392,7 @@ class QuattSwitch(QuattEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return true if the switch is on."""
-        return self.coordinator.get_value(self.entity_description.key)
+        return self._get_current_value(self.entity_description)
 
     def turn_on(self, **kwargs) -> None:
         """Implement required base class method but do not use it (async handled separately)."""
@@ -469,12 +478,16 @@ class QuattNumber(QuattEntity, NumberEntity):
     @property
     def native_value(self) -> float | None:
         """Return the current value."""
-        return self.coordinator.get_value(f"{self.entity_description.key}.value")
+        return self.coordinator.get_value(
+            f"{self.entity_description.raw_value_key}.value"
+        )
 
     @property
     def native_min_value(self) -> float:
         """Return the minimum value."""
-        value = self.coordinator.get_value(f"{self.entity_description.key}.minValue")
+        value = self.coordinator.get_value(
+            f"{self.entity_description.raw_value_key}.minValue"
+        )
         if value is None:
             return super().native_min_value
         return value
@@ -482,7 +495,9 @@ class QuattNumber(QuattEntity, NumberEntity):
     @property
     def native_max_value(self) -> float:
         """Return the maximum value."""
-        value = self.coordinator.get_value(f"{self.entity_description.key}.maxValue")
+        value = self.coordinator.get_value(
+            f"{self.entity_description.raw_value_key}.maxValue"
+        )
         if value is None:
             return super().native_max_value
         return value
@@ -490,7 +505,9 @@ class QuattNumber(QuattEntity, NumberEntity):
     @property
     def native_step(self) -> float | None:
         """Return the step value."""
-        value = self.coordinator.get_value(f"{self.entity_description.key}.increment")
+        value = self.coordinator.get_value(
+            f"{self.entity_description.raw_value_key}.increment"
+        )
         if value is None:
             return super().native_step
         return value
@@ -547,51 +564,84 @@ class QuattFeatureFlags:
     mobile_api: bool = False
 
 
-class QuattSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+class QuattEntityDescriptionMixin:
+    """Share value lookup key helpers."""
+
+    @property
+    def raw_value_key(self) -> str:
+        """Return the raw coordinator data path, using data_key or key."""
+        return self.data_key or self.key
+
+
+class QuattSensorEntityDescription(
+    QuattEntityDescriptionMixin, SensorEntityDescription, frozen_or_thawed=True
+):
     """A class that describes Quatt sensor entities."""
 
+    data_key: str | None = None
+    computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSensor
     quatt_unique_id_key: str | None = None
 
 
 class QuattBinarySensorEntityDescription(
-    BinarySensorEntityDescription, frozen_or_thawed=True
+    QuattEntityDescriptionMixin,
+    BinarySensorEntityDescription,
+    frozen_or_thawed=True,
 ):
     """A class that describes Quatt binary sensor entities."""
 
+    data_key: str | None = None
+    computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattBinarySensor
     quatt_unique_id_key: str | None = None
 
 
-class QuattSelectEntityDescription(SelectEntityDescription, frozen_or_thawed=True):
+class QuattSelectEntityDescription(
+    QuattEntityDescriptionMixin, SelectEntityDescription, frozen_or_thawed=True
+):
     """A class that describes Quatt select entities."""
 
+    data_key: str | None = None
+    computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSelect
     quatt_unique_id_key: str | None = None
 
 
-class QuattSwitchEntityDescription(SwitchEntityDescription, frozen_or_thawed=True):
+class QuattSwitchEntityDescription(
+    QuattEntityDescriptionMixin, SwitchEntityDescription, frozen_or_thawed=True
+):
     """A class that describes Quatt switch entities."""
 
+    data_key: str | None = None
+    computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSwitch
     quatt_unique_id_key: str | None = None
 
 
-class QuattNumberEntityDescription(NumberEntityDescription, frozen_or_thawed=True):
+class QuattNumberEntityDescription(
+    QuattEntityDescriptionMixin, NumberEntityDescription, frozen_or_thawed=True
+):
     """A class that describes Quatt number entities."""
 
+    data_key: str | None = None
+    computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattNumber
     quatt_unique_id_key: str | None = None
 
 
-class QuattClimateEntityDescription(ClimateEntityDescription, frozen_or_thawed=True):
+class QuattClimateEntityDescription(
+    QuattEntityDescriptionMixin, ClimateEntityDescription, frozen_or_thawed=True
+):
     """A class that describes Quatt climate entities."""
 
+    data_key: str | None = None
+    computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = ClimateEntity
     quatt_unique_id_key: str | None = None

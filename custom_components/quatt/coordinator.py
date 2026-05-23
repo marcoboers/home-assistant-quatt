@@ -77,6 +77,13 @@ class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
 
         raise NotImplementedError
 
+    def get_computed_value(
+        self, value_path: str, default: Any | None = None
+    ) -> Any:
+        """Return a computed value if supported by this coordinator."""
+        LOGGER.debug("Computed values are not supported by %s", self.__class__.__name__)
+        return default
+
 
 class QuattCicDataUpdateCoordinator(QuattDataUpdateCoordinator, ABC):
     """Abstract base class for CIC (heatpump) data update coordinators.
