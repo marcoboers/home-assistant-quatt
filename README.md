@@ -20,6 +20,7 @@ This integration covers the **local CIC JSON API** (heat pump telemetry) plus a 
 - [About reverse-engineered features](#about-reverse-engineered-features)
 - [Remote Mobile API](#remote-mobile-api)
 - [Home battery](#home-battery)
+- [Quatt Energy](#quatt-energy)
 - [Dashboard card](#dashboard-card)
 - [Usage graphs with ApexCharts](#usage-graphs-with-apexcharts)
 - [Actions reference](#actions-reference)
@@ -93,6 +94,22 @@ Steps:
 6. Click `Submit` — Home Assistant pairs the home battery via the Quatt mobile API
 7. A new **Home battery** hub device appears with sub-devices **Savings**, **Insights** and **Energy flow** for cumulative savings, today's 15-minute insights and today's energy flow respectively
 
+### Adding a Quatt Energy hub
+
+The Quatt Energy hub connects to the separate **Quatt Energy portal** at https://mijnenergie.quatt.io. It uses its own portal credentials (email + password) — **not** the mobile-API sign-in used by the CIC and home battery.
+
+Steps:
+
+1. In Home Assistant, go to `Settings` → `Devices & services` → `Integrations`
+2. Click `+ Add integration` and search for **Quatt**
+3. In the "What kind of Quatt device do you want to add?" menu, select **Energy (mijnenergie)**
+4. Enter the **email address** and **password** you use on https://mijnenergie.quatt.io
+5. Click `Submit` — Home Assistant signs in to the portal, discovers your EAN and creates an **Energy** hub device
+
+> ℹ️ If sign-in succeeds but no EAN is returned, open https://mijnenergie.quatt.io once in a browser to finish onboarding, then retry.
+
+To update the stored password later (e.g. after a portal password change), go to `Settings` → `Devices & services` → `Quatt` → **Configure** on the Energy hub.
+
 ### Quatt mobile API sign-in
 
 Several features depend on the **Quatt mobile API**: the [Remote Mobile API](#remote-mobile-api) on the CIC, and the [Home battery](#home-battery). They share a single sign-in:
@@ -129,11 +146,12 @@ All sensors from the local API feed are available. In addition, the following co
 
 ## About reverse-engineered features
 
-A number of features in this integration are built on top of the **Quatt mobile API**, which was reverse-engineered from the official Quatt mobile app:
+A number of features in this integration are built on top of the **Quatt mobile API** and the **Quatt Energy portal**, which were reverse-engineered from the official Quatt mobile app and web portal:
 
 - [Remote Mobile API](#remote-mobile-api)
 - [Chill](#chill)
 - [Home battery](#home-battery)
+- [Quatt Energy](#quatt-energy)
 - [Dashboard card](#dashboard-card)
 - [Usage graphs with ApexCharts](#usage-graphs-with-apexcharts)
 
@@ -229,6 +247,37 @@ See [Configuration › Adding a home battery](#adding-a-home-battery) for the pa
 ### Caching
 
 Today's insights and energy-flow data are cached client-side to match the Quatt server-side refresh rate (roughly once per `remote_scan_interval` minutes). Calling the actions more frequently does not return fresher data.
+
+## Quatt Energy
+
+The Quatt Energy hub connects to the separate **Quatt Energy portal** (https://mijnenergie.quatt.io) and exposes live tariff prices plus on-demand history for prices, electricity/gas usage and costs. It is a stand-alone hub — a CIC or home battery is **not** required.
+
+### Features
+
+- **Stand-alone device**: Add an Energy hub without a CIC or home battery by selecting "Energy (mijnenergie)" in the `+ Add integration` menu.
+- **Live price sensors** (refreshed on the hub's poll interval):
+  - **Current energy price** — price for the current quarter-hour window, with `period_start`, `period_end`, `period_label`, `time_window`, `product` and `date` attributes
+  - **Cheapest energy price today** — minimum quarter-hour price today, with the slot's `time`, `time_end`, `time_label` and `time_window`
+  - **Most expensive energy price today** — analogous to cheapest
+  - **Average energy price today**
+- **EAN diagnostic** sensor showing the meter identifier registered in the portal
+- **Surcharge toggles** — three switches that map directly to the `vat`, `tax` and `markup` query parameters on the portal's prices endpoint:
+  - **Include VAT**
+  - **Include energy tax**
+  - **Include supplier markup**
+
+  Flipping a switch immediately changes the prices returned by the live sensors and by the [`quatt.get_energy_prices`](#quattget_energy_prices) action on the next call. The flags are persisted per hub so they survive restarts.
+- **On-demand history**: The actions [`quatt.get_energy_prices`](#quattget_energy_prices), [`quatt.get_energy_power`](#quattget_energy_power) and [`quatt.get_energy_costs`](#quattget_energy_costs) fetch detail for a chosen day, month or year — useful for ApexCharts-style graphs (see [Usage graphs with ApexCharts](#usage-graphs-with-apexcharts)).
+
+### Pairing
+
+See [Configuration › Adding a Quatt Energy hub](#adding-a-quatt-energy-hub) for the sign-in flow.
+
+### Refresh-rate caveats
+
+- **Prices** are published by the portal roughly **once per day**.
+- **Power (usage)** and **costs** lag the portal by roughly **two days** — today's measurements are not yet exposed. The example automations therefore fetch `(now − 2 days)` for the day scope.
+- Polling more frequently than the example values does not return fresher data.
 
 ## Dashboard card
 
@@ -373,6 +422,71 @@ The automation populates `sensor.quatt_cic_insights_<day|week|month|year|all>`. 
   - Month: [`examples/apexcharts_home_battery_savings_month.yaml`](examples/apexcharts_home_battery_savings_month.yaml)
   - Year: [`examples/apexcharts_home_battery_savings_year.yaml`](examples/apexcharts_home_battery_savings_year.yaml)
 
+#### Energy — prices
+
+Requires the [Quatt Energy](#quatt-energy) hub. Whether VAT, energy tax and supplier markup are included is controlled by the **Include VAT / energy tax / supplier markup** switches on the hub.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/quatt_energy_price_day.png" width="180"><br><b>Day</b></td>
+    <td align="center"><img src="docs/images/quatt_energy_price_month.png" width="180"><br><b>Month</b></td>
+    <td align="center"><img src="docs/images/quatt_energy_price_year.png" width="180"><br><b>Year</b></td>
+  </tr>
+</table>
+
+- Python script: [`examples/set_energy_prices.py`](examples/set_energy_prices.py)
+- Automation (day / month / year): [`examples/automation_energy_prices.yaml`](examples/automation_energy_prices.yaml)
+- ApexCharts cards:
+  - Day: [`examples/apexcharts_quatt_energy_prices_day.yaml`](examples/apexcharts_quatt_energy_prices_day.yaml)
+  - Month: [`examples/apexcharts_quatt_energy_prices_month.yaml`](examples/apexcharts_quatt_energy_prices_month.yaml)
+  - Year: [`examples/apexcharts_quatt_energy_prices_year.yaml`](examples/apexcharts_quatt_energy_prices_year.yaml)
+
+The automation populates `sensor.quatt_energy_prices_<day|month|year>`.
+
+#### Energy — power (usage)
+
+Requires the [Quatt Energy](#quatt-energy) hub.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/quatt_energy_power_day.png" width="180"><br><b>Day (lagged 2 days)</b></td>
+    <td align="center"><img src="docs/images/quatt_energy_power_month.png" width="180"><br><b>Month</b></td>
+    <td align="center"><img src="docs/images/quatt_energy_power_year.png" width="180"><br><b>Year</b></td>
+  </tr>
+</table>
+
+- Python script: [`examples/set_energy_power.py`](examples/set_energy_power.py)
+- Automation (day lagged by 2 days / year): [`examples/automation_energy_power.yaml`](examples/automation_energy_power.yaml)
+- ApexCharts cards:
+  - Day: [`examples/apexcharts_quatt_energy_power_day.yaml`](examples/apexcharts_quatt_energy_power_day.yaml)
+  - Month: [`examples/apexcharts_quatt_energy_power_month.yaml`](examples/apexcharts_quatt_energy_power_month.yaml)
+  - Year: [`examples/apexcharts_quatt_energy_power_year.yaml`](examples/apexcharts_quatt_energy_power_year.yaml)
+
+The automation populates `sensor.quatt_energy_power_<day|year>`; the month card is rendered from the `year` aggregate, so the year automation drives both the month and year ApexCharts cards.
+
+> ℹ️ The portal does not publish today's usage yet, so the day card uses an `offset: "-2d"` and the automation fetches data for **two days ago**.
+
+#### Energy — costs
+
+Requires the [Quatt Energy](#quatt-energy) hub.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/quatt_energy_costs_day.png" width="180"><br><b>Day (lagged 2 days)</b></td>
+    <td align="center"><img src="docs/images/quatt_energy_costs_month.png" width="180"><br><b>Month</b></td>
+    <td align="center"><img src="docs/images/quatt_energy_costs_year.png" width="180"><br><b>Year</b></td>
+  </tr>
+</table>
+
+- Python script: [`examples/set_energy_costs.py`](examples/set_energy_costs.py)
+- Automation (day lagged by 2 days / year): [`examples/automation_energy_costs.yaml`](examples/automation_energy_costs.yaml)
+- ApexCharts cards:
+  - Day: [`examples/apexcharts_quatt_energy_costs_day.yaml`](examples/apexcharts_quatt_energy_costs_day.yaml)
+  - Month: [`examples/apexcharts_quatt_energy_costs_month.yaml`](examples/apexcharts_quatt_energy_costs_month.yaml)
+  - Year: [`examples/apexcharts_quatt_energy_costs_year.yaml`](examples/apexcharts_quatt_energy_costs_year.yaml)
+
+The automation populates `sensor.quatt_energy_costs_<day|year>`; the month card is rendered from the `year` aggregate, so the year automation drives both the month and year ApexCharts cards.
+
 ## Actions reference
 
 ### `quatt.get_cic_insights`
@@ -419,6 +533,54 @@ Retrieves the home battery savings timeseries and aggregated totals (home batter
 | (none) | Current month (daily granularity) |
 | `year` + `month` | A specific month (daily granularity) |
 | `year` | A specific year (monthly granularity) |
+
+### `quatt.get_energy_prices`
+
+Retrieves tariff prices from the Quatt Energy portal. Whether VAT, energy tax and supplier markup are included is controlled by the surcharge switches on the [Quatt Energy](#quatt-energy) hub.
+
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `period` | no | `day` | One of `day`, `month`, `year` |
+| `product` | no | `electricity` | One of `electricity`, `gas` |
+| `year` | no | current | Year (e.g. `2026`) |
+| `month` | no | current | Month, 1-12 |
+| `day` | no | today | Day of month, 1-31 (only used when `period=day`) |
+
+Prices are published by the portal roughly **once per day** — do not poll more frequently.
+
+### `quatt.get_energy_power`
+
+Retrieves electricity or gas usage from the Quatt Energy portal. Scope is determined by which fields you provide:
+
+| Fields provided | Scope |
+|---|---|
+| (none) / `year` only | Whole-year monthly aggregate |
+| `year` + `month` + `day` | Hourly drilldown of that day |
+
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `product` | no | `electricity` | One of `electricity`, `gas` |
+| `year` | no | current | Year (e.g. `2026`) |
+| `month` | no | — | Month, 1-12 (only used together with `day`) |
+| `day` | no | — | Day of month, 1-31 |
+
+Power data lags the portal by roughly **two days**.
+
+### `quatt.get_energy_costs`
+
+Retrieves electricity or gas costs from the Quatt Energy portal. Scope and refresh cadence match [`quatt.get_energy_power`](#quattget_energy_power):
+
+| Fields provided | Scope |
+|---|---|
+| (none) / `year` only | Whole-year monthly aggregate |
+| `year` + `month` + `day` | Hourly drilldown of that day |
+
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `product` | no | `electricity` | One of `electricity`, `gas` |
+| `year` | no | current | Year (e.g. `2026`) |
+| `month` | no | — | Month, 1-12 (only used together with `day`) |
+| `day` | no | — | Day of month, 1-31 |
 
 ## Contributions
 

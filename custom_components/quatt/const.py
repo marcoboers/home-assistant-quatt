@@ -23,6 +23,31 @@ CONF_HOME_BATTERY_UUID = "home_battery_uuid"
 CONF_HOME_BATTERY_CHECK_CODE = "home_battery_check_code"
 CONF_HOME_BATTERY_QR_URL = "home_battery_qr_url"
 
+# Quatt Energy (mijnenergie) config keys
+CONF_ENERGY_USERNAME = "energy_username"
+CONF_ENERGY_PASSWORD = "energy_password"
+
+# Quatt Energy price-display toggles (stored in entry options). They map
+# 1:1 to the ``vat``/``tax``/``markup`` query params on the prices API,
+# so flipping them changes the prices the portal returns on the next call.
+CONF_ENERGY_INCLUDE_VAT = "energy_include_vat"
+CONF_ENERGY_INCLUDE_TAX = "energy_include_tax"
+CONF_ENERGY_INCLUDE_MARKUP = "energy_include_markup"
+DEFAULT_ENERGY_INCLUDE_VAT = True
+DEFAULT_ENERGY_INCLUDE_TAX = True
+DEFAULT_ENERGY_INCLUDE_MARKUP = True
+
+# Quatt Energy API
+QUATT_ENERGY_BASE_URL = "https://mijnenergie.quatt.io"
+# The mobile site treats unknown user-agents differently; mimic a real device.
+QUATT_ENERGY_USER_AGENT = (
+    "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/148.0.0.0 Mobile Safari/537.36"
+)
+# Unique-id prefix for Energy hub entries (matches CIC-/BAT- convention).
+ENERGY_UNIQUE_ID_PREFIX = "ENG-"
+
 # Remote API URLs (from kwatt)
 FIREBASE_INSTALLATIONS_URL = (
     "https://firebaseinstallations.googleapis.com/v1/projects/"
@@ -88,6 +113,7 @@ DEVICE_HOME_BATTERY_SAVINGS_ID = "home_battery_savings"
 DEVICE_HOME_BATTERY_INSIGHTS_ID = "home_battery_insights"
 DEVICE_HOME_BATTERY_ENERGY_FLOW_ID = "home_battery_energy_flow"
 DEVICE_CHILL_ID = "chill"
+DEVICE_ENERGY_ID = "energy"
 
 
 class QuattDeviceKind(StrEnum):
@@ -133,6 +159,7 @@ DEVICE_LIST = [
         "id": DEVICE_HOME_BATTERY_ENERGY_FLOW_ID,
         "kind": QuattDeviceKind.SERVICE,
     },
+    {"name": "Energy", "id": DEVICE_ENERGY_ID, "kind": QuattDeviceKind.HUB},
 ]
 
 

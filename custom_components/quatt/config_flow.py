@@ -36,8 +36,11 @@ from .api import (
 )
 from .api_local_cic import QuattCicLocalApiClient
 from .api_remote_cic import QuattCicRemoteApiClient
+from .api_remote_energy import QuattEnergyApiClient
 from .api_remote_home_battery import QuattHomeBatteryApiClient
 from .const import (
+    CONF_ENERGY_PASSWORD,
+    CONF_ENERGY_USERNAME,
     CONF_HOME_BATTERY_CHECK_CODE,
     CONF_HOME_BATTERY_QR_URL,
     CONF_HOME_BATTERY_SERIAL,
@@ -48,6 +51,7 @@ from .const import (
     DEFAULT_LOCAL_SCAN_INTERVAL,
     DEFAULT_REMOTE_SCAN_INTERVAL,
     DOMAIN,
+    ENERGY_UNIQUE_ID_PREFIX,
     LOCAL_MAX_SCAN_INTERVAL,
     LOCAL_MIN_SCAN_INTERVAL,
     LOGGER,
@@ -312,7 +316,7 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user - pick heatpump or home battery."""
         return self.async_show_menu(
             step_id="user",
-            menu_options=["local", "home_battery"],
+            menu_options=["local", "home_battery", "energy"],
         )
 
     async def async_step_local(
@@ -518,6 +522,90 @@ class QuattFlowHandler(ConfigFlow, domain=DOMAIN):
         )
         return None if success else "home_battery_pair_failed"
 
+    async def async_step_energy(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Set up a Quatt Energy (mijnenergie.quatt.io) hub.
+
+        Asks for the portal credentials and immediately attempts a full login
+        so any problem (wrong password, missing EAN, ...) surfaces here rather
+        than in the integration loader.
+        """
+        _errors: dict[str, str] = {}
+        if user_input is not None:
+            username = user_input[CONF_ENERGY_USERNAME].strip()
+            password = user_input[CONF_ENERGY_PASSWORD]
+            unique_id = f"{ENERGY_UNIQUE_ID_PREFIX}{username.lower()}"
+
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
+            # Isolated cookie jar - cookies must not leak into the shared
+            # Home Assistant aiohttp session.
+            session = async_create_clientsession(self.hass)
+            store = Store(
+                self.hass,
+                STORAGE_VERSION,
+                f"{REMOTE_STORAGE_KEY_PREFIX}_{unique_id}",
+            )
+            client = QuattEnergyApiClient(
+                session=session,
+                username=username,
+                password=password,
+                store=store,
+            )
+
+            try:
+                authenticated = await client.authenticate()
+            except QuattApiClientAuthenticationError as err:
+                LOGGER.warning("Quatt Energy auth rejected: %s", err)
+                _errors["base"] = "auth"
+            except QuattApiClientCommunicationError as err:
+                LOGGER.error("Quatt Energy connection error: %s", err)
+                _errors["base"] = "cannot_connect"
+            except QuattApiClientError as err:
+                LOGGER.exception("Quatt Energy unexpected error: %s", err)
+                _errors["base"] = "unknown"
+            else:
+                if not authenticated:
+                    _errors["base"] = "energy_no_ean"
+                else:
+                    title = f"Energy ({username})"
+                    return self.async_create_entry(
+                        title=title,
+                        data={
+                            CONF_ENERGY_USERNAME: username,
+                            CONF_ENERGY_PASSWORD: password,
+                        },
+                    )
+
+        prev = user_input or {}
+        return self.async_show_form(
+            step_id="energy",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_ENERGY_USERNAME,
+                        default=prev.get(CONF_ENERGY_USERNAME, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.EMAIL
+                        )
+                    ),
+                    vol.Required(
+                        CONF_ENERGY_PASSWORD,
+                        default=prev.get(CONF_ENERGY_PASSWORD, ""),
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        )
+                    ),
+                }
+            ),
+            errors=_errors,
+            description_placeholders={"portal_url": "mijnenergie.quatt.io"},
+        )
+
     async def async_step_dhcp(
         self, discovery_info: DhcpServiceInfo
     ) -> ConfigFlowResult:
@@ -641,6 +729,9 @@ class QuattOptionsFlowHandler(OptionsFlow):
 
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Manage the options."""
+        # Energy (mijnenergie) entries get their own credential-update form
+        if CONF_ENERGY_USERNAME in self.config_entry.data:
+            return await self._async_step_init_energy(user_input)
         # Home battery entries use a simpler options form
         if (
             CONF_HOME_BATTERY_SERIAL in self.config_entry.data
@@ -770,4 +861,112 @@ class QuattOptionsFlowHandler(OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(schema_dict),
+        )
+
+    async def _async_step_init_energy(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Options form for a Quatt Energy hub.
+
+        Allows the user to update the stored password (e.g. after a portal
+        password change) and adjust the poll interval. The username is
+        intentionally read-only because it backs the entry's unique_id.
+        """
+        _errors: dict[str, str] = {}
+        current_username = self.config_entry.data.get(CONF_ENERGY_USERNAME, "")
+        current_password = self.config_entry.data.get(CONF_ENERGY_PASSWORD, "")
+
+        if user_input is not None:
+            new_password = user_input.get(CONF_ENERGY_PASSWORD, current_password)
+
+            # Only re-authenticate when the password actually changed.
+            if new_password != current_password:
+                session = async_create_clientsession(self.hass)
+                store = Store(
+                    self.hass,
+                    STORAGE_VERSION,
+                    f"{REMOTE_STORAGE_KEY_PREFIX}_{self.config_entry.unique_id}",
+                )
+                client = QuattEnergyApiClient(
+                    session=session,
+                    username=current_username,
+                    password=new_password,
+                    store=store,
+                )
+                try:
+                    ok = await client.authenticate()
+                except QuattApiClientAuthenticationError as err:
+                    LOGGER.warning("Quatt Energy auth rejected: %s", err)
+                    _errors["base"] = "auth"
+                except QuattApiClientCommunicationError as err:
+                    LOGGER.error("Quatt Energy connection error: %s", err)
+                    _errors["base"] = "cannot_connect"
+                except QuattApiClientError as err:
+                    LOGGER.exception("Quatt Energy unexpected error: %s", err)
+                    _errors["base"] = "unknown"
+                else:
+                    if not ok:
+                        _errors["base"] = "energy_no_ean"
+
+                if _errors:
+                    return self._energy_options_form(user_input, _errors)
+
+                # Persist the new password on the config entry data.
+                new_data = {
+                    **self.config_entry.data,
+                    CONF_ENERGY_PASSWORD: new_password,
+                }
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry, data=new_data
+                )
+
+            return self.async_create_entry(
+                title="",
+                data={
+                    REMOTE_CONF_SCAN_INTERVAL: user_input.get(
+                        REMOTE_CONF_SCAN_INTERVAL,
+                        self.config_entry.options.get(
+                            REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                        ),
+                    ),
+                },
+            )
+
+        return self._energy_options_form(user_input, _errors)
+
+    def _energy_options_form(
+        self, user_input: dict | None, errors: dict[str, str]
+    ) -> ConfigFlowResult:
+        """Render the Energy options form (factored out so error retries reuse it)."""
+        prev = user_input or {}
+        current_password = self.config_entry.data.get(CONF_ENERGY_PASSWORD, "")
+        schema_dict = {
+            vol.Required(
+                REMOTE_CONF_SCAN_INTERVAL,
+                default=prev.get(
+                    REMOTE_CONF_SCAN_INTERVAL,
+                    self.config_entry.options.get(
+                        REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                    ),
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=REMOTE_MIN_SCAN_INTERVAL,
+                    max=REMOTE_MAX_SCAN_INTERVAL,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            ),
+            vol.Required(
+                CONF_ENERGY_PASSWORD,
+                default=prev.get(CONF_ENERGY_PASSWORD, current_password),
+            ): selector.TextSelector(
+                selector.TextSelectorConfig(
+                    type=selector.TextSelectorType.PASSWORD
+                )
+            ),
+        }
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(schema_dict),
+            errors=errors,
         )

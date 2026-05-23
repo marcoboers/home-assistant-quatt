@@ -115,3 +115,140 @@ get_home_battery_savings:
           min: 1
           max: 12
           mode: box
+
+get_energy_prices:
+  name: Get energy prices
+  description: Retrieves tariff prices from the Quatt Energy portal (mijnenergie.quatt.io). The period selects whether you get a day's quarter-hourly prices, a month's daily prices or a year's monthly prices. Without year/month/day the current period is used (today for day, the current month for month/year).
+  fields:
+    period:
+      name: Period
+      description: Granularity of the returned price series.
+      default: "day"
+      example: "day"
+      selector:
+        select:
+          options:
+            - "day"
+            - "month"
+            - "year"
+    product:
+      name: Product
+      description: Whether to fetch electricity or gas prices.
+      default: "electricity"
+      example: "electricity"
+      selector:
+        select:
+          options:
+            - "electricity"
+            - "gas"
+    year:
+      name: Year
+      description: Year (e.g. 2026). Defaults to the current year.
+      example: 2026
+      selector:
+        number:
+          min: 2020
+          max: 2100
+          mode: box
+    month:
+      name: Month
+      description: Month (1-12). Defaults to the current month.
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 12
+          mode: box
+    day:
+      name: Day
+      description: Day of month (1-31). Only used for period=day; defaults to today.
+      example: 11
+      selector:
+        number:
+          min: 1
+          max: 31
+          mode: box
+
+get_energy_power:
+  name: Get energy power
+  description: Retrieves electricity or gas usage from the Quatt Energy portal. Scope is chosen by which fields you provide - year + month + day for an hourly drilldown of that day, year alone (or no fields) for the full-year monthly aggregate.
+  fields:
+    product:
+      name: Product
+      description: Whether to fetch electricity or gas usage.
+      default: "electricity"
+      example: "electricity"
+      selector:
+        select:
+          options:
+            - "electricity"
+            - "gas"
+    year:
+      name: Year
+      description: Year (e.g. 2026). Defaults to the current year.
+      example: 2026
+      selector:
+        number:
+          min: 2020
+          max: 2100
+          mode: box
+    month:
+      name: Month
+      description: Month (1-12). Requires day for an hourly drilldown.
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 12
+          mode: box
+    day:
+      name: Day
+      description: Day of month (1-31). Together with month switches to the hourly drilldown.
+      example: 11
+      selector:
+        number:
+          min: 1
+          max: 31
+          mode: box
+
+get_energy_costs:
+  name: Get energy costs
+  description: Retrieves electricity or gas costs from the Quatt Energy portal. Scope is chosen by which fields you provide - year + month + day for an hourly drilldown of that day, year alone (or no fields) for the full-year monthly aggregate.
+  fields:
+    product:
+      name: Product
+      description: Whether to fetch electricity or gas costs.
+      default: "electricity"
+      example: "electricity"
+      selector:
+        select:
+          options:
+            - "electricity"
+            - "gas"
+    year:
+      name: Year
+      description: Year (e.g. 2026). Defaults to the current year.
+      example: 2026
+      selector:
+        number:
+          min: 2020
+          max: 2100
+          mode: box
+    month:
+      name: Month
+      description: Month (1-12). Requires day for an hourly drilldown.
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 12
+          mode: box
+    day:
+      name: Day
+      description: Day of month (1-31). Together with month switches to the hourly drilldown.
+      example: 11
+      selector:
+        number:
+          min: 1
+          max: 31
+          mode: box

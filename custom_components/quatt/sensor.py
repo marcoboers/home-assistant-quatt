@@ -9,6 +9,7 @@ from .const import (
     DEVICE_BOILER_ID,
     DEVICE_CIC_ID,
     DEVICE_CIC_INSIGHTS_ID,
+    DEVICE_ENERGY_ID,
     DEVICE_FLOWMETER_ID,
     DEVICE_HEAT_BATTERY_ID,
     DEVICE_HEAT_CHARGER_ID,
@@ -33,6 +34,7 @@ from .sensor_descriptions_cic import (
     FLOWMETER_SENSORS,
     THERMOSTAT_SENSORS,
 )
+from .sensor_descriptions_energy import ENERGY_SENSORS
 from .sensor_descriptions_heat import (
     HEAT_BATTERY_SENSORS,
     HEAT_CHARGER_SENSORS,
@@ -117,6 +119,27 @@ def _create_home_battery_sensors(
     return sensors
 
 
+def _create_energy_sensors(
+    coordinator: QuattDataUpdateCoordinator,
+) -> list[QuattSensor]:
+    """Create Quatt Energy (mijnenergie) hub sensor entities."""
+    sensors: list[QuattSensor] = []
+
+    for desc in ENERGY_SENSORS:
+        sensors.append(
+            desc.quatt_entity_class(
+                device_name="Energy",
+                device_id=DEVICE_ENERGY_ID,
+                sensor_key=desc.key,
+                coordinator=coordinator,
+                entity_description=desc,
+                device_kind=QuattDeviceKind.HUB,
+            )
+        )
+
+    return sensors
+
+
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Set up the sensor platform."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
@@ -128,6 +151,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     home_battery_coordinator: QuattDataUpdateCoordinator | None = coordinators.get(
         "home_battery"
     )
+    energy_coordinator: QuattDataUpdateCoordinator | None = coordinators.get("energy")
 
     sensors: list[QuattSensor] = []
 
@@ -163,5 +187,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
     if home_battery_coordinator is not None:
         sensors += _create_home_battery_sensors(home_battery_coordinator)
+
+    if energy_coordinator is not None:
+        sensors += _create_energy_sensors(energy_coordinator)
 
     async_add_devices(sensors)

@@ -1,0 +1,210 @@
+type: custom:apexcharts-card
+graph_span: 31d
+span:
+  start: month
+update_interval: 15m
+header:
+  show: true
+  title: Stroomverbruik deze maand
+  show_states: true
+  colorize_states: true
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  plotOptions:
+    bar:
+      columnWidth: 0%
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 10
+    labels:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const base = new Date();
+          if (d.getMonth() !== base.getMonth() || d.getFullYear() !== base.getFullYear()) return '';
+          return d.getDate().toString();
+        }
+  yaxis:
+    labels:
+      formatter: |
+        EVAL:(value) => Number(value).toFixed(0) + ' kWh'
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const s = d.toLocaleDateString('nl-NL', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+          });
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+    "y":
+      formatter: |
+        EVAL:(value) => {
+          if (value == null) return '-';
+          return Number(value).toFixed(1).replace('.', ',') + ' kWh';
+        }
+series:
+  - entity: sensor.quatt_energy_power_year
+    name: Verbruik
+    type: column
+    color: "#888888"
+    stroke_width: 4
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.power_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const now = new Date();
+      const mid = `reading_total_electricity_${String(now.getMonth() + 1).padStart(2, '0')}_${now.getFullYear()}`;
+      const series = (d.drilldownSeries || []).find(s => s && s.id === mid);
+      if (!series) return [];
+      const pts = (series.data || []).filter(p => p && p.date && p.y !== null && !(typeof p.className === 'string' && p.className.includes('drilldown-missing')));
+      if (!pts.length) return [];
+      const ys = pts.map(p => p.y);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const tsOf = (s) => {
+        const [y, m, dd] = String(s).split('-').map(Number);
+        return new Date(y, m - 1, dd, 12, 0, 0).getTime();
+      };
+      return pts.map(p => {
+        const ts = tsOf(p.date);
+        if (p.y === minY || p.y === maxY) return [ts, null];
+        return [ts, p.y];
+      });
+  - entity: sensor.quatt_energy_power_year
+    name: Laagst
+    type: column
+    color: "#27ae60"
+    stroke_width: 4
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.power_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const now = new Date();
+      const mid = `reading_total_electricity_${String(now.getMonth() + 1).padStart(2, '0')}_${now.getFullYear()}`;
+      const series = (d.drilldownSeries || []).find(s => s && s.id === mid);
+      if (!series) return [];
+      const pts = (series.data || []).filter(p => p && p.date && p.y !== null && !(typeof p.className === 'string' && p.className.includes('drilldown-missing')));
+      if (!pts.length) return [];
+      const minY = Math.min(...pts.map(p => p.y));
+      const tsOf = (s) => {
+        const [y, m, dd] = String(s).split('-').map(Number);
+        return new Date(y, m - 1, dd, 12, 0, 0).getTime();
+      };
+      return pts.map(p => {
+        const ts = tsOf(p.date);
+        if (p.y !== minY) return [ts, null];
+        return [ts, p.y];
+      });
+  - entity: sensor.quatt_energy_power_year
+    name: Hoogst
+    type: column
+    color: "#e74c3c"
+    stroke_width: 4
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.power_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const now = new Date();
+      const mid = `reading_total_electricity_${String(now.getMonth() + 1).padStart(2, '0')}_${now.getFullYear()}`;
+      const series = (d.drilldownSeries || []).find(s => s && s.id === mid);
+      if (!series) return [];
+      const pts = (series.data || []).filter(p => p && p.date && p.y !== null && !(typeof p.className === 'string' && p.className.includes('drilldown-missing')));
+      if (!pts.length) return [];
+      const maxY = Math.max(...pts.map(p => p.y));
+      const tsOf = (s) => {
+        const [y, m, dd] = String(s).split('-').map(Number);
+        return new Date(y, m - 1, dd, 12, 0, 0).getTime();
+      };
+      return pts.map(p => {
+        const ts = tsOf(p.date);
+        if (p.y !== maxY) return [ts, null];
+        return [ts, p.y];
+      });
+  - entity: sensor.quatt_energy_power_year
+    name: netto
+    unit: kWh
+    color: "#3498db"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 0
+    data_generator: |
+      const raw = entity.attributes.power_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const now = new Date();
+      const mid = `reading_total_electricity_${String(now.getMonth() + 1).padStart(2, '0')}_${now.getFullYear()}`;
+      const series = (d.drilldownSeries || []).find(s => s && s.id === mid);
+      if (!series) return [[Date.now(), 0]];
+      const pts = (series.data || []).filter(p => p && p.y !== null && !(typeof p.className === 'string' && p.className.includes('drilldown-missing')));
+      const sum = pts.reduce((a, p) => a + p.y, 0);
+      return [[Date.now(), sum]];
+  - entity: sensor.quatt_energy_power_year
+    name: laagst
+    unit: kWh
+    color: "#27ae60"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 0
+    data_generator: |
+      const raw = entity.attributes.power_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const now = new Date();
+      const mid = `reading_total_electricity_${String(now.getMonth() + 1).padStart(2, '0')}_${now.getFullYear()}`;
+      const series = (d.drilldownSeries || []).find(s => s && s.id === mid);
+      if (!series) return [[Date.now(), 0]];
+      const pts = (series.data || []).filter(p => p && p.y !== null && !(typeof p.className === 'string' && p.className.includes('drilldown-missing')));
+      if (!pts.length) return [[Date.now(), 0]];
+      const m = pts.reduce((a, b) => a.y < b.y ? a : b);
+      return [[Date.now(), m.y]];
+  - entity: sensor.quatt_energy_power_year
+    name: hoogst
+    unit: kWh
+    color: "#e74c3c"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 0
+    data_generator: |
+      const raw = entity.attributes.power_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const now = new Date();
+      const mid = `reading_total_electricity_${String(now.getMonth() + 1).padStart(2, '0')}_${now.getFullYear()}`;
+      const series = (d.drilldownSeries || []).find(s => s && s.id === mid);
+      if (!series) return [[Date.now(), 0]];
+      const pts = (series.data || []).filter(p => p && p.y !== null && !(typeof p.className === 'string' && p.className.includes('drilldown-missing')));
+      if (!pts.length) return [[Date.now(), 0]];
+      const m = pts.reduce((a, b) => a.y > b.y ? a : b);
+      return [[Date.now(), m.y]];

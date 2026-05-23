@@ -7,7 +7,8 @@
                 "description": "What kind of Quatt device do you want to add?",
                 "menu_options": {
                     "local": "Heatpump (CIC)",
-                    "home_battery": "Home battery"
+                    "home_battery": "Home battery",
+                    "energy": "Energy (mijnenergie)"
                 }
             },
             "local": {
@@ -61,6 +62,14 @@
             },
             "confirm": {
                 "description": "Press Submit to confirm setup."
+            },
+            "energy": {
+                "title": "Sign in to mijnenergie.quatt.io",
+                "description": "Enter the email address and password you use on {portal_url}. Credentials are stored locally in Home Assistant and used to keep the session alive.",
+                "data": {
+                    "energy_username": "Email address",
+                    "energy_password": "Password"
+                }
             }
         },
         "error": {
@@ -69,6 +78,7 @@
             "pairing_timeout": "Pairing timeout. Please try again and press the button on the CIC device within 60 seconds.",
             "home_battery_qr_invalid": "Invalid QR code URL. Make sure to copy the full URL from the battery QR code.",
             "home_battery_pair_failed": "Home battery pairing failed. Please check the access key, serial number and check code.",
+            "energy_no_ean": "Login succeeded but no energy meter (EAN) was returned. Open the Quatt energy portal once in a browser to finish onboarding, then retry.",
             "unknown": "An unexpected error occurred. Please try again."
         },
         "abort": {
@@ -85,13 +95,15 @@
                     "scan_interval": "Local update interval (seconds)",
                     "remote_scan_interval": "Remote mobile API update interval (minutes)",
                     "power_sensor": "Power sensor (optional)",
-                    "add_remote": "Enable remote connection setup"
+                    "add_remote": "Enable remote connection setup",
+                    "energy_password": "Quatt Energy password"
                 },
                 "data_description": {
                     "scan_interval": "Number of seconds between requesting information from the Quatt.",
                     "remote_scan_interval": "Number of minutes between requesting information from the mobile Quatt API.",
                     "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt.",
-                    "add_remote": "Add remote connectivity through the Quatt mobile API to retrieve additional heatpump data."
+                    "add_remote": "Add remote connectivity through the Quatt mobile API to retrieve additional heatpump data.",
+                    "energy_password": "Update only if you changed your password on mijnenergie.quatt.io."
                 }
             },
             "remote": {
@@ -120,6 +132,7 @@
             "auth": "Authentication failed. Please check your credentials.",
             "cannot_connect": "Cannot connect to your local CIC. Check the IP address.",
             "pairing_timeout": "Pairing timeout. Please try again and press the button on the CIC device within 60 seconds.",
+            "energy_no_ean": "Login succeeded but no energy meter (EAN) was returned.",
             "unknown": "An unexpected error occurred. Please try again."
         }
     }

@@ -36,10 +36,13 @@ from .api import (
 from .api_local_cic import QuattCicLocalApiClient
 from .api_remote_auth import QuattRemoteAuthClient
 from .api_remote_cic import QuattCicRemoteApiClient
+from .api_remote_energy import QuattEnergyApiClient
 from .api_remote_home_battery import QuattHomeBatteryApiClient
 from .const import (
     CARD_FILE,
     CARD_MOUNT,
+    CONF_ENERGY_PASSWORD,
+    CONF_ENERGY_USERNAME,
     CONF_HOME_BATTERY_SERIAL,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
@@ -57,6 +60,7 @@ from .const import (
 from .coordinator_home_battery import QuattHomeBatteryDataUpdateCoordinator
 from .coordinator_local_cic import QuattCicLocalDataUpdateCoordinator
 from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
+from .coordinator_remote_energy import QuattEnergyDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -306,12 +310,113 @@ def _register_get_home_battery_savings_service(hass: HomeAssistant) -> None:
         )
 
 
+def _find_coordinator(hass: HomeAssistant, key: str):
+    """Return the first coordinator stored under ``key`` across all entries."""
+    for coordinators_dict in hass.data[DOMAIN].values():
+        if not isinstance(coordinators_dict, dict):
+            continue
+        if coordinators_dict.get(key):
+            return coordinators_dict[key]
+    return None
+
+
+def _register_get_energy_prices_service(hass: HomeAssistant) -> None:
+    if not hass.services.has_service(DOMAIN, "get_energy_prices"):
+
+        async def handle_get_energy_prices(call: ServiceCall) -> ServiceResponse:
+            energy_coordinator = _find_coordinator(hass, "energy")
+            if not energy_coordinator:
+                LOGGER.error("No Quatt Energy hub configured for prices service")
+                return {
+                    "error": "No Quatt Energy hub configured. Add one first.",
+                }
+
+            data = await energy_coordinator.client.get_prices(
+                period=call.data.get("period", "day"),
+                product=call.data.get("product", "electricity"),
+                year=call.data.get("year"),
+                month=call.data.get("month"),
+                day=call.data.get("day"),
+            )
+            if data:
+                return data
+            return {"error": "Failed to fetch energy prices"}
+
+        hass.services.async_register(
+            DOMAIN,
+            "get_energy_prices",
+            handle_get_energy_prices,
+            supports_response=SupportsResponse.ONLY,
+        )
+
+
+def _register_get_energy_power_service(hass: HomeAssistant) -> None:
+    if not hass.services.has_service(DOMAIN, "get_energy_power"):
+
+        async def handle_get_energy_power(call: ServiceCall) -> ServiceResponse:
+            energy_coordinator = _find_coordinator(hass, "energy")
+            if not energy_coordinator:
+                LOGGER.error("No Quatt Energy hub configured for power service")
+                return {
+                    "error": "No Quatt Energy hub configured. Add one first.",
+                }
+
+            data = await energy_coordinator.client.get_power(
+                product=call.data.get("product", "electricity"),
+                year=call.data.get("year"),
+                month=call.data.get("month"),
+                day=call.data.get("day"),
+            )
+            if data:
+                return data
+            return {"error": "Failed to fetch energy power data"}
+
+        hass.services.async_register(
+            DOMAIN,
+            "get_energy_power",
+            handle_get_energy_power,
+            supports_response=SupportsResponse.ONLY,
+        )
+
+
+def _register_get_energy_costs_service(hass: HomeAssistant) -> None:
+    if not hass.services.has_service(DOMAIN, "get_energy_costs"):
+
+        async def handle_get_energy_costs(call: ServiceCall) -> ServiceResponse:
+            energy_coordinator = _find_coordinator(hass, "energy")
+            if not energy_coordinator:
+                LOGGER.error("No Quatt Energy hub configured for costs service")
+                return {
+                    "error": "No Quatt Energy hub configured. Add one first.",
+                }
+
+            data = await energy_coordinator.client.get_costs(
+                product=call.data.get("product", "electricity"),
+                year=call.data.get("year"),
+                month=call.data.get("month"),
+                day=call.data.get("day"),
+            )
+            if data:
+                return data
+            return {"error": "Failed to fetch energy costs data"}
+
+        hass.services.async_register(
+            DOMAIN,
+            "get_energy_costs",
+            handle_get_energy_costs,
+            supports_response=SupportsResponse.ONLY,
+        )
+
+
 def _register_services(hass: HomeAssistant) -> None:
     """Register integration services if not already registered."""
     _register_get_cic_insights_service(hass)
     _register_get_home_battery_insights_service(hass)
     _register_get_home_battery_energy_flow_service(hass)
     _register_get_home_battery_savings_service(hass)
+    _register_get_energy_prices_service(hass)
+    _register_get_energy_power_service(hass)
+    _register_get_energy_costs_service(hass)
 
 
 @callback
@@ -360,6 +465,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     is_home_battery_hub = (
         CONF_HOME_BATTERY_SERIAL in entry.data and CONF_LOCAL_CIC not in entry.data
     )
+    is_energy_hub = CONF_ENERGY_USERNAME in entry.data
     has_remote = CONF_REMOTE_CIC in entry.data
 
     coordinators: dict[
@@ -367,10 +473,55 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         QuattCicLocalDataUpdateCoordinator
         | QuattCicRemoteDataUpdateCoordinator
         | QuattHomeBatteryDataUpdateCoordinator
+        | QuattEnergyDataUpdateCoordinator
         | None,
-    ] = {"cic_local": None, "cic_remote": None, "home_battery": None}
+    ] = {
+        "cic_local": None,
+        "cic_remote": None,
+        "home_battery": None,
+        "energy": None,
+    }
 
-    if is_home_battery_hub:
+    if is_energy_hub:
+        # Quatt Energy hub - separate web portal (mijnenergie.quatt.io), no
+        # Firebase auth involved. The session needs an isolated cookie jar.
+        store = Store(
+            hass,
+            STORAGE_VERSION,
+            f"{REMOTE_STORAGE_KEY_PREFIX}_{entry.unique_id}",
+        )
+        stored_data = await store.async_load() or {}
+        session = async_create_clientsession(hass)
+        energy_client = QuattEnergyApiClient(
+            session=session,
+            username=entry.data[CONF_ENERGY_USERNAME],
+            password=entry.data[CONF_ENERGY_PASSWORD],
+            store=store,
+        )
+        # Price-display flags are persisted in the per-hub Store next to the
+        # auth identifiers, so toggling them via the dedicated switches does
+        # not require an entry reload (which would tear down every sensor).
+        energy_client.load_state(
+            csrf_token=stored_data.get("csrf_token"),
+            session_id=stored_data.get("session_id"),
+            ean=stored_data.get("ean"),
+            include_vat=stored_data.get("include_vat"),
+            include_tax=stored_data.get("include_tax"),
+            include_markup=stored_data.get("include_markup"),
+        )
+
+        energy_coordinator = QuattEnergyDataUpdateCoordinator(
+            hass=hass,
+            update_interval=timedelta(
+                minutes=entry.options.get(
+                    REMOTE_CONF_SCAN_INTERVAL, DEFAULT_REMOTE_SCAN_INTERVAL
+                )
+            ),
+            client=energy_client,
+        )
+        await energy_coordinator.async_config_entry_first_refresh()
+        coordinators["energy"] = energy_coordinator
+    elif is_home_battery_hub:
         # Home battery only hub - no local CIC, only the remote home battery API.
         # Battery unique_id is the access-key UUID (already prefixed BAT-).
         store = Store(
@@ -494,7 +645,8 @@ def _entry_uses_remote_auth(entry: ConfigEntry) -> bool:
 
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Clean up per-hub storage (and shared auth when the last remote hub leaves)."""
-    if entry.unique_id and _entry_uses_remote_auth(entry):
+    is_energy = CONF_ENERGY_USERNAME in entry.data
+    if entry.unique_id and (_entry_uses_remote_auth(entry) or is_energy):
         hub_store = Store(
             hass,
             STORAGE_VERSION,

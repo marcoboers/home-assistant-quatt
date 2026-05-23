@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.helpers.typing import StateType
@@ -57,4 +58,52 @@ class QuattSystemSensor(QuattSensor):
             DUO_HEATPUMP_SYSTEM: self.coordinator.heatpump_2_active(),
             ALL_ELECTRIC_SYSTEM: self.coordinator.all_electric_active(),
             OPENTHERM_SYSTEM: self.coordinator.is_boiler_opentherm(),
+        }
+
+
+class QuattEnergyCurrentPriceSensor(QuattSensor):
+    """Current quarter-hour energy price with period attributes."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose period bounds + product/date for templating."""
+        return {
+            "period_start": self.coordinator.get_value("prices.current.periodStart"),
+            "period_end": self.coordinator.get_value("prices.current.periodEnd"),
+            "period_label": self.coordinator.get_value("prices.current.name"),
+            "time_window": self.coordinator.get_value("prices.current.window"),
+            "product": self.coordinator.get_value("prices.product"),
+            "date": self.coordinator.get_value("prices.date"),
+        }
+
+
+class QuattEnergyCheapestPriceSensor(QuattSensor):
+    """Cheapest quarter-hour energy price today, with its timestamp."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the cheapest-slot timestamp + product/date."""
+        return {
+            "time": self.coordinator.get_value("prices.cheapest.time"),
+            "time_end": self.coordinator.get_value("prices.cheapest.timeEnd"),
+            "time_label": self.coordinator.get_value("prices.cheapest.name"),
+            "time_window": self.coordinator.get_value("prices.cheapest.window"),
+            "product": self.coordinator.get_value("prices.product"),
+            "date": self.coordinator.get_value("prices.date"),
+        }
+
+
+class QuattEnergyMostExpensivePriceSensor(QuattSensor):
+    """Most expensive quarter-hour energy price today, with its timestamp."""
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the most-expensive-slot timestamp + product/date."""
+        return {
+            "time": self.coordinator.get_value("prices.mostExpensive.time"),
+            "time_end": self.coordinator.get_value("prices.mostExpensive.timeEnd"),
+            "time_label": self.coordinator.get_value("prices.mostExpensive.name"),
+            "time_window": self.coordinator.get_value("prices.mostExpensive.window"),
+            "product": self.coordinator.get_value("prices.product"),
+            "date": self.coordinator.get_value("prices.date"),
         }

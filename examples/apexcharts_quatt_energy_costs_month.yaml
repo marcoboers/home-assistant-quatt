@@ -1,0 +1,152 @@
+type: custom:apexcharts-card
+graph_span: 31d
+span:
+  start: month
+update_interval: 15m
+header:
+  show: true
+  title: Stroomkosten deze maand
+  show_states: true
+  colorize_states: true
+apex_config:
+  chart:
+    toolbar:
+      show: false
+  plotOptions:
+    bar:
+      columnWidth: 0%
+  xaxis:
+    tooltip:
+      enabled: false
+    type: datetime
+    tickAmount: 10
+    labels:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const base = new Date();
+          if (d.getMonth() !== base.getMonth() || d.getFullYear() !== base.getFullYear()) return '';
+          return d.getDate().toString();
+        }
+  yaxis:
+    labels:
+      formatter: |
+        EVAL:(value) => '€ ' + Number(value).toFixed(0)
+  tooltip:
+    x:
+      formatter: |
+        EVAL:(value) => {
+          const ts = typeof value === 'number' ? value : Date.parse(value);
+          const d = new Date(ts);
+          const s = d.toLocaleDateString('nl-NL', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+          });
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+    "y":
+      formatter: |
+        EVAL:(value) => {
+          if (value == null) return '-';
+          return '€ ' + Number(value).toFixed(2).replace('.', ',');
+        }
+series:
+  - entity: sensor.quatt_energy_costs_year
+    name: Kosten
+    type: column
+    color: "#3498db"
+    stroke_width: 4
+    show:
+      in_chart: true
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [];
+      let d;
+      try { d = JSON.parse(raw); } catch { return []; }
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const days = (d.adminDrilldownDays && d.adminDrilldownDays.electricity && d.adminDrilldownDays.electricity[key]) || {};
+      const tsOf = (s) => {
+        const [y, m, dd] = String(s).split('-').map(Number);
+        return new Date(y, m - 1, dd, 12, 0, 0).getTime();
+      };
+      const out = [];
+      for (const k of Object.keys(days)) {
+        const row = days[k] || {};
+        if (!row.date) continue;
+        const u = (row.day_usage_amount == null) ? null : Number(row.day_usage_amount);
+        const p = (row.day_prod_amount == null) ? null : Number(row.day_prod_amount);
+        if (u == null && p == null) continue;
+        const total = (u || 0) + (p || 0);
+        out.push([tsOf(row.date), Number(total.toFixed(4))]);
+      }
+      return out;
+  - entity: sensor.quatt_energy_costs_year
+    name: totaal
+    unit: €
+    color: "#3498db"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const days = (d.adminDrilldownDays && d.adminDrilldownDays.electricity && d.adminDrilldownDays.electricity[key]) || {};
+      let sum = 0;
+      for (const k of Object.keys(days)) {
+        const row = days[k] || {};
+        sum += Number(row.day_usage_amount || 0) + Number(row.day_prod_amount || 0);
+      }
+      return [[Date.now(), Number(sum.toFixed(2))]];
+  - entity: sensor.quatt_energy_costs_year
+    name: afname
+    unit: €
+    color: "#888888"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const days = (d.adminDrilldownDays && d.adminDrilldownDays.electricity && d.adminDrilldownDays.electricity[key]) || {};
+      let sum = 0;
+      for (const k of Object.keys(days)) {
+        sum += Number((days[k] || {}).day_usage_amount || 0);
+      }
+      return [[Date.now(), Number(sum.toFixed(2))]];
+  - entity: sensor.quatt_energy_costs_year
+    name: invoeding
+    unit: €
+    color: "#27ae60"
+    show:
+      in_chart: false
+      in_header: true
+      legend_value: false
+    float_precision: 2
+    data_generator: |
+      const raw = entity.attributes.costs_json;
+      if (!raw) return [[Date.now(), 0]];
+      let d;
+      try { d = JSON.parse(raw); } catch { return [[Date.now(), 0]]; }
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const days = (d.adminDrilldownDays && d.adminDrilldownDays.electricity && d.adminDrilldownDays.electricity[key]) || {};
+      let sum = 0;
+      for (const k of Object.keys(days)) {
+        sum += Number((days[k] || {}).day_prod_amount || 0);
+      }
+      return [[Date.now(), Number(sum.toFixed(2))]];
