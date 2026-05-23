@@ -1,0 +1,139 @@
+{
+    "config": {
+        "flow_title": "CIC: {name}",
+        "step": {
+            "user": {
+                "title": "Quatt-Gerät",
+                "description": "Welche Art von Quatt-Gerät möchten Sie hinzufügen?",
+                "menu_options": {
+                    "local": "Wärmepumpe (CIC)",
+                    "home_battery": "Heimspeicher",
+                    "energy": "Energie (mijnenergie)"
+                }
+            },
+            "local": {
+                "description": "Lokale Verbindung zur Quatt-Wärmepumpe einrichten.",
+                "data": {
+                    "ip_address": "IP-Adresse / Hostname",
+                    "add_remote": "Externe Verbindung aktivieren"
+                },
+                "data_description": {
+                    "ip_address": "Ohne http:// und Port.",
+                    "add_remote": "Externe Konnektivität über die mobile Quatt-API hinzufügen, um zusätzliche Daten der Wärmepumpe abzurufen."
+                }
+            },
+            "home_battery": {
+                "title": "Mit einem Quatt-Heimspeicher koppeln",
+                "menu_options": {
+                    "home_battery_qr": "QR-Code scannen",
+                    "home_battery_manual": "Daten manuell eingeben"
+                }
+            },
+            "home_battery_qr": {
+                "title": "Koppeln per QR-Code",
+                "description": "Scannen Sie den QR-Code auf dem Heimspeicher und fügen Sie die URL unten ein.\n\n![Position des QR-Code-Etiketts am Heimspeicher](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_qr_url": "QR-Code-URL"
+                },
+                "data_description": {
+                    "home_battery_qr_url": "Scannen Sie den QR-Code und kopieren Sie den Link:\n- **iOS**: QR-Vorschlag lange drücken → Link kopieren\n- **Android**: Google Lens / Kamera-Scan → Kopieren\n- Jede Barcode-App (ZXing, Binary Eye), die den Rohtext anzeigt"
+                }
+            },
+            "home_battery_manual": {
+                "title": "Manuell koppeln",
+                "description": "Geben Sie die **UUID**, die **Seriennummer** und den **Prüfcode** vom Etikett des Heimspeichers ein.\n\n![Position des Kopplungsetiketts am Heimspeicher](/quatt_static/battery_pair.png)",
+                "data": {
+                    "home_battery_uuid": "UUID",
+                    "home_battery_serial": "Seriennummer",
+                    "home_battery_check_code": "Prüfcode"
+                }
+            },
+            "auth": {
+                "title": "Bei der mobilen Quatt-API anmelden",
+                "description": "Geben Sie Ihren Namen ein, um ein anonymes Konto bei der mobilen Quatt-API zu erstellen. Diese Daten werden ausschließlich lokal in Home Assistant gespeichert und für alle Quatt-Geräte wiederverwendet, die Sie hinzufügen.",
+                "data": {
+                    "first_name": "Vorname",
+                    "last_name": "Nachname"
+                }
+            },
+            "pair": {
+                "title": "Mit dem Quatt-Gerät koppeln",
+                "description": "Drücken Sie die Taste an Ihrem CIC-Gerät, um die Kopplung abzuschließen.\n\n> **{cic}**\n\n![Position der Kopplungstaste](/quatt_static/pair.png)\nSchließen Sie die Kopplung innerhalb von 60 Sekunden ab.\n\nDrücken Sie 'Senden', um den Kopplungsvorgang zu starten, und warten Sie auf die Bestätigung."
+            },
+            "confirm": {
+                "description": "Klicken Sie auf 'Senden', um die Einrichtung zu bestätigen."
+            },
+            "energy": {
+                "title": "Bei mijnenergie.quatt.io anmelden",
+                "description": "Geben Sie die E-Mail-Adresse und das Passwort ein, die Sie auf {portal_url} verwenden. Die Anmeldedaten werden ausschließlich lokal in Home Assistant gespeichert und verwendet, um die Sitzung aktiv zu halten.",
+                "data": {
+                    "energy_username": "E-Mail-Adresse",
+                    "energy_password": "Passwort"
+                }
+            }
+        },
+        "error": {
+            "auth": "Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
+            "cannot_connect": "Verbindung zum lokalen CIC nicht möglich. Bitte überprüfen Sie die IP-Adresse.",
+            "pairing_timeout": "Zeitüberschreitung beim Koppeln. Bitte versuchen Sie es erneut und drücken Sie innerhalb von 60 Sekunden die Taste am CIC-Gerät.",
+            "home_battery_qr_invalid": "Ungültige QR-Code-URL. Stellen Sie sicher, dass Sie die vollständige URL des Heimspeicher-QR-Codes kopieren.",
+            "home_battery_pair_failed": "Kopplung des Heimspeichers fehlgeschlagen. Bitte überprüfen Sie den Zugriffsschlüssel, die Seriennummer und den Prüfcode.",
+            "energy_no_ean": "Anmeldung erfolgreich, aber es wurde kein Energiezähler (EAN) zurückgegeben. Öffnen Sie das Quatt-Energieportal einmal in einem Browser, um die Einrichtung abzuschließen, und versuchen Sie es dann erneut.",
+            "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+        },
+        "abort": {
+            "already_in_progress": "Für dieses Quatt-Gerät läuft bereits ein Konfigurationsvorgang.",
+            "already_configured": "Gerät ist bereits konfiguriert.",
+            "no_match": "Kein passendes Quatt-Gerät gefunden."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "description": "Quatt-Optionen",
+                "data": {
+                    "scan_interval": "Lokales Aktualisierungsintervall (Sekunden)",
+                    "remote_scan_interval": "Aktualisierungsintervall der mobilen API (Minuten)",
+                    "power_sensor": "Leistungssensor (optional)",
+                    "add_remote": "Externe Verbindung aktivieren",
+                    "energy_password": "Quatt Energy-Passwort"
+                },
+                "data_description": {
+                    "scan_interval": "Anzahl der Sekunden zwischen den Datenabfragen vom Quatt.",
+                    "remote_scan_interval": "Anzahl der Minuten zwischen den Datenabfragen über die mobile Quatt-API.",
+                    "power_sensor": "Externer Energiesensor, der den aktuellen Energieverbrauch des Quatt misst.",
+                    "add_remote": "Externe Konnektivität über die mobile Quatt-API hinzufügen, um zusätzliche Daten der Wärmepumpe abzurufen.",
+                    "energy_password": "Nur aktualisieren, wenn Sie Ihr Passwort auf mijnenergie.quatt.io geändert haben."
+                }
+            },
+            "remote": {
+                "description": "Externe Verbindung zur Quatt-Wärmepumpe über die mobile API einrichten.\nGeben Sie die CIC-ID ein (z. B. CIC-xxxx-xxxx-xxxx).",
+                "data": {
+                    "cic": "CIC-ID"
+                }
+            },
+            "auth": {
+                "title": "Bei der mobilen Quatt-API anmelden",
+                "description": "Geben Sie Ihren Namen ein, um ein anonymes Konto bei der mobilen Quatt-API zu erstellen. Diese Daten werden ausschließlich lokal in Home Assistant gespeichert und für alle Quatt-Geräte wiederverwendet, die Sie hinzufügen.",
+                "data": {
+                    "first_name": "Vorname",
+                    "last_name": "Nachname"
+                }
+            },
+            "pair": {
+                "title": "Mit dem Quatt-Gerät koppeln",
+                "description": "Drücken Sie die Taste an Ihrem CIC-Gerät, um die Kopplung abzuschließen.\n\n> **{cic}**\n\n![Position der Kopplungstaste](/quatt_static/pair.png)\nSchließen Sie die Kopplung innerhalb von 60 Sekunden ab.\n\nDrücken Sie 'Senden', um den Kopplungsvorgang zu starten, und warten Sie auf die Bestätigung."
+            },
+            "confirm": {
+                "description": "Klicken Sie auf 'Senden', um die Einrichtung zu bestätigen."
+            }
+        },
+        "error": {
+            "auth": "Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
+            "cannot_connect": "Verbindung zum lokalen CIC nicht möglich. Bitte überprüfen Sie die IP-Adresse.",
+            "pairing_timeout": "Zeitüberschreitung beim Koppeln. Bitte versuchen Sie es erneut und drücken Sie innerhalb von 60 Sekunden die Taste am CIC-Gerät.",
+            "energy_no_ean": "Anmeldung erfolgreich, aber es wurde kein Energiezähler (EAN) zurückgegeben.",
+            "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+        }
+    }
+}
