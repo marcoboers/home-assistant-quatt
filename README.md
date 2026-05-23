@@ -5,7 +5,7 @@
 [![License][license-shield]](LICENSE)
 
 [![hacs][hacsbadge]][hacs]
-![Project Maintenance][maintenance-shield1][maintenance-shield2]
+![Project Maintenance][maintenance-shield1] ![Project Maintenance][maintenance-shield2]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 _Unofficial integration for Quatt Heat Pump and Quatt Home Battery._
