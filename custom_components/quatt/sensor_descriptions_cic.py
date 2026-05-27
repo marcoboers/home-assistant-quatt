@@ -31,6 +31,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Heat power",
         key="computedHeatPower",
+        computed_key="computed_heat_power",
         icon="mdi:heat-wave",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -40,6 +41,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="COP",
         key="computedCop",
+        computed_key="computed_cop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
         suggested_display_precision=2,
@@ -48,6 +50,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Total power input",
         key="computedPowerInput",
+        computed_key="computed_power_input",
         icon="mdi:lightning-bolt",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -57,6 +60,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Total power",
         key="computedPower",
+        computed_key="computed_power",
         icon="mdi:heat-wave",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -66,6 +70,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Total system power",
         key="computedSystemPower",
+        computed_key="computed_system_power",
         icon="mdi:heat-wave",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -75,6 +80,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Total water delta",
         key="computedWaterDelta",
+        computed_key="computed_water_delta",
         icon="mdi:thermometer-water",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -84,6 +90,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Total Quatt COP",
         key="computedQuattCop",
+        computed_key="computed_quatt_cop",
         icon="mdi:heat-pump",
         native_unit_of_measurement="CoP",
         suggested_display_precision=2,
@@ -96,6 +103,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="QC supervisory control mode",
         key="qc.computedSupervisoryControlMode",
+        computed_key="qc.computed_supervisory_control_mode",
     ),
     QuattSensorEntityDescription(
         name="QC All-Electric supervisory control mode code",
@@ -107,6 +115,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="QC All-Electric supervisory control mode",
         key="qcAllE.computedAllESupervisoryControlMode",
+        computed_key="qcAllE.computed_all_e_supervisory_control_mode",
         quatt_features=QuattFeatureFlags(
             all_electric=True,
         ),
@@ -122,6 +131,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Electricity tariff type",
         key="system.computedElectricityTariffType",
+        computed_key="system.computed_electricity_tariff_type",
         icon="mdi:swap-horizontal-circle",
     ),
     QuattSensorEntityDescription(
@@ -135,6 +145,7 @@ CIC_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Gas tariff type",
         key="system.computedGasTariffType",
+        computed_key="system.computed_gas_tariff_type",
         icon="mdi:swap-horizontal-circle",
     ),
     QuattSensorEntityDescription(
@@ -469,6 +480,7 @@ BOILER_SENSORS: list[QuattSensorEntityDescription] = [
     QuattSensorEntityDescription(
         name="Heat power",
         key="boiler.computedBoilerHeatPower",
+        computed_key="boiler.computed_boiler_heat_power",
         icon="mdi:heat-wave",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,

@@ -68,6 +68,7 @@ def create_heatpump_sensor_entity_descriptions(
         QuattSensorEntityDescription(
             name="Water delta",
             key=f"{prefix}.computedWaterDelta",
+            computed_key=f"{prefix}.computed_water_delta",
             icon="mdi:thermometer-water",
             native_unit_of_measurement=UnitOfTemperature.CELSIUS,
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -104,6 +105,7 @@ def create_heatpump_sensor_entity_descriptions(
         QuattSensorEntityDescription(
             name="Quatt COP",
             key=f"{prefix}.computedQuattCop",
+            computed_key=f"{prefix}.computed_quatt_cop",
             icon="mdi:heat-pump",
             native_unit_of_measurement="CoP",
             suggested_display_precision=2,

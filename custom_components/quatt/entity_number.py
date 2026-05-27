@@ -25,7 +25,7 @@ class QuattHomeBatterySolarCapacityNumber(QuattNumber):
     @property
     def native_value(self) -> float | None:
         """Read the scalar value directly from the coordinator data."""
-        return self.coordinator.get_value(self.entity_description.key)
+        return self.coordinator.get_value(self.entity_description.raw_value_key)
 
     @property
     def native_min_value(self) -> float:

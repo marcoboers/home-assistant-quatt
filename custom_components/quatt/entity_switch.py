@@ -62,7 +62,7 @@ class QuattEnergyPriceFlagSwitch(QuattSwitch):
         client = self.coordinator.client
         if not isinstance(client, QuattEnergyApiClient):
             return False
-        return bool(getattr(client, self.entity_description.key))
+        return bool(getattr(client, self.entity_description.key, False))
 
     async def async_turn_on(self, **kwargs) -> None:
         """Enable the flag."""
