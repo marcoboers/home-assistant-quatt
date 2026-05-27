@@ -172,6 +172,8 @@ class SupervisoryControlMode(IntEnum):
     HEATING_HEATPUMP_ONLY = 2
     HEATING_HEATPUMP_PLUS_BOILER = 3
     HEATING_BOILER_ONLY = 4
+    STANDBY_COOLING = 5
+    COOLING = 6
     ANTIFREEZE_BOILER_ON = 96
     ANTIFREEZE_BOILER_PREPUMP = 97
     ANTIFREEZE_WATER_CIRCULATION = 98
@@ -186,6 +188,8 @@ class SupervisoryControlMode(IntEnum):
             self.HEATING_HEATPUMP_ONLY: "Heating - heatpump only",
             self.HEATING_HEATPUMP_PLUS_BOILER: "Heating - heatpump + boiler",
             self.HEATING_BOILER_ONLY: "Heating - boiler only",
+            self.STANDBY_COOLING: "Standby - cooling",
+            self.COOLING: "Cooling",
             self.ANTIFREEZE_BOILER_ON: "Anti-freeze protection - boiler on",
             self.ANTIFREEZE_BOILER_PREPUMP: "Anti-freeze protection - boiler pre-pump",
             self.ANTIFREEZE_WATER_CIRCULATION: "Anti-freeze protection - water circulation",

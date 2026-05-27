@@ -109,10 +109,23 @@ class QuattDashboardCard extends LitElement {
             2:  'Heatpump only',
             3:  'Heatpump + boiler',
             4:  'Boiler only',
+            5:  'Standby - cooling',
+            6:  'Cooling',
             96: 'Boiler on',
             97: 'Boiler pre-pump',
             98: 'Water circulation',
             99: 'Fault',
+        };
+        return map[code] ?? 'Unknown';
+    }
+
+    mainWorkingModeDescription(workingMode) {
+        const mode = Number(typeof workingMode === "string" ? workingMode.trim() : workingMode);
+        const code = Number.isFinite(mode) ? Math.trunc(mode) : NaN;
+        const map = {
+            0: 'Standby',
+            1: 'Cooling',
+            2: 'Heating',
         };
         return map[code] ?? 'Unknown';
     }
@@ -276,11 +289,13 @@ class QuattDashboardCard extends LitElement {
 
     getHeatpumpMetricValue(heatpumpID) {
         const workingMode = this.getSensorState(`${heatpumpID}.${heatpumpID}_workingmode`)?.state;
-        if (!(workingMode >= 1))
-            return this.supervisoryControlModeDescription(workingMode);
+        const workingModeCode = Number(typeof workingMode === "string" ? workingMode.trim() : workingMode);
+        if (!(workingModeCode >= 1))
+            return this.mainWorkingModeDescription(workingMode);
 
         const metric = this.getHeatpumpMetric();
         if (metric === 'cop') {
+            if (workingModeCode === 1) return '-';
             return this.getSensorState(`${heatpumpID}.${heatpumpID}_cop`, { number: true, decimals: 2 });
         }
         if (metric === 'power') {
@@ -918,9 +933,13 @@ class QuattDashboardCard extends LitElement {
         const qcMode = this.getSensorState('cic.qc_supervisory_control_mode_code', { number: true, asString: false, decimals: 0, fallback: NaN });
         const centralHeatingOn = this.getSensorState('cic.cic_central_heating_on', { fallback: { state: 'off' } })?.state === 'on';
 
-        const hp1On = hp1Mode >= 1;
-        const hp2On = hp2Mode >= 1;
-        const anyHpOn = hp1On || hp2On;
+        const hp1Cooling = hp1Mode === 1;
+        const hp2Cooling = hp2Mode === 1;
+        const hp1Heating = hp1Mode === 2;
+        const hp2Heating = hp2Mode === 2;
+        const anyCooling = hp1Cooling || hp2Cooling;
+        const anyHeating = hp1Heating || hp2Heating;
+        const anyHpOn = anyCooling || anyHeating;
 
         // Defrosting
         const hp1Defrost = this.getSensorState('hp1.hp1_defrosting', { fallback: { state: 'off' } })?.state === 'on';
@@ -934,8 +953,8 @@ class QuattDashboardCard extends LitElement {
         // Reverse flow when antifreeze or defrosting (house -> heatpump)
         const reverseFlow = antiFreezeMode || anyDefrost;
 
-        // Color: antifreeze cool, otherwise warm (defrost stays warm)
-        const prefix = antiFreezeMode ? "Cool" : "";
+        // Cooling and anti-freeze use cool water colors; heating/defrost stay warm.
+        const prefix = (antiFreezeMode || anyCooling) ? "Cool" : "";
 
         // Direction mapping:
         // normal:  outside ToLeft,  bottom ToRight  (heatpump -> house)
@@ -943,9 +962,9 @@ class QuattDashboardCard extends LitElement {
         const outsideStroke = `url(#waterGradient${prefix}${reverseFlow ? "ToRight" : "ToLeft"})`;
         const bottomStroke  = `url(#waterGradient${prefix}${reverseFlow ? "ToLeft"  : "ToRight"})`;
 
-        // No fog-lines when in anti-freeze mode or defrosting
-        const hp1ShowFog = hp1On && !antiFreezeMode && !hp1Defrost;
-        const hp2ShowFog = hp2On && !antiFreezeMode && !hp2Defrost;
+        // Show neutral ODU airflow whenever the heat pump is active.
+        const hp1ShowFog = (hp1Heating || hp1Cooling) && !antiFreezeMode && !hp1Defrost;
+        const hp2ShowFog = (hp2Heating || hp2Cooling) && !antiFreezeMode && !hp2Defrost;
 
         return svg`
             <!-- Outside & bottom pipes -->
@@ -961,13 +980,13 @@ class QuattDashboardCard extends LitElement {
                     : svg``}
 
                 ${this.isAllElectric() && anyCirculation && !antiFreezeMode
-                    ? svg`<path id="quatt.alle.bottomPipe" d="M 405 1185 L 406 1117" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>`
+                    ? svg`<path id="quatt.alle.bottomPipe" d="M 405 1185 L 406 1117" stroke="url(#waterGradient${prefix}Up)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
 
-                ${this.isAllElectric() && centralHeatingOn && !antiFreezeMode
+                ${this.isAllElectric() && (centralHeatingOn || anyCooling) && !antiFreezeMode
                     ? svg`
-                        <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradientUp)" stroke-width="8" fill="none" stroke-linecap="round"/>
-                        <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradientDown)" stroke-width="8" fill="none" stroke-linecap="round"/>`
+                        <path id="quatt.alle.radiatorPipe1" d="M 434 1121 L 435 1167" stroke="url(#waterGradient${prefix}Up)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                        <path id="quatt.alle.radiatorPipe2" d="M 435 1167 L 495 1139" stroke="url(#waterGradient${prefix}Down)" stroke-width="8" fill="none" stroke-linecap="round"/>`
                     : svg``}
             </g>
 
@@ -1003,8 +1022,8 @@ class QuattDashboardCard extends LitElement {
                     </g>`
                 : svg``}
 
-            <!-- Radiator heat -->
-            ${!antiFreezeMode && ((this.isAllElectric() && centralHeatingOn) || (this.isHybrid() && anyHpOn))
+            <!-- Radiator airflow -->
+            ${!antiFreezeMode && ((this.isAllElectric() && centralHeatingOn && anyHeating) || (this.isHybrid() && anyHeating))
                 ? svg`<g id="quatt.radiatorHeat" transform="${this.isAllElectric() ? 'translate(100,-40)' : ''}">
                         <path class="radiator-heat-line" pathLength="100" transform="translate(0,-12)"
                             style="animation-duration:6.77s; animation-delay:-2.13s"
@@ -1025,6 +1044,32 @@ class QuattDashboardCard extends LitElement {
                             style="animation-duration:6.93s; animation-delay:-6.28s"
                             d="M465 1166.6 C467 1156.6,443 1148.6,455 1138.6 C467 1128.6,443 1120.6,455 1110.6 C467 1100.6,443 1092.6,455 1082.6 C467 1072.6,443 1064.6,455 1054.6 C467 1044.6,443 1036.6,455 1026.6 C467 1016.6,443 1010.6,455 1005.6"/>
                         <path class="radiator-heat-line" pathLength="100" transform="translate(0,-24)"
+                            style="animation-duration:7.37s; animation-delay:-4.46s"
+                            d="M474 1157.4 C486 1147.4,462 1139.4,474 1129.4 C486 1119.4,462 1111.4,474 1101.4 C486 1091.4,462 1083.4,474 1073.4 C486 1035.4,462 1027.4,474 1017.4 C486 1007.4,462 1002.4,474  997.4"/>
+                    </g>`
+                : svg``}
+
+            ${!antiFreezeMode && anyCooling
+                ? svg`<g id="quatt.radiatorCool" transform="${this.isAllElectric() ? 'translate(100,-40)' : ''}">
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-12)"
+                            style="animation-duration:6.77s; animation-delay:-2.13s"
+                            d="M415 1186.1 C427 1176.1,403 1168.1,415 1158.1 C427 1148.1,403 1140.1,415 1130.1 C427 1120.1,403 1112.1,415 1102.1 C427 1092.1,403 1084.1,415 1074.1 C427 1064.1,403 1056.1,415 1046.1 C427 1036.1,403 1030.1,415 1025.1"/>
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-28)"
+                            style="animation-duration:7.09s; animation-delay:-5.04s"
+                            d="M425 1181.3 C437 1171.3,413 1163.3,425 1153.3 C437 1143.3,413 1135.3,425 1125.3 C437 1115.3,413 1107.3,425 1097.3 C437 1087.3,413 1079.3,425 1069.3 C437 1059.3,413 1051.3,425 1041.3 C437 1031.3,413 1025.3,425 1020.3"/>
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-40)"
+                            style="animation-duration:6.61s; animation-delay:-0.41s"
+                            d="M435 1176.4 C447 1166.4,423 1158.4,435 1148.4 C447 1138.4,423 1130.4,435 1120.4 C447 1110.4,423 1102.4,435 1092.4 C447 1082.4,423 1074.4,435 1064.4 C447 1054.4,423 1046.4,435 1036.4 C447 1026.4,423 1020.4,435 1015.4"/>
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-16)"
+                            style="animation-duration:7.21s; animation-delay:-3.57s"
+                            d="M445 1171.5 C457 1161.5,433 1153.5,445 1143.5 C457 1133.5,433 1125.5,445 1115.5 C457 1105.5,433 1097.5,445 1087.5 C457 1077.5,433 1069.5,445 1059.5 C457 1049.5,433 1041.5,445 1031.5 C457 1021.5,433 1015.5,445 1010.5"/>
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-32)"
+                            style="animation-duration:6.47s; animation-delay:-1.89s"
+                            d="M455 1161.8 C477 1151.8,453 1143.8,465 1133.8 C477 1123.8,453 1115.8,465 1105.8 C477 1095.8,453 1087.8,465 1077.8 C477 1067.8,453 1059.8,465 1049.8 C477 1039.8,453 1031.8,465 1021.8 C477 1011.8,453 1005.8,465 1000.8"/>
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-10)"
+                            style="animation-duration:6.93s; animation-delay:-6.28s"
+                            d="M465 1166.6 C467 1156.6,443 1148.6,455 1138.6 C467 1128.6,443 1120.6,455 1110.6 C467 1100.6,443 1092.6,455 1082.6 C467 1072.6,443 1064.6,455 1054.6 C467 1044.6,443 1036.6,455 1026.6 C467 1016.6,443 1010.6,455 1005.6"/>
+                        <path class="radiator-cool-line" pathLength="100" transform="translate(0,-24)"
                             style="animation-duration:7.37s; animation-delay:-4.46s"
                             d="M474 1157.4 C486 1147.4,462 1139.4,474 1129.4 C486 1119.4,462 1111.4,474 1101.4 C486 1091.4,462 1083.4,474 1073.4 C486 1035.4,462 1027.4,474 1017.4 C486 1007.4,462 1002.4,474  997.4"/>
                     </g>`
@@ -1539,7 +1584,7 @@ class QuattDashboardCard extends LitElement {
             <g id="tooltipHp1Metric" transform="translate(120, -108)">
                 <rect x="560" y="1500" width="385" height="270" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                 <text x="575" y="1535" font-size="1.0em" fill="#999999">Working mode</text>
-                <text x="930" y="1535" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.supervisoryControlModeDescription(this.getSensorState('hp1.hp1_workingmode')?.state)}</text>
+                <text x="930" y="1535" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.mainWorkingModeDescription(this.getSensorState('hp1.hp1_workingmode')?.state)}</text>
                 <text x="575" y="1570" font-size="1.0em" fill="#999999">Temperature water in</text>
                 <text x="930" y="1570" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_temperaturewaterin', { number: true, decimals: 1 })} °C</text>
                 <text x="575" y="1605" font-size="1.0em" fill="#999999">Temperature water out</text>
@@ -1547,7 +1592,7 @@ class QuattDashboardCard extends LitElement {
                 <text x="575" y="1640" font-size="1.0em" fill="#999999">ΔT</text>
                 <text x="930" y="1640" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_waterdelta', { number: true, decimals: 1 })} °C</text>
                 <text x="575" y="1675" font-size="1.0em" fill="#999999">COP</text>
-                <text x="930" y="1675" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_cop')?.state}</text>
+                <text x="930" y="1675" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp1.hp1_workingmode', { number: true, asString: false, decimals: 0, fallback: NaN }) === 2 ? this.getSensorState('hp1.hp1_cop')?.state : '-'}</text>
                 <text x="575" y="1710" font-size="1.0em" fill="#999999">Power</text>
                 <text x="930" y="1710" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end"> ${this.getSensorState('hp1.hp1_power', { number: true, decimals: 0 })} W</text>
                 <text x="575" y="1745" font-size="1.0em" fill="#999999">Power input</text>
@@ -1558,7 +1603,7 @@ class QuattDashboardCard extends LitElement {
                 ? svg`<g id="tooltipHp2Metric" transform="translate(120, -108)">
                         <rect x="420" y="1435" width="385" height="270" fill="#2d2d2d" opacity="0.95" rx="8" stroke="#4a4a4a" stroke-width="2"/>
                         <text x="435" y="1470" font-size="1.0em" fill="#999999">Working mode</text>
-                        <text x="790" y="1470" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.supervisoryControlModeDescription(this.getSensorState('hp2.hp2_workingmode')?.state)}</text>
+                        <text x="790" y="1470" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.mainWorkingModeDescription(this.getSensorState('hp2.hp2_workingmode')?.state)}</text>
                         <text x="435" y="1505" font-size="1.0em" fill="#999999">Temperature water in</text>
                         <text x="790" y="1505" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_temperaturewaterin', { number: true, decimals: 1 })} °C</text>
                         <text x="435" y="1540" font-size="1.0em" fill="#999999">Temperature water out</text>
@@ -1566,7 +1611,7 @@ class QuattDashboardCard extends LitElement {
                         <text x="435" y="1575" font-size="1.0em" fill="#999999">ΔT</text>
                         <text x="790" y="1575" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_waterdelta', { number: true, decimals: 1 })} °C</text>
                         <text x="435" y="1610" font-size="1.0em" fill="#999999">COP</text>
-                        <text x="790" y="1610" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_cop')?.state}</text>
+                        <text x="790" y="1610" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_workingmode', { number: true, asString: false, decimals: 0, fallback: NaN }) === 2 ? this.getSensorState('hp2.hp2_cop')?.state : '-'}</text>
                         <text x="435" y="1645" font-size="1.0em" fill="#999999">Power</text>
                         <text x="790" y="1645" font-size="1.0em" font-weight="bold" fill="#ffffff" text-anchor="end">${this.getSensorState('hp2.hp2_power', { number: true, decimals: 0 })} W</text>
                         <text x="435" y="1680" font-size="1.0em" fill="#999999">Power input</text>
@@ -1790,17 +1835,25 @@ class QuattDashboardCard extends LitElement {
                 100% { stroke-dasharray: 45 200; stroke-dashoffset: -64; opacity: 0.06; }
             }
 
-            .radiator-heat-line {
+            .radiator-heat-line,
+            .radiator-cool-line {
                 animation-name: heatRise;
                 animation-timing-function: linear;
                 animation-iteration-count: infinite;
                 filter: blur(2px);
-                stroke: #ff8a00;
                 stroke-width: 2;
                 fill: none;
                 stroke-linecap: round;
                 stroke-dasharray: 0 200;
                 stroke-dashoffset: 0;
+            }
+
+            .radiator-heat-line {
+                stroke: #ff8a00;
+            }
+
+            .radiator-cool-line {
+                stroke: #64B5F6;
             }
 
             /* Default */
