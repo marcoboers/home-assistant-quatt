@@ -129,5 +129,18 @@
             "energy_no_ean": "Inloggen is gelukt, maar er is geen energiemeter (EAN) teruggegeven.",
             "unknown": "Er is een onverwachte fout opgetreden. Probeer het opnieuw."
         }
+    },
+    "issues": {
+        "remote_auth_failed": {
+            "title": "Opnieuw koppelen met je Quatt CIC is vereist",
+            "fix_flow": {
+                "step": {
+                    "confirm": {
+                        "title": "Opnieuw koppelen met het Quatt-apparaat",
+                        "description": "Home Assistant kon niet meer inloggen bij de Quatt mobile API, waardoor externe gegevens (zoals Chill, insights en status) niet beschikbaar zijn. Opnieuw koppelen met je CIC lost dit op.\n\n![Locatie van de koppelknop](/quatt_static/pair.png)\n\nZorg dat je bij je CIC in de buurt bent en druk daarna op 'Verzenden'. Druk vervolgens binnen 60 seconden op de knop van je CIC om het koppelen te voltooien."
+                    }
+                }
+            }
+        }
     }
 }

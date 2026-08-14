@@ -25,6 +25,7 @@ from homeassistant.helpers.aiohttp_client import (
 )
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
+import homeassistant.helpers.issue_registry as ir
 from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 
@@ -591,6 +592,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             # Authenticate (will use existing tokens if available, or do full auth)
             if await remote_client.authenticate():
+                ir.async_delete_issue(
+                    hass, DOMAIN, f"remote_auth_failed_{entry.entry_id}"
+                )
+
                 # Create remote coordinator only if authentication succeeded
                 remote_coordinator = QuattCicRemoteDataUpdateCoordinator(
                     hass=hass,
@@ -606,6 +611,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 coordinators["cic_remote"] = remote_coordinator
             else:
                 LOGGER.error("Failed to authenticate with Quatt remote API")
+                ir.async_create_issue(
+                    hass,
+                    DOMAIN,
+                    f"remote_auth_failed_{entry.entry_id}",
+                    is_fixable=True,
+                    severity=ir.IssueSeverity.ERROR,
+                    translation_key="remote_auth_failed",
+                    translation_placeholders={"name": entry.title},
+                    data={"entry_id": entry.entry_id},
+                )
 
     # Store coordinators
     hass.data[DOMAIN][entry.entry_id] = coordinators

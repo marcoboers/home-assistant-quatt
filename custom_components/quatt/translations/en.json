@@ -135,5 +135,18 @@
             "energy_no_ean": "Login succeeded but no energy meter (EAN) was returned.",
             "unknown": "An unexpected error occurred. Please try again."
         }
+    },
+    "issues": {
+        "remote_auth_failed": {
+            "title": "Re-pairing with your Quatt CIC is required",
+            "fix_flow": {
+                "step": {
+                    "confirm": {
+                        "title": "Re-pair with the Quatt device",
+                        "description": "Home Assistant could no longer sign in to the Quatt mobile API, so remote data (such as Chill, insights and status) is unavailable. Re-pairing with your CIC fixes this.\n\n![Pairing button location](/quatt_static/pair.png)\n\nMake sure you are near your CIC, then press 'Submit'. Within 60 seconds, press the button on your CIC device to complete pairing."
+                    }
+                }
+            }
+        }
     }
 }
