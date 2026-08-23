@@ -6,9 +6,39 @@ import voluptuous as vol
 
 from homeassistant import data_entry_flow
 from homeassistant.components.repairs import ConfirmRepairFlow, RepairsFlow
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+import homeassistant.helpers.issue_registry as ir
+
+from .const import DOMAIN
 
 ISSUE_REMOTE_AUTH_FAILED_PREFIX = "remote_auth_failed"
+
+
+def remote_auth_issue_id(entry_id: str) -> str:
+    """Return the issue id for a failed remote authentication."""
+    return f"{ISSUE_REMOTE_AUTH_FAILED_PREFIX}_{entry_id}"
+
+
+@callback
+def async_create_remote_auth_issue(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Create a repair issue for a failed remote API authentication."""
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        remote_auth_issue_id(entry.entry_id),
+        is_fixable=True,
+        severity=ir.IssueSeverity.ERROR,
+        translation_key="remote_auth_failed",
+        translation_placeholders={"name": entry.title},
+        data={"entry_id": entry.entry_id},
+    )
+
+
+@callback
+def async_delete_remote_auth_issue(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove the repair issue for a failed remote API authentication."""
+    ir.async_delete_issue(hass, DOMAIN, remote_auth_issue_id(entry.entry_id))
 
 
 class RemoteAuthFailedRepairFlow(RepairsFlow):
