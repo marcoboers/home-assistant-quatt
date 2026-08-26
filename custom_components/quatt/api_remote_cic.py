@@ -235,6 +235,44 @@ class QuattCicRemoteApiClient(QuattApiClient):
                     return chills
         return None
 
+    async def get_all_electric_boost(
+        self, retry_on_403: bool = True
+    ) -> dict[str, Any] | None:
+        """Fetch the all-electric heat battery boost status."""
+        if not self._auth.is_authenticated:
+            return None
+        status, data = await self._auth.request(
+            "GET",
+            f"/me/cic/{self.cic}/allElectricBoost",
+            retry_on_auth_error=retry_on_403,
+        )
+        if status == 200 and isinstance(data, dict):
+            result = data.get("result")
+            if isinstance(result, dict):
+                return result
+        return None
+
+    async def set_all_electric_boost(self, start: bool) -> bool:
+        """Start or cancel the all-electric heat battery boost."""
+        if not self._auth.is_authenticated:
+            _LOGGER.error("Cannot update all-electric boost: not authenticated")
+            return False
+
+        action = "START" if start else "CANCEL"
+        status, _data = await self._auth.request(
+            "POST",
+            f"/me/cic/{self.cic}/allElectricBoost/actions",
+            json_body={"type": action},
+            expected_statuses=(200, 201, 202, 204),
+        )
+        if status in (200, 201, 202, 204):
+            _LOGGER.debug("All-electric boost action %s accepted", action)
+            return True
+        _LOGGER.error(
+            "All-electric boost action %s failed with status %s", action, status
+        )
+        return False
+
     async def async_get_data(self, retry_on_client_error: bool = False) -> Any:
         """Get data for the coordinator (CIC feed + insights)."""
         cic_data = await self.get_cic_data()
@@ -242,6 +280,12 @@ class QuattCicRemoteApiClient(QuattApiClient):
             return None
 
         result = cic_data.get("result", {})
+
+        # Boost status only exists for all-electric installations
+        if result.get("allEStatus"):
+            boost = await self.get_all_electric_boost()
+            if boost is not None:
+                result["allElectricBoost"] = boost
 
         installation_id = self._installation_id or result.get("installationId")
 
@@ -338,6 +382,39 @@ class QuattCicRemoteApiClient(QuattApiClient):
             _LOGGER.debug("CIC settings updated successfully: %s", settings)
             return True
         _LOGGER.error("CIC settings update failed with status %s", status)
+        return False
+
+    async def update_night_window(
+        self,
+        start_hour: int | None,
+        start_minute: int | None,
+        end_hour: int | None,
+        end_minute: int | None,
+    ) -> bool:
+        """Update the CIC night window (30-minute resolution).
+
+        Passing ``None`` for all values resets the window to the Quatt defaults.
+        """
+        if not self._auth.is_authenticated:
+            _LOGGER.error("Cannot update night window: not authenticated")
+            return False
+
+        payload = {
+            "nightTimeStartHour": start_hour,
+            "nightTimeStartMinute": start_minute,
+            "nightTimeEndHour": end_hour,
+            "nightTimeEndMinute": end_minute,
+        }
+        status, _data = await self._auth.request(
+            "PUT",
+            f"/me/cic/{self.cic}/nightWindow",
+            json_body=payload,
+            expected_statuses=(200, 201, 204),
+        )
+        if status in (200, 201, 204):
+            _LOGGER.debug("Night window updated successfully: %s", payload)
+            return True
+        _LOGGER.error("Night window update failed with status %s", status)
         return False
 
     async def update_chill_action(self, chill_uuid: str, data: dict[str, Any]) -> bool:

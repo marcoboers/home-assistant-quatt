@@ -279,6 +279,15 @@ REMOTE_MAX_SCAN_INTERVAL: Final = 10
 REMOTE_CONF_SCAN_INTERVAL: Final = "remote_scan_interval"
 INSIGHTS_REMOTE_SCAN_INTERVAL: Final = 60
 
+# All-electric heat battery boost.
+# While a boost is starting/running the remote coordinator polls every
+# BOOST_FAST_SCAN_INTERVAL seconds, and keeps doing so until
+# BOOST_FAST_SCAN_TAIL minutes after the boost ended (completed or canceled),
+# after which it returns to the configured scan interval.
+BOOST_ACTIVE_STATUSES: Final = frozenset({"AWAITING_CIC_STATE", "STARTING", "ACTIVE"})
+BOOST_FAST_SCAN_INTERVAL: Final = 5  # seconds
+BOOST_FAST_SCAN_TAIL: Final = 3  # minutes
+
 
 # Temperature-dependent conversion factors for water in a central heating system at 2 bar pressure.
 # The table below provides specific heat capacity (c_p), density (rho), and conversion factors (k)

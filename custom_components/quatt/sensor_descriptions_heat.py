@@ -324,6 +324,36 @@ HEAT_BATTERY_SENSORS: list[QuattSensorEntityDescription] = [
             mobile_api=True,
         ),
     ),
+    QuattSensorEntityDescription(
+        name="Boost status",
+        key="allElectricBoost.status",
+        icon="mdi:rocket-launch",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        quatt_features=QuattFeatureFlags(
+            all_electric=True,
+            mobile_api=True,
+        ),
+    ),
+    QuattSensorEntityDescription(
+        name="Boost end time",
+        key="allElectricBoost.endTime",
+        icon="mdi:clock-end",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        quatt_features=QuattFeatureFlags(
+            all_electric=True,
+            mobile_api=True,
+        ),
+    ),
+    QuattSensorEntityDescription(
+        name="Boost exit reason",
+        key="allElectricBoost.exitReason",
+        icon="mdi:rocket-launch-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        quatt_features=QuattFeatureFlags(
+            all_electric=True,
+            mobile_api=True,
+        ),
+    ),
 ]
 
 

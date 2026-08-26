@@ -1,0 +1,73 @@
+{
+  "boiler": null,
+  "chill": null,
+  "externalMeters": null,
+  "flowMeter": {
+    "waterSupplyTemperature": 24.69
+  },
+  "hb": {
+    "bottomTemperature": 57.13,
+    "middleTemperature": 57.64,
+    "showerMinutes": 32,
+    "topTemperature": 56.36
+  },
+  "hc": {
+    "chHeatExchangerInletTemperature": 26.6,
+    "distributionSystemSupplyTemperature": 27,
+    "electricalPower": 0,
+    "heatingSystemPressure": 1.2
+  },
+  "hp1": {
+    "getMainWorkingMode": 0,
+    "limitedByCop": false,
+    "modbusSlaveId": 1,
+    "power": 0,
+    "powerInput": 5.15,
+    "silentModeStatus": false,
+    "temperatureOutside": 19.52,
+    "temperatureWaterIn": 18.39,
+    "temperatureWaterOut": 21.41
+  },
+  "hp2": {
+    "getMainWorkingMode": 0,
+    "limitedByCop": false,
+    "modbusSlaveId": 2,
+    "power": 0,
+    "powerInput": 5.15,
+    "silentModeStatus": false,
+    "temperatureOutside": 19.62,
+    "temperatureWaterIn": 18.09,
+    "temperatureWaterOut": 21.52
+  },
+  "qc": {
+    "electricityPriceUsed": 0.3,
+    "flowRateFiltered": 0,
+    "gasPriceUsed": 1.55,
+    "stickyPumpProtectionEnabled": false,
+    "supervisoryControlMode": 0
+  },
+  "qcAllE": {
+    "allESupervisoryControlMode": 0,
+    "isAntilegionellaActive": false
+  },
+  "qcChill": null,
+  "system": {
+    "chMaxWaterTemperature": 40,
+    "electricityTariffType": 2,
+    "gasTariffType": 2,
+    "hostName": "CIC-12345678-1234-5678-1234-567812345678"
+  },
+  "thermostat": {
+    "otFtChEnabled": false,
+    "otFtControlSetpoint": 0,
+    "otFtCoolingEnabled": false,
+    "otFtDhwEnabled": false,
+    "otFtRoomSetpoint": 5,
+    "otFtRoomTemperature": 21.76
+  },
+  "thread": null,
+  "time": {
+    "ts": 1787315230408,
+    "tsHuman": "2026-08-21T12:27:10Z"
+  }
+}

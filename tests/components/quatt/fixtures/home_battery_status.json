@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "status": 200,
+    "took": 0.030091595
+  },
+  "result": {
+    "uuid": "DEV-12345678-1234-5678-1234-567812345678",
+    "name": "HOME_BATTERY",
+    "serial": "QOD000000000000",
+    "capacityKWh": 23.04,
+    "inverterPowerKw": 10,
+    "controlMode": "PROFIT_OPTIMIZATION",
+    "connected": true,
+    "live": {
+      "controlAction": "CHARGING_CHEAP_ENERGY",
+      "chargeStatePercent": 57,
+      "powerKw": 7.4312,
+      "powerFlowDirection": "CHARGING"
+    },
+    "lastMeasurementAt": "2026-08-21T11:45:00.000Z"
+  }
+}

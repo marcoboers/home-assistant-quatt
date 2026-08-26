@@ -27,7 +27,11 @@ from .entity import (
     QuattSwitchEntityDescription,
 )
 from .entity_setup import async_setup_entities
-from .entity_switch import QuattEnergyPriceFlagSwitch, QuattSettingSwitch
+from .entity_switch import (
+    QuattAllElectricBoostSwitch,
+    QuattEnergyPriceFlagSwitch,
+    QuattSettingSwitch,
+)
 
 ENERGY_SWITCHES: list[QuattSwitchEntityDescription] = [
     QuattSwitchEntityDescription(
@@ -72,7 +76,19 @@ SWITCHES = {
             quatt_entity_class=QuattSettingSwitch,
         ),
     ],
-    DEVICE_HEAT_BATTERY_ID: [],
+    DEVICE_HEAT_BATTERY_ID: [
+        QuattSwitchEntityDescription(
+            key="allElectricBoost",
+            data_key="allElectricBoost.status",
+            name="Boost",
+            icon="mdi:rocket-launch",
+            quatt_features=QuattFeatureFlags(
+                all_electric=True,
+                mobile_api=True,
+            ),
+            quatt_entity_class=QuattAllElectricBoostSwitch,
+        ),
+    ],
     DEVICE_HEAT_CHARGER_ID: [],
     DEVICE_HEATPUMP_1_ID: [],
     DEVICE_HEATPUMP_2_ID: [],

@@ -183,7 +183,7 @@ Only sensors that are not already provided by the local API are added — no dup
 - **Thermostat data**: Outside temperature (via remote API)
 - **Boiler data** (Hybrid only): Additional boiler power and temperature sensors
 
-In addition, the remote API exposes **programmable day and night maximum sound levels** (normal, library, silent) as controls.
+In addition, the remote API exposes **programmable day and night maximum sound levels** (normal, library, silent) as controls, and the **night time window** (start and end time, in 30-minute steps) as time entities, including a button to reset the window to the Quatt defaults.
 
 ### Enabling
 

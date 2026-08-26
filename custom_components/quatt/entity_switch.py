@@ -6,6 +6,7 @@ import logging
 
 from .api_remote_cic import QuattCicRemoteApiClient
 from .api_remote_energy import QuattEnergyApiClient
+from .const import BOOST_ACTIVE_STATUSES
 from .entity import QuattSwitch
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +44,34 @@ class QuattSettingSwitch(QuattSwitch):
 
         _LOGGER.debug("Updating CIC setting: %s", settings)
         return await remote_client.update_cic_settings(settings)
+
+
+class QuattAllElectricBoostSwitch(QuattSwitch):
+    """Switch entity for the all-electric heat battery boost.
+
+    Turning the switch on starts a boost via the remote API, turning it off
+    cancels the running boost. The state is derived from the boost status
+    polled by the remote coordinator; right after a START the API goes through
+    startup statuses (AWAITING_CIC_STATE, STARTING) before reaching ACTIVE, so
+    all of those count as "on" and can be canceled.
+    """
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if a boost is starting or active."""
+        status = self.coordinator.get_value(self.entity_description.raw_value_key)
+        return isinstance(status, str) and status.upper() in BOOST_ACTIVE_STATUSES
+
+    async def _perform_api_update(self, state: bool) -> bool:
+        """Start (True) or cancel (False) the boost."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
+            _LOGGER.error(
+                "Cannot update %s: remote client required", self.entity_description.key
+            )
+            return False
+
+        return await remote_client.set_all_electric_boost(state)
 
 
 class QuattEnergyPriceFlagSwitch(QuattSwitch):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
 import logging
@@ -14,6 +14,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.components.climate import (
     ClimateEntity,
     ClimateEntityDescription,
@@ -27,6 +28,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -361,6 +363,144 @@ class QuattSelect(QuattEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
 
+class QuattTime(QuattEntity, TimeEntity):
+    """Quatt Time class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattTimeEntityDescription,
+        device_kind: QuattDeviceKind,
+    ) -> None:
+        """Initialize the time class."""
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the time entity should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    def set_value(self, value: time) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_set_value instead")
+
+    @abstractmethod
+    async def _perform_api_update(self, value: time) -> bool:
+        """Perform the API call to update this setting.
+
+        Must return True if the update succeeded, False otherwise.
+        """
+        raise NotImplementedError
+
+    async def async_set_value(self, value: time) -> None:
+        """Change the time value."""
+        # Only remote coordinator supports updating settings
+        if not isinstance(self.coordinator, QuattCicRemoteDataUpdateCoordinator):
+            _LOGGER.error(
+                "Cannot update %s: only available via remote API",
+                self.entity_description.key,
+            )
+            raise NotImplementedError(
+                f"Setting {self.entity_description.key} is only available via remote API"
+            )
+
+        success = False
+        try:
+            success = await self._perform_api_update(value)
+        except Exception as err:
+            _LOGGER.exception("Error updating %s", self.entity_description.key)
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            ) from err
+
+        if not success:
+            _LOGGER.warning("Failed to update %s", self.entity_description.key)
+            raise RuntimeError(f"Failed to update {self.entity_description.key}")
+
+        # Always refresh coordinator data after a successful update
+        await self.coordinator.async_request_refresh()
+
+
+class QuattButton(QuattEntity, ButtonEntity):
+    """Quatt Button class."""
+
+    def __init__(
+        self,
+        device_name: str,
+        device_id: str,
+        sensor_key: str,
+        coordinator: QuattDataUpdateCoordinator,
+        entity_description: QuattButtonEntityDescription,
+        device_kind: QuattDeviceKind,
+    ) -> None:
+        """Initialize the button class."""
+        super().__init__(
+            device_name,
+            device_id,
+            sensor_key,
+            coordinator,
+            device_kind,
+            entity_description.quatt_unique_id_key,
+        )
+        self.entity_description = entity_description
+
+    @property
+    def entity_registry_enabled_default(self):
+        """Return whether the button should be enabled by default."""
+        return self.entity_description.entity_registry_enabled_default
+
+    def press(self) -> None:
+        """Implement required base class method but do not use it (async handled separately)."""
+        raise NotImplementedError("Use async_press instead")
+
+    @abstractmethod
+    async def _perform_api_update(self) -> bool:
+        """Perform the API call for this button press.
+
+        Must return True if the update succeeded, False otherwise.
+        """
+        raise NotImplementedError
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        # Only remote coordinator supports updating settings
+        if not isinstance(self.coordinator, QuattCicRemoteDataUpdateCoordinator):
+            _LOGGER.error(
+                "Cannot update %s: only available via remote API",
+                self.entity_description.key,
+            )
+            raise NotImplementedError(
+                f"Setting {self.entity_description.key} is only available via remote API"
+            )
+
+        success = False
+        try:
+            success = await self._perform_api_update()
+        except Exception as err:
+            _LOGGER.exception("Error updating %s", self.entity_description.key)
+            raise RuntimeError(
+                f"Failed to update {self.entity_description.key}"
+            ) from err
+
+        if not success:
+            _LOGGER.warning("Failed to update %s", self.entity_description.key)
+            raise RuntimeError(f"Failed to update {self.entity_description.key}")
+
+        # Always refresh coordinator data after a successful update
+        await self.coordinator.async_request_refresh()
+
+
 class QuattSwitch(QuattEntity, SwitchEntity):
     """Quatt Switch class."""
 
@@ -608,6 +748,30 @@ class QuattSelectEntityDescription(
     computed_key: str | None = None
     quatt_features: QuattFeatureFlags = QuattFeatureFlags()
     quatt_entity_class: type[QuattEntity] = QuattSelect
+    quatt_unique_id_key: str | None = None
+
+
+class QuattTimeEntityDescription(
+    QuattEntityDescriptionMixin, TimeEntityDescription, frozen_or_thawed=True
+):
+    """A class that describes Quatt time entities."""
+
+    data_key: str | None = None
+    computed_key: str | None = None
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: type[QuattEntity] = QuattTime
+    quatt_unique_id_key: str | None = None
+
+
+class QuattButtonEntityDescription(
+    QuattEntityDescriptionMixin, ButtonEntityDescription, frozen_or_thawed=True
+):
+    """A class that describes Quatt button entities."""
+
+    data_key: str | None = None
+    computed_key: str | None = None
+    quatt_features: QuattFeatureFlags = QuattFeatureFlags()
+    quatt_entity_class: type[QuattEntity] = QuattButton
     quatt_unique_id_key: str | None = None
 
 
