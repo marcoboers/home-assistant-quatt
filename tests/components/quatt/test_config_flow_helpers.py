@@ -44,16 +44,16 @@ def test_parse_battery_qr_url_strips_whitespace() -> None:
 @pytest.mark.parametrize(
     "url",
     [
-        "https://quatt.io/battery/a/b/c/d",  # wrong host
-        "https://app.quatt.example/battery/a/b/c/d",  # spoofed host
-        "https://app.quatt.io/other/a/b/c/d",  # wrong path prefix
-        "https://app.quatt.io/battery/uuid/serial",  # too few segments
-        "https://app.quatt.io/battery",  # no segments at all
-        "not a url",  # garbage
-        "",  # empty
+        pytest.param("https://quatt.io/battery/a/b/c/d", id="wrong-host"),
+        pytest.param("https://app.quatt.example/battery/a/b/c/d", id="spoofed-host"),
+        pytest.param("https://app.quatt.io/other/a/b/c/d", id="wrong-path-prefix"),
+        pytest.param("https://app.quatt.io/battery/uuid/serial", id="too-few-segments"),
+        pytest.param("https://app.quatt.io/battery", id="missing-segments"),
+        pytest.param("not a url", id="invalid-url"),
+        pytest.param("", id="empty-url"),
     ],
 )
-def test_parse_battery_qr_url_invalid(url) -> None:
+def test_parse_battery_qr_url_invalid(url: str) -> None:
     """Anything that is not a valid battery QR URL yields None."""
     assert _parse_battery_qr_url(url) is None
 
@@ -71,17 +71,17 @@ def test_parse_battery_qr_url_non_string() -> None:
 @pytest.mark.parametrize(
     ("ip", "expected"),
     [
-        ("192.168.1.10", True),
-        ("10.0.0.1", True),
-        ("::1", True),
-        ("2001:db8::1", True),
-        ("999.1.1.1", False),
-        ("192.168.1", False),
-        ("cic-hostname", False),
-        ("", False),
+        pytest.param("192.168.1.10", True, id="private-ipv4-192"),
+        pytest.param("10.0.0.1", True, id="private-ipv4-10"),
+        pytest.param("::1", True, id="ipv6-loopback"),
+        pytest.param("2001:db8::1", True, id="ipv6-documentation"),
+        pytest.param("999.1.1.1", False, id="invalid-ipv4-octet"),
+        pytest.param("192.168.1", False, id="incomplete-ipv4"),
+        pytest.param("cic-hostname", False, id="hostname"),
+        pytest.param("", False, id="empty"),
     ],
 )
-def test_is_valid_ip(ip, expected) -> None:
+def test_is_valid_ip(ip: str, expected: bool) -> None:
     """IPv4 and IPv6 addresses validate; everything else does not."""
     flow = QuattFlowHandler()
     assert flow.is_valid_ip(ip) is expected

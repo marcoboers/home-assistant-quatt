@@ -214,7 +214,13 @@ def frozen_now_fixture(monkeypatch: MonkeyPatch) -> datetime:
 
 
 @pytest.mark.parametrize(
-    "status", ["AWAITING_CIC_STATE", "STARTING", "ACTIVE", "active"]
+    "status",
+    [
+        pytest.param("AWAITING_CIC_STATE", id="awaiting-cic-state"),
+        pytest.param("STARTING", id="starting"),
+        pytest.param("ACTIVE", id="active"),
+        pytest.param("active", id="active-lowercase"),
+    ],
 )
 def test_active_boost_switches_to_fast_polling(
     frozen_now: datetime, status: str
@@ -235,12 +241,12 @@ def test_active_boost_switches_to_fast_polling(
 @pytest.mark.parametrize(
     "data",
     [
-        None,
-        {},
-        {"allElectricBoost": None},
-        {"allElectricBoost": {}},
-        {"allElectricBoost": {"status": "FINISHED"}},
-        {"allElectricBoost": {"status": 5}},
+        pytest.param(None, id="no-data"),
+        pytest.param({}, id="missing-boost"),
+        pytest.param({"allElectricBoost": None}, id="null-boost"),
+        pytest.param({"allElectricBoost": {}}, id="empty-boost"),
+        pytest.param({"allElectricBoost": {"status": "FINISHED"}}, id="finished"),
+        pytest.param({"allElectricBoost": {"status": 5}}, id="invalid-status"),
     ],
 )
 def test_no_boost_keeps_configured_interval(frozen_now: datetime, data: Any) -> None:
@@ -375,14 +381,14 @@ def _make_switch(coordinator: FakeRemoteCoordinator) -> QuattAllElectricBoostSwi
 @pytest.mark.parametrize(
     ("status", "expected"),
     [
-        ("AWAITING_CIC_STATE", True),
-        ("STARTING", True),
-        ("ACTIVE", True),
-        ("active", True),
-        ("FINISHED", False),
-        ("USER_CANCELED", False),
-        (None, False),
-        (5, False),
+        pytest.param("AWAITING_CIC_STATE", True, id="awaiting-cic-state"),
+        pytest.param("STARTING", True, id="starting"),
+        pytest.param("ACTIVE", True, id="active"),
+        pytest.param("active", True, id="active-lowercase"),
+        pytest.param("FINISHED", False, id="finished"),
+        pytest.param("USER_CANCELED", False, id="user-canceled"),
+        pytest.param(None, False, id="missing-status"),
+        pytest.param(5, False, id="invalid-status"),
     ],
 )
 @pytest.mark.asyncio
@@ -400,7 +406,10 @@ async def test_boost_switch_is_on_follows_status(
 
 @pytest.mark.parametrize(
     ("turn_on", "expected_action"),
-    [(True, True), (False, False)],
+    [
+        pytest.param(True, True, id="turn-on"),
+        pytest.param(False, False, id="turn-off"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_boost_switch_sends_boost_action(

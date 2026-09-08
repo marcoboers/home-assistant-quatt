@@ -73,8 +73,19 @@ def test_summarize_today_insights_no_optional_fields() -> None:
     assert "latestTimestamp" not in summary
 
 
-@pytest.mark.parametrize("raw", [None, {}, [], "text", 42])
-def test_summarize_today_insights_invalid_input(raw) -> None:
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param(None, id="none"),
+        pytest.param({}, id="empty-dict"),
+        pytest.param([], id="empty-list"),
+        pytest.param("text", id="string"),
+        pytest.param(42, id="number"),
+    ],
+)
+def test_summarize_today_insights_invalid_input(
+    raw: dict[str, object] | list[object] | str | int | None,
+) -> None:
     """Anything but a non-empty list yields None."""
     assert _summarize_today_insights(raw) is None
 
@@ -113,8 +124,16 @@ def test_add_euro_fields() -> None:
     assert "unrelatedEur" not in section
 
 
-@pytest.mark.parametrize("section", [None, "text", 42, ["totalSavedCents"]])
-def test_add_euro_fields_non_dict_noop(section) -> None:
+@pytest.mark.parametrize(
+    "section",
+    [
+        pytest.param(None, id="none"),
+        pytest.param("text", id="string"),
+        pytest.param(42, id="number"),
+        pytest.param(["totalSavedCents"], id="list"),
+    ],
+)
+def test_add_euro_fields_non_dict_noop(section: str | int | list[str] | None) -> None:
     """Non-dict sections are left untouched without raising."""
     _add_euro_fields(section)
 
@@ -141,12 +160,8 @@ def _make_client(
         return value
 
     monkeypatch.setattr(client, "get_status", lambda: _return(status))
-    monkeypatch.setattr(
-        client, "get_savings_overview", lambda: _return(savings)
-    )
-    monkeypatch.setattr(
-        client, "_get_today_insights_cached", lambda: _return(insights)
-    )
+    monkeypatch.setattr(client, "get_savings_overview", lambda: _return(savings))
+    monkeypatch.setattr(client, "_get_today_insights_cached", lambda: _return(insights))
     monkeypatch.setattr(client, "get_installation", lambda: _return(installation))
     monkeypatch.setattr(
         client, "_get_today_energy_flow_cached", lambda: _return(energy_flow)

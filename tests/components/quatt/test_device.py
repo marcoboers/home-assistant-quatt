@@ -3,10 +3,10 @@
 from collections.abc import Iterator
 from contextlib import ExitStack
 from dataclasses import dataclass
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
-from pytest import LogCaptureFixture, MonkeyPatch
+from pytest import FixtureRequest, LogCaptureFixture, MonkeyPatch
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -228,3 +228,70 @@ async def test_hub_registered_before_platforms_and_reused_on_reload(
     assert registry.async_get(hub_id).name_by_user == "My Quatt"
     assert registry.async_get(hub_id).via_device_id is None
     assert "deprecated `via_device`" not in caplog.text
+
+
+@pytest.fixture(
+    name="expected_modern_lookup_calls",
+    params=[
+        pytest.param((2025, 5, 0), id="minimum"),
+        pytest.param((2026, 7, 0), id="last-legacy"),
+        pytest.param((2026, 8, 1), id="first-modern"),
+        pytest.param((2027, 1, 1), id="next-year"),
+    ],
+)
+def expected_modern_lookup_calls_fixture(
+    request: FixtureRequest, monkeypatch: MonkeyPatch
+) -> int:
+    """Select the HA lookup API for each supported version boundary."""
+    major, minor, expected_calls = request.param
+    monkeypatch.setattr(device, "MAJOR_VERSION", major)
+    monkeypatch.setattr(device, "MINOR_VERSION", minor)
+    return expected_calls
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("identifier", "expected_name"),
+    [
+        pytest.param("owned", "Bedroom", id="found"),
+        pytest.param("foreign", None, id="other-config-entry"),
+        pytest.param("missing", None, id="missing"),
+    ],
+)
+async def test_device_lookup_uses_supported_api_and_own_config_entry(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    expected_modern_lookup_calls: int,
+    identifier: str,
+    expected_name: str | None,
+) -> None:
+    """Both APIs find owned devices and exclude missing or foreign devices."""
+    registry = dr.async_get(hass)
+    registry.async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        identifiers={(DOMAIN, "owned")},
+        name="Bedroom",
+    )
+    other_entry = MockConfigEntry(domain=DOMAIN, unique_id="CIC-other", data={})
+    other_entry.add_to_hass(hass)
+    registry.async_get_or_create(
+        config_entry_id=other_entry.entry_id,
+        identifiers={(DOMAIN, "foreign")},
+        name="Other bedroom",
+    )
+
+    with patch.object(
+        registry,
+        "async_get_device_by_identifier",
+        wraps=registry.async_get_device_by_identifier,
+    ) as modern_lookup:
+        result = device.async_get_device_by_identifier(
+            registry, (DOMAIN, identifier), config_entry.entry_id
+        )
+
+    assert getattr(result, "name", None) == expected_name
+    assert (
+        modern_lookup.call_args_list
+        == [call((DOMAIN, identifier), config_entry.entry_id)]
+        * expected_modern_lookup_calls
+    )

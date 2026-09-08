@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -15,7 +16,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
-from custom_components.quatt.__init__ import _sync_chill_device_names
+# tests/conftest.py exposes the core test helpers at runtime.
+from tests.common import MockConfigEntry  # pylint: disable=no-name-in-module
+
+from custom_components.quatt import _sync_chill_device_names
 from custom_components.quatt.climate import (
     CLIMATES,
     create_chill_climate_entity_descriptions,
@@ -26,6 +30,8 @@ from custom_components.quatt.entity_setup import (
     async_setup_entities,
     create_chill_entity_descriptions,
 )
+
+from custom_components.quatt.number import NUMBERS
 
 pytestmark = pytest.mark.asyncio
 
@@ -119,7 +125,7 @@ async def test_create_chill_entity_descriptions_skip_missing_uuid(
 
     assert "Cannot set up Chill at index 0: missing UUID" in caplog.text
     assert "Bedroom" not in device_names.values()
-    assert device_kinds == {}
+    assert not device_kinds
     assert "uuid-a" not in entity_descriptions
 
 
@@ -173,15 +179,79 @@ async def test_async_setup_entities_removes_obsolete_chill_device(
     )
 
 
+@pytest.mark.parametrize(
+    ("initial_name", "expected_updates"),
+    [
+        pytest.param("Old bedroom", 1, id="renamed"),
+        pytest.param("Bedroom chill", 0, id="unchanged"),
+    ],
+)
 async def test_sync_chill_device_names_updates_registry_name(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: MockConfigEntry,
+    initial_name: str,
+    expected_updates: int,
 ) -> None:
-    """Refreshing remote data should rename the Chill device in HA."""
+    """Refreshing remote data updates the device name and preserves user naming."""
     device_registry = dr.async_get(hass)
     device = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, f"{config_entry.unique_id}:uuid-a")},
+        name=initial_name,
+    )
+    device_registry.async_update_device(device.id, name_by_user="My bedroom")
+    coordinator = FakeRemoteCoordinator(
+        _remote_data([{"uuid": "uuid-a", "name": "Bedroom chill"}])
+    )
+
+    with patch.object(
+        device_registry,
+        "async_update_device",
+        wraps=device_registry.async_update_device,
+    ) as update_device:
+        _sync_chill_device_names(hass, config_entry, coordinator)
+
+    assert update_device.call_count == expected_updates
+    updated_device = device_registry.async_get(device.id)
+    assert updated_device.name == "Bedroom chill"
+    assert updated_device.name_by_user == "My bedroom"
+    assert updated_device.identifiers == device.identifiers
+
+
+async def test_sync_chill_device_names_skips_missing_device(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Name synchronization must not create devices absent from the registry."""
+    device_registry = dr.async_get(hass)
+    coordinator = FakeRemoteCoordinator(
+        _remote_data([{"uuid": "uuid-missing", "name": "Bedroom chill"}])
+    )
+
+    _sync_chill_device_names(hass, config_entry, coordinator)
+
+    assert (
+        dr.async_entries_for_config_entry(device_registry, config_entry.entry_id) == []
+    )
+
+
+async def test_sync_chill_device_names_uses_own_config_entry(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Identical identifiers in another config entry must not redirect a rename."""
+    device_registry = dr.async_get(hass)
+    other_entry = MockConfigEntry(domain=DOMAIN, unique_id="CIC-other", data={})
+    other_entry.add_to_hass(hass)
+    identifiers = {(DOMAIN, f"{config_entry.unique_id}:uuid-a")}
+    other_device = device_registry.async_get_or_create(
+        config_entry_id=other_entry.entry_id,
+        identifiers=identifiers,
+        name="Other bedroom",
+    )
+    device = device_registry.async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        identifiers=identifiers,
         name="Old bedroom",
     )
     coordinator = FakeRemoteCoordinator(
@@ -190,13 +260,13 @@ async def test_sync_chill_device_names_updates_registry_name(
 
     _sync_chill_device_names(hass, config_entry, coordinator)
 
+    assert device.id != other_device.id
     assert device_registry.async_get(device.id).name == "Bedroom chill"
+    assert device_registry.async_get(other_device.id).name == "Other bedroom"
 
 
 async def test_max_water_temperature_number_has_device_class() -> None:
     """The Max water temperature number sensor should be classified as temperature."""
-    from custom_components.quatt.number import NUMBERS
-
     description = NUMBERS[DEVICE_CIC_ID][0]
 
     assert description.key == "chMaxWaterTemperature"

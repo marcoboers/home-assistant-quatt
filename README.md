@@ -214,6 +214,7 @@ The Remote Mobile API can be enabled either while adding the CIC for the first t
 
 - **Climate control**: A climate entity for Quatt Chill devices with heating, cooling, target temperature and fan mode control.
 - **Status and diagnostics**: Chill mode, fan mode, ambient temperature, status and update-state sensors.
+- **Device names**: Names from the Quatt app are synchronized on refresh. Names you set manually in Home Assistant remain unchanged.
 
 ## Home battery
 

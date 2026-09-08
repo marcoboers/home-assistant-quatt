@@ -301,10 +301,12 @@ async def test_time_native_value_defaults_minute_to_zero(
 @pytest.mark.parametrize(
     "value",
     [
-        time(hour=21, minute=15),
-        time(hour=21, minute=1),
-        time(hour=21, minute=0, second=30),
-        time(hour=21, minute=30, microsecond=1),
+        pytest.param(time(hour=21, minute=15), id="quarter-hour"),
+        pytest.param(time(hour=21, minute=1), id="off-boundary-minute"),
+        pytest.param(time(hour=21, minute=0, second=30), id="nonzero-seconds"),
+        pytest.param(
+            time(hour=21, minute=30, microsecond=1), id="nonzero-microseconds"
+        ),
     ],
 )
 @pytest.mark.asyncio

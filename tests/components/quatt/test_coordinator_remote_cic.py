@@ -26,9 +26,7 @@ def make_coordinator(data: Any) -> QuattCicRemoteDataUpdateCoordinator:
 @pytest.fixture(name="coordinator")
 def coordinator_fixture() -> QuattCicRemoteDataUpdateCoordinator:
     """Return a coordinator loaded with the duo all-electric remote payload."""
-    data = json.loads(
-        (FIXTURES / "remote_cic_duo_all_electric.json").read_text()
-    )
+    data = json.loads((FIXTURES / "remote_cic_duo_all_electric.json").read_text())
     return make_coordinator(data)
 
 
@@ -58,14 +56,16 @@ def test_get_value_list_index(coordinator) -> None:
 @pytest.mark.parametrize(
     "value_path",
     [
-        "heatPumps.5.power",  # index out of range
-        "heatPumps.first.power",  # non-numeric index
-        "doesNotExist",  # missing key
-        "allEStatus.doesNotExist",  # missing nested key
-        "quattBuild.nested",  # walking into a scalar
+        pytest.param("heatPumps.5.power", id="index-out-of-range"),
+        pytest.param("heatPumps.first.power", id="non-numeric-index"),
+        pytest.param("doesNotExist", id="missing-key"),
+        pytest.param("allEStatus.doesNotExist", id="missing-nested-key"),
+        pytest.param("quattBuild.nested", id="scalar-traversal"),
     ],
 )
-def test_get_value_invalid_paths_return_default(coordinator, value_path) -> None:
+def test_get_value_invalid_paths_return_default(
+    coordinator: QuattCicRemoteDataUpdateCoordinator, value_path: str
+) -> None:
     """Invalid paths return the provided default."""
     sentinel = object()
     assert coordinator.get_value(value_path, sentinel) is sentinel

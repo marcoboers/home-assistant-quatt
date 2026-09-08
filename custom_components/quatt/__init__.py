@@ -61,6 +61,7 @@ from .coordinator_home_battery import QuattHomeBatteryDataUpdateCoordinator
 from .coordinator_local_cic import QuattCicLocalDataUpdateCoordinator
 from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
 from .coordinator_remote_energy import QuattEnergyDataUpdateCoordinator
+from .device import async_get_device_by_identifier
 from .repairs import (
     async_create_remote_auth_issue,
     async_delete_remote_auth_issue,
@@ -448,8 +449,8 @@ def _sync_chill_device_names(
         if not chill_uuid or not chill_name:
             continue
 
-        device = device_reg.async_get_device(
-            identifiers={(DOMAIN, f"{hub_id}:{chill_uuid}")}
+        device = async_get_device_by_identifier(
+            device_reg, (DOMAIN, f"{hub_id}:{chill_uuid}"), entry.entry_id
         )
         if device is None or device.name == chill_name:
             continue

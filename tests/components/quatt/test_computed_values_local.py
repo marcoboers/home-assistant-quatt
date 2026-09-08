@@ -84,15 +84,19 @@ def test_feature_detection_mono_hybrid(duo_all_electric_data: dict) -> None:
 @pytest.mark.parametrize(
     ("temperature", "expected_key"),
     [
-        (40, 40),  # exact match
-        (21.52, 20),  # nearest below midpoint
-        (23.1, 25),  # nearest above midpoint
-        (-10, 5),  # clamped to lowest table entry
-        (150, 80),  # clamped to highest table entry
-        (27.5, 25),  # tie resolves to the first (lower) table entry
+        pytest.param(40, 40, id="exact-match"),
+        pytest.param(21.52, 20, id="nearest-below-midpoint"),
+        pytest.param(23.1, 25, id="nearest-above-midpoint"),
+        pytest.param(-10, 5, id="below-range"),
+        pytest.param(150, 80, id="above-range"),
+        pytest.param(27.5, 25, id="midpoint-prefers-lower"),
     ],
 )
-def test_get_conversion_factor(coordinator, temperature, expected_key) -> None:
+def test_get_conversion_factor(
+    coordinator: QuattCicLocalDataUpdateCoordinator,
+    temperature: float,
+    expected_key: int,
+) -> None:
     """The conversion factor is looked up by nearest table temperature."""
     assert coordinator.get_conversion_factor(temperature) == pytest.approx(
         CONVERSION_FACTORS[expected_key]
@@ -111,9 +115,14 @@ def test_computed_water_delta_duo_spans_both_pumps(coordinator) -> None:
 
 @pytest.mark.parametrize(
     ("parent_key", "expected"),
-    [("hp1", 21.41 - 18.39), ("hp2", 21.52 - 18.09)],
+    [
+        pytest.param("hp1", 21.41 - 18.39, id="heatpump-1"),
+        pytest.param("hp2", 21.52 - 18.09, id="heatpump-2"),
+    ],
 )
-def test_computed_water_delta_per_pump(coordinator, parent_key, expected) -> None:
+def test_computed_water_delta_per_pump(
+    coordinator: QuattCicLocalDataUpdateCoordinator, parent_key: str, expected: float
+) -> None:
     """A parent key computes the delta over that pump only."""
     assert coordinator.computed_water_delta(parent_key) == pytest.approx(expected)
 
@@ -276,9 +285,7 @@ def test_computed_cop_with_power_sensor(duo_all_electric_data) -> None:
     )
 
     heat_power = coordinator.computed_heat_power()
-    assert coordinator.computed_cop() == pytest.approx(
-        round(heat_power / 18.0, 2)
-    )
+    assert coordinator.computed_cop() == pytest.approx(round(heat_power / 18.0, 2))
 
 
 def test_computed_cop_zero_electrical_power(coordinator) -> None:
@@ -290,8 +297,17 @@ def test_computed_cop_zero_electrical_power(coordinator) -> None:
     assert coordinator.computed_cop() is None
 
 
-@pytest.mark.parametrize("state", ["unavailable", "unknown", "not-a-number"])
-def test_electrical_power_invalid_states(coordinator, state) -> None:
+@pytest.mark.parametrize(
+    "state",
+    [
+        pytest.param("unavailable", id="unavailable"),
+        pytest.param("unknown", id="unknown"),
+        pytest.param("not-a-number", id="non-numeric"),
+    ],
+)
+def test_electrical_power_invalid_states(
+    coordinator: QuattCicLocalDataUpdateCoordinator, state: str
+) -> None:
     """Unavailable, unknown and non-numeric sensor states yield None."""
     coordinator._power_sensor_id = "sensor.hp_power"  # noqa: SLF001
     coordinator.hass = SimpleNamespace(
@@ -368,11 +384,13 @@ def test_computed_defrost_detected(duo_all_electric_data) -> None:
 @pytest.mark.parametrize(
     ("power", "water_out"),
     [
-        (-0.5, 22.0),  # power dip too small
-        (-500, 24.5),  # delta not negative enough
+        pytest.param(-0.5, 22.0, id="power-dip-too-small"),
+        pytest.param(-500, 24.5, id="temperature-delta-too-small"),
     ],
 )
-def test_computed_defrost_boundaries(duo_all_electric_data, power, water_out) -> None:
+def test_computed_defrost_boundaries(
+    duo_all_electric_data: dict[str, Any], power: float, water_out: float
+) -> None:
     """Both the power and the delta threshold must be crossed."""
     data = deepcopy(duo_all_electric_data)
     data["qc"]["supervisoryControlMode"] = int(
@@ -393,17 +411,19 @@ def test_computed_defrost_boundaries(duo_all_electric_data, power, water_out) ->
 @pytest.mark.parametrize(
     ("mode", "expected"),
     [
-        (0, "Standby"),
-        (2, "Heating - heatpump only"),
-        (6, "Cooling"),
-        (96, "Anti-freeze protection - boiler on"),
-        (100, "Commissioning modes"),
-        (245, "Commissioning modes"),
-        (42, None),  # unknown code below 100
+        pytest.param(0, "Standby", id="standby"),
+        pytest.param(2, "Heating - heatpump only", id="heating-heatpump-only"),
+        pytest.param(6, "Chill cooling", id="chill-cooling"),
+        pytest.param(
+            96, "Anti-freeze protection - boiler on", id="anti-freeze-boiler-on"
+        ),
+        pytest.param(100, "Commissioning modes", id="commissioning-100"),
+        pytest.param(245, "Commissioning modes", id="commissioning-245"),
+        pytest.param(42, None, id="unknown-mode"),
     ],
 )
 def test_computed_supervisory_control_mode(
-    duo_all_electric_data, mode, expected
+    duo_all_electric_data: dict[str, Any], mode: int, expected: str | None
 ) -> None:
     """Numeric supervisory control modes map to their descriptions."""
     data = deepcopy(duo_all_electric_data)
@@ -415,17 +435,21 @@ def test_computed_supervisory_control_mode(
 @pytest.mark.parametrize(
     ("mode", "expected"),
     [
-        (0, "Idle"),
-        (8, "Discharge"),
-        (9, "Discharge - CH backup"),
-        (13, "Charge - chill cooling"),
-        (14, "Charge - dynamic prices"),
-        (15, "Charge - dynamic prices CH backup"),
-        (99, None),
+        pytest.param(0, "Idle", id="idle"),
+        pytest.param(8, "Discharge", id="discharge"),
+        pytest.param(9, "Discharge - CH backup", id="discharge-ch-backup"),
+        pytest.param(13, "Charge - chill cooling", id="charge-chill-cooling"),
+        pytest.param(14, "Charge - dynamic prices", id="charge-dynamic-prices"),
+        pytest.param(
+            15,
+            "Charge - dynamic prices CH backup",
+            id="charge-dynamic-prices-ch-backup",
+        ),
+        pytest.param(99, None, id="unknown-mode"),
     ],
 )
 def test_computed_all_e_supervisory_control_mode(
-    duo_all_electric_data, mode, expected
+    duo_all_electric_data: dict[str, Any], mode: int, expected: str | None
 ) -> None:
     """All-electric supervisory control modes map to their descriptions."""
     data = deepcopy(duo_all_electric_data)
@@ -443,13 +467,17 @@ def test_computed_tariff_types_dynamic(coordinator) -> None:
 @pytest.mark.parametrize(
     ("electricity", "gas", "expected_electricity", "expected_gas"),
     [
-        (0, 0, "Single tariff", "Single tariff"),
-        (1, 1, "Double tariff", None),  # gas has no double tariff
-        (5, 5, None, None),
+        pytest.param(0, 0, "Single tariff", "Single tariff", id="single-tariff"),
+        pytest.param(1, 1, "Double tariff", None, id="double-tariff-electricity-only"),
+        pytest.param(5, 5, None, None, id="unknown-tariffs"),
     ],
 )
 def test_computed_tariff_types_variants(
-    duo_all_electric_data, electricity, gas, expected_electricity, expected_gas
+    duo_all_electric_data: dict[str, Any],
+    electricity: int,
+    gas: int,
+    expected_electricity: str | None,
+    expected_gas: str | None,
 ) -> None:
     """Tariff type codes map to descriptions; unknown codes yield None."""
     data = deepcopy(duo_all_electric_data)

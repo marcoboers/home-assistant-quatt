@@ -62,22 +62,34 @@ def test_get_computed_value_uses_top_level_calculation() -> None:
 @pytest.mark.parametrize(
     ("mode", "expected"),
     [
-        (None, None),
-        (0, "Standby"),
-        (1, "Standby - heating"),
-        (2, "Heating - heatpump only"),
-        (3, "Heating - heatpump + boiler"),
-        (4, "Heating - boiler only"),
-        (5, "Chill circulation"),
-        (6, "Chill cooling"),
-        (95, "Sticky pump protection"),
-        (96, "Anti-freeze protection - boiler on"),
-        (97, "Anti-freeze protection - boiler pre-pump"),
-        (98, "Anti-freeze protection - water circulation"),
-        (99, "Fault - circulation pump on"),
-        (100, "Commissioning modes"),
-        (101, "Commissioning modes"),
-        (400, "Invalid configuration"),
+        pytest.param(None, None, id="missing-mode"),
+        pytest.param(0, "Standby", id="standby"),
+        pytest.param(1, "Standby - heating", id="standby-heating"),
+        pytest.param(2, "Heating - heatpump only", id="heating-heatpump-only"),
+        pytest.param(
+            3, "Heating - heatpump + boiler", id="heating-heatpump-and-boiler"
+        ),
+        pytest.param(4, "Heating - boiler only", id="heating-boiler-only"),
+        pytest.param(5, "Chill circulation", id="chill-circulation"),
+        pytest.param(6, "Chill cooling", id="chill-cooling"),
+        pytest.param(95, "Sticky pump protection", id="sticky-pump-protection"),
+        pytest.param(
+            96, "Anti-freeze protection - boiler on", id="anti-freeze-boiler-on"
+        ),
+        pytest.param(
+            97,
+            "Anti-freeze protection - boiler pre-pump",
+            id="anti-freeze-boiler-prepump",
+        ),
+        pytest.param(
+            98,
+            "Anti-freeze protection - water circulation",
+            id="anti-freeze-water-circulation",
+        ),
+        pytest.param(99, "Fault - circulation pump on", id="fault-circulation-pump-on"),
+        pytest.param(100, "Commissioning modes", id="commissioning-100"),
+        pytest.param(101, "Commissioning modes", id="commissioning-101"),
+        pytest.param(400, "Invalid configuration", id="invalid-configuration"),
     ],
 )
 def test_computed_supervisory_control_mode_maps_known_and_failsafe_codes(

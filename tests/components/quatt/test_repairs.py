@@ -90,9 +90,9 @@ async def test_create_fix_flow_returns_remote_auth_flow(
 @pytest.mark.parametrize(
     ("issue_id", "data"),
     [
-        ("some_other_issue", {"entry_id": "abc"}),
-        ("remote_auth_failed_abc", None),
-        ("remote_auth_failed_abc", {}),
+        pytest.param("some_other_issue", {"entry_id": "abc"}, id="unknown-issue"),
+        pytest.param("remote_auth_failed_abc", None, id="missing-data"),
+        pytest.param("remote_auth_failed_abc", {}, id="missing-entry-id"),
     ],
 )
 async def test_create_fix_flow_fallback(
