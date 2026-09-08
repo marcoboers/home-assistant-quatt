@@ -21,6 +21,7 @@ from custom_components.quatt.climate import (
     create_chill_climate_entity_descriptions,
 )
 from custom_components.quatt.const import DOMAIN, DEVICE_CIC_ID, QuattDeviceKind
+from custom_components.quatt.device import hub_link_info
 from custom_components.quatt.entity_setup import (
     async_setup_entities,
     create_chill_entity_descriptions,
@@ -130,7 +131,7 @@ async def test_async_setup_entities_removes_obsolete_chill_device(
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
 
-    device_registry.async_get_or_create(
+    hub_device = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, config_entry.unique_id)},
         name="Quatt",
@@ -138,7 +139,7 @@ async def test_async_setup_entities_removes_obsolete_chill_device(
     chill_device = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, f"{config_entry.unique_id}:uuid-gone")},
-        via_device=(DOMAIN, config_entry.unique_id),
+        **hub_link_info(config_entry.unique_id, hub_device.id),
         name="Old bedroom",
     )
     entity_registry.async_get_or_create(
@@ -161,12 +162,7 @@ async def test_async_setup_entities_removes_obsolete_chill_device(
     )
 
     assert entities == []
-    assert (
-        device_registry.async_get_device(
-            identifiers={(DOMAIN, f"{config_entry.unique_id}:uuid-gone")}
-        )
-        is None
-    )
+    assert device_registry.async_get(chill_device.id) is None
     assert (
         entity_registry.async_get_entity_id(
             CLIMATE_DOMAIN,

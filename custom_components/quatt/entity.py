@@ -37,6 +37,7 @@ import homeassistant.util.dt as dt_util
 from .const import ATTRIBUTION, DOMAIN, NAME, QuattDeviceKind
 from .coordinator import QuattDataUpdateCoordinator
 from .coordinator_remote_cic import QuattCicRemoteDataUpdateCoordinator
+from .device import hub_link_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -174,11 +175,13 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
         else:
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, f"{self._hub_id}:{device_id}")},
-                via_device=(DOMAIN, self._hub_id),
                 name=device_name,
                 manufacturer=NAME,
                 model="—",
                 entry_type=DeviceEntryType.SERVICE if is_service_device else None,
+            )
+            self._attr_device_info.update(
+                hub_link_info(self._hub_id, coordinator.hub_device_id)
             )
 
     def _current_chill_index(self) -> int | None:

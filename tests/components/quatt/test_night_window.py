@@ -152,6 +152,7 @@ class FakeRemoteCoordinator:
     ) -> None:
         """Initialize the fake coordinator."""
         self.config_entry = config_entry
+        self.hub_device_id = "test-hub-device-id"
         self.data = data
         self.client = client
         self.last_update_success = True

@@ -28,6 +28,8 @@ This integration covers the **local CIC JSON API** (heat pump telemetry) plus a 
 
 ## Installation
 
+Requires Home Assistant **2025.5.0** or newer.
+
 ### Install with HACS (recommended)
 
 Do you have [HACS](https://hacs.xyz/) installed?

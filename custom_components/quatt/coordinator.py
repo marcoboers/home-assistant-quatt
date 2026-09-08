@@ -31,6 +31,9 @@ from .const import CONF_POWER_SENSOR, DOMAIN, LOGGER
 class QuattDataUpdateCoordinator(DataUpdateCoordinator, ABC):
     """Product-neutral abstract base class for Quatt data update coordinators."""
 
+    # Assigned during config entry setup before any platform creates entities.
+    hub_device_id: str
+
     def __init__(
         self,
         hass: HomeAssistant,
