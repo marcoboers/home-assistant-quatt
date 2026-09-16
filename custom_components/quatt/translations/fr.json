@@ -135,5 +135,18 @@
             "energy_no_ean": "Connexion réussie, mais aucun compteur d'énergie (EAN) n'a été renvoyé.",
             "unknown": "Une erreur inattendue s'est produite. Veuillez réessayer."
         }
+    },
+    "issues": {
+        "remote_auth_failed": {
+            "title": "Le rattachement du CIC Quatt {name} est requis",
+            "fix_flow": {
+                "step": {
+                    "confirm": {
+                        "title": "Rattacher à nouveau l'appareil Quatt",
+                        "description": "Home Assistant n'a plus pu se connecter à l'API mobile Quatt pour {name}, donc les données distantes (comme Chill, les insights et le statut) ne sont pas disponibles. Le rattachement de ce CIC corrige le problème.\n\n![Emplacement du bouton d'appairage](/quatt_static/pair.png)\n\nAssurez-vous d'être près du CIC, puis appuyez sur « Envoyer ». Dans les 60 secondes, appuyez sur le bouton de l'appareil CIC pour terminer l'appairage."
+                    }
+                }
+            }
+        }
     }
 }

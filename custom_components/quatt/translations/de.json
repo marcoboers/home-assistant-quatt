@@ -135,5 +135,18 @@
             "energy_no_ean": "Anmeldung erfolgreich, aber es wurde kein Energiezähler (EAN) zurückgegeben.",
             "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
         }
+    },
+    "issues": {
+        "remote_auth_failed": {
+            "title": "Neues Koppeln mit dem Quatt CIC {name} ist erforderlich",
+            "fix_flow": {
+                "step": {
+                    "confirm": {
+                        "title": "Mit dem Quatt-Gerät neu koppeln",
+                        "description": "Home Assistant konnte sich für {name} nicht mehr bei der Quatt-Mobile-API anmelden, daher sind Remote-Daten (z. B. Chill, Insights und Status) nicht verfügbar. Ein erneutes Koppeln mit diesem CIC behebt das.\n\n![Standort des Kopplungsbuttons](/quatt_static/pair.png)\n\nStelle sicher, dass du in der Nähe des CIC bist, und drücke dann auf 'Senden'. Drücke innerhalb von 60 Sekunden auf die Taste deines CIC-Geräts, um das Koppeln abzuschließen."
+                    }
+                }
+            }
+        }
     }
 }
