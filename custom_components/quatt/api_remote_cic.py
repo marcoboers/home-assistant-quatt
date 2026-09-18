@@ -92,11 +92,12 @@ class QuattCicRemoteApiClient(QuattApiClient):
                         _LOGGER.info("Successfully authenticated with refreshed token")
                         return True
 
-                # Existing tokens no longer usable - reset and fall through
+                # Do not clear the shared mobile-auth state here: several CICs may
+                # share the same Quatt account, and wiping the global auth object for
+                # one device would invalidate the others as well.
                 _LOGGER.warning(
                     "Existing tokens could not be validated, re-pairing with CIC"
                 )
-                self._auth.load_tokens(None, None)
                 self._installation_id = None
 
             # Full authentication flow (signup + profile)

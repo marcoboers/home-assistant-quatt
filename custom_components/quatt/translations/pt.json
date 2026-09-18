@@ -135,5 +135,18 @@
             "energy_no_ean": "Sessão iniciada, mas não foi devolvido nenhum contador de energia (EAN).",
             "unknown": "Ocorreu um erro inesperado. Tente novamente."
         }
+    },
+    "issues": {
+        "remote_auth_failed": {
+            "title": "É necessário emparelhar novamente o CIC da Quatt {name}",
+            "fix_flow": {
+                "step": {
+                    "confirm": {
+                        "title": "Emparelhar novamente o dispositivo Quatt",
+                        "description": "O Home Assistant deixou de conseguir iniciar sessão na API móvel da Quatt para {name}, pelo que os dados remotos (como Chill, insights e estado) não estão disponíveis. Emparelhar novamente este CIC resolve isto.\n\n![Localização do botão de emparelhamento](/quatt_static/pair.png)\n\nCertifique-se de que está perto do CIC e, em seguida, prima 'Enviar'. Dentro de 60 segundos, prima o botão do dispositivo CIC para concluir o emparelhamento."
+                    }
+                }
+            }
+        }
     }
 }

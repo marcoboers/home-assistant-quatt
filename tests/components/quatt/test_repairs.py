@@ -3,7 +3,10 @@
 
 from __future__ import annotations
 
-from unittest.mock import Mock
+import asyncio
+import json
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -12,6 +15,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.issue_registry as ir
 
+from custom_components.quatt.api_remote_auth import QuattRemoteAuthClient
+from custom_components.quatt.api_remote_cic import QuattCicRemoteApiClient
 from custom_components.quatt.const import DOMAIN
 from custom_components.quatt.repairs import (
     RemoteAuthFailedRepairFlow,
@@ -22,6 +27,67 @@ from custom_components.quatt.repairs import (
 )
 
 pytestmark = pytest.mark.asyncio
+
+
+async def test_remote_auth_issue_uses_cic_name_in_translation() -> None:
+    """Repair text should clearly identify which CIC needs to be re-paired."""
+    await asyncio.sleep(0)
+
+    strings = json.loads(
+        (
+            Path(__file__).resolve().parents[3]
+            / "custom_components"
+            / "quatt"
+            / "strings.json"
+        ).read_text(encoding="utf-8")
+    )
+    issue = strings["issues"]["remote_auth_failed"]
+
+    assert "{name}" in issue["title"]
+    assert "{name}" in issue["fix_flow"]["step"]["confirm"]["description"]
+
+
+async def test_auth_recovery_does_not_clear_shared_cic_tokens() -> None:
+    """A failed validation on one CIC must not invalidate the shared account auth."""
+    auth = QuattRemoteAuthClient(session=Mock())
+    auth.load_tokens("id-token", "refresh-token")
+    auth.refresh_token = AsyncMock(return_value=False)
+    auth.ensure_authenticated = AsyncMock(return_value=True)
+
+    client = QuattCicRemoteApiClient("CIC-1", session=Mock(), auth=auth)
+    client.get_cic_data = AsyncMock(return_value=None)
+    client._request_pair = AsyncMock(return_value=True)
+    client._wait_for_pairing = AsyncMock(return_value=True)
+    client._resolve_installation_id = AsyncMock(return_value=True)
+    client._save_installation_id = AsyncMock()
+
+    assert await client.authenticate() is True
+    assert auth.id_token == "id-token"
+    assert auth._refresh_token == "refresh-token"
+
+
+async def test_two_cic_clients_share_auth_without_cross_reset() -> None:
+    """A failed auth validation for the first CIC must not wipe the shared auth for the second CIC."""
+    auth = QuattRemoteAuthClient(session=Mock())
+    auth.load_tokens("id-token", "refresh-token")
+
+    first = QuattCicRemoteApiClient("CIC-1", session=Mock(), auth=auth)
+    second = QuattCicRemoteApiClient("CIC-2", session=Mock(), auth=auth)
+
+    first.get_cic_data = AsyncMock(return_value=None)
+    first._request_pair = AsyncMock(return_value=True)
+    first._wait_for_pairing = AsyncMock(return_value=True)
+    first._resolve_installation_id = AsyncMock(return_value=True)
+    first._save_installation_id = AsyncMock()
+    first._auth.refresh_token = AsyncMock(return_value=False)
+    first._auth.ensure_authenticated = AsyncMock(return_value=True)
+
+    second.get_cic_data = AsyncMock(return_value={"result": {"status": "ok"}})
+
+    assert await first.authenticate() is True
+    assert auth.id_token == "id-token"
+    assert auth._refresh_token == "refresh-token"
+    assert await second.get_cic_data() == {"result": {"status": "ok"}}
 
 
 async def test_create_remote_auth_issue(
