@@ -7,7 +7,7 @@
 
 This integration includes a fully-featured **Quatt Dashboard Card** that replicates and enhances the dashboard from the official Quatt mobile app directly in Home Assistant. It provides a comprehensive, at-a-glance view of your Quatt heat pump system status and performance.
 
-<img width="930" height="732" alt="Quatt overview" src="images/quatt-dashboard-card.png" />
+<img width="929" height="733" alt="Quatt overview" src="images/quatt-dashboard-card.png" />
 
 ## Features
 
@@ -24,8 +24,14 @@ This integration includes a fully-featured **Quatt Dashboard Card** that replica
   - Solar collector integration including animations
   - Home battery integration
   - Hot water tank integration including water temperature animations
+  - Defrost animation while a heat pump is defrosting
+  - Reversed, cold water flow while the system circulates water for antifreeze protection
 - **Responsive design**: Adapts to different screen sizes and devices
 - **Custom card implementation**: Uses a dedicated Lovelace custom card for optimal performance
+
+The defrost animation:
+
+https://github.com/user-attachments/assets/e18bd759-1418-4274-8aab-3f76d577a8ad
 
 ## Prerequisites
 

@@ -7,13 +7,9 @@
 
 The Quatt Energy hub connects to the separate **Quatt Energy portal** (https://mijnenergie.quatt.io) and exposes live tariff prices plus on-demand history for prices, electricity/gas usage and costs. It is a stand-alone hub — a CIC or home battery is **not** required.
 
-<table>
-  <tr>
-    <td align="center"><img src="images/quatt_energy_price_day.png" width="180"><br><b>Prices (day)</b></td>
-    <td align="center"><img src="images/quatt_energy_power_month.png" width="180"><br><b>Usage (month)</b></td>
-    <td align="center"><img src="images/quatt_energy_costs_year.png" width="180"><br><b>Costs (year)</b></td>
-  </tr>
-</table>
+<img src="images/quatt_energy_dashboard.png" width="800" alt="Dashboard with Quatt Energy prices, usage and costs">
+
+_A dashboard built from the [usage graph examples](usage-graphs.md#energy--prices) for prices, usage and costs._
 
 ## Features
 

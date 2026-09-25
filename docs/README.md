@@ -15,8 +15,8 @@ Documentation for the unofficial Quatt integration for Home Assistant. New here?
 
 | Page | Covers | Built on |
 |---|---|---|
-| [Heat pump](heat-pump.md) | Sensors from the local CIC API and the computed sensors | Local CIC API |
-| [Remote Mobile API](remote-mobile-api.md) | Additional sensors and controls, observed compressor starts, enabling it | Quatt mobile API¹ |
+| [Heat pump](heat-pump.md) | Devices, sensors from the local CIC API and the computed sensors | Local CIC API |
+| [Remote Mobile API](remote-mobile-api.md) | Additional sensors and controls, heat battery boost, observed compressor starts, enabling it | Quatt mobile API¹ |
 | [Quatt Chill](chill.md) | Climate control, status and diagnostics for Chill devices | Quatt mobile API¹ |
 | [Home battery](home-battery.md) | Live status, savings, insights, energy flow, solar capacity | Quatt mobile API¹ |
 | [Quatt Energy](quatt-energy.md) | Live tariff prices, surcharge toggles, price/usage/cost history | Quatt Energy portal¹ |
