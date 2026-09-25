@@ -17,7 +17,7 @@ Only sensors that are not already provided by the local API are added — no dup
 - **Energy pricing**: Electricity prices (standard, day, night), gas prices, and night time schedule configuration
 - **Sound control**: Silent mode status, day/night max sound levels, and sound schedule configuration
 - **Quatt Chill support**: Climate control for heating/cooling, target temperature and fan mode, plus Chill status and diagnostic sensors — see [Quatt Chill](chill.md)
-- **Heat battery metrics** (All-Electric only): Serial number, status, size, charge percentage
+- **Heat battery metrics** (All-Electric only): Serial number, status, size, charge percentage, and the [heat battery boost](#heat-battery-boost) status
 - **Enhanced heat pump data**: Compressor frequency (actual and demand), minimum/rated/expected power, water pump level, ODU type, on/off status, Modbus slave ID
 - **Installation details**: Installation date, insights start date, Quatt build version, installation name, location (zip code, country), and order number
 - **Thermostat data**: Outside temperature (via remote API)
@@ -26,7 +26,25 @@ Only sensors that are not already provided by the local API are added — no dup
 
 ## Controls
 
-In addition, the remote API exposes **programmable day and night maximum sound levels** (normal, library, silent) as controls, and the **night time window** (start and end time, in 30-minute steps) as time entities, including a button to reset the window to the Quatt defaults.
+In addition, the remote API exposes settings from the Quatt app as controls on the CIC device:
+
+<img src="images/quatt_cic_controls.png" width="300" alt="CIC controls in Home Assistant">
+
+- **Day max sound level** and **Night max sound level**: programmable maximum sound levels (normal, library, silent)
+- **Night time start** and **Night time end**: the night time window, in 30-minute steps, plus a **Reset night time window** button that restores the Quatt defaults
+- **Max water temperature**: the maximum central heating water temperature
+- **Use pricing to limit heatpump** and **Avoid nighttime charging**: the corresponding switches from the Quatt app
+
+## Heat battery boost
+
+On All-Electric installations, the heat battery device gets start/cancel control and progress tracking for the heat battery boost.
+
+<img src="images/quatt_heat_battery_boost_switch.png" width="300" alt="Heat battery boost switch"> <img src="images/quatt_heat_battery_boost_diagnostic.png" width="300" alt="Heat battery boost diagnostic sensors">
+
+- **Boost** switch: turning it on starts a boost, turning it off cancels the running boost. The switch is on while a boost is starting or active.
+- **Boost status** and **Boost exit reason** diagnostic sensors, and a **Boost end time** sensor.
+
+While a boost is starting or running, the remote API is polled every **5 seconds**, until 3 minutes after the boost has ended. After that the configured update interval applies again.
 
 ## Observed compressor starts
 
@@ -44,7 +62,11 @@ With the Remote Mobile API enabled, each heat pump has an **Observed compressor 
 
 ## Enabling
 
-The Remote Mobile API can be enabled either while adding the CIC for the first time, or on an existing CIC.
+The Remote Mobile API can be enabled either while adding the CIC for the first time, or on an existing CIC. Either way, pairing ends with a dialog that shows where the button on the CIC is: click **Submit** to start pairing, then press that button within 60 seconds.
+
+<img src="images/quatt_remote_api_pairing.png" width="300" alt="Pair with the Quatt device dialog">
+
+_Screenshot from an earlier version, in which the name was asked in the same dialog. It is now asked in a separate [sign-in](configuration.md#quatt-mobile-api-sign-in) step, and only once._
 
 ### During initial setup
 

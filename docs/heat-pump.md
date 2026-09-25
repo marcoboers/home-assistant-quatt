@@ -4,6 +4,12 @@
 
 The heat pump is read from the Quatt CIC (Commander In Chief) over its **local JSON API**. This works entirely on your local network; no Quatt account is needed. See [Adding a CIC](configuration.md#adding-a-cic-heat-pump) to set it up.
 
+## Devices
+
+The sensors are grouped into separate devices under the CIC: **CIC**, **Heatpump 1** and **Heatpump 2** (Quatt Duo), **Boiler** (Hybrid), **Heat battery** and **Heat charger** (All-Electric), **Flowmeter** and **Thermostat**. Only the devices and sensors that apply to your installation type are created.
+
+<img src="images/quatt_devices.png" width="600" alt="Quatt devices in Home Assistant">
+
 ## Sensors
 
 All sensors from the local API feed are available. In addition, the following computed sensors are provided:

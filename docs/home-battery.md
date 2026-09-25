@@ -5,6 +5,8 @@
 > [!NOTE]
 > Built on the reverse-engineered Quatt mobile API — see [About reverse-engineered features](../README.md#about-reverse-engineered-features).
 
+<img src="images/quatt_home_battery.webp" width="250" alt="Quatt home battery">
+
 The home battery is a separate device that can be added alongside (or independently of) a Quatt heat pump. Once paired it exposes live status, savings, insights and full energy-flow data (battery, solar, house, grid) in Home Assistant.
 
 <table>

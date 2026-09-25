@@ -5,6 +5,8 @@
 > [!NOTE]
 > Built on the reverse-engineered Quatt mobile API — see [About reverse-engineered features](../README.md#about-reverse-engineered-features).
 
+<img src="images/quatt_chill.png" width="450" alt="Quatt Chill">
+
 Quatt Chill devices are added automatically when they are present on your installation and the [Remote Mobile API](remote-mobile-api.md) is enabled on your CIC. See [Enabling the Remote Mobile API](remote-mobile-api.md#enabling).
 
 ## Features

@@ -19,7 +19,7 @@ This integration covers the **local CIC JSON API** (heat pump telemetry) plus a 
 | Feature | What you get | Requires |
 |---|---|---|
 | [Heat pump](docs/heat-pump.md) | All sensors from the local CIC API, plus computed COP, heat power and system power | A CIC on your local network |
-| [Remote Mobile API](docs/remote-mobile-api.md) | Extra sensors and controls: connectivity, energy pricing, sound levels, night time window, observed compressor starts | Opt-in, on top of a CIC |
+| [Remote Mobile API](docs/remote-mobile-api.md) | Extra sensors and controls: connectivity, energy pricing, sound levels, night time window, heat battery boost, observed compressor starts | Opt-in, on top of a CIC |
 | [Quatt Chill](docs/chill.md) | Climate entity for heating/cooling, plus Chill status and diagnostics | Remote Mobile API |
 | [Home battery](docs/home-battery.md) | Live status, savings, insights and energy flow | Quatt mobile API; no CIC needed |
 | [Quatt Energy](docs/quatt-energy.md) | Live tariff prices, plus price, usage and cost history | A mijnenergie account; no CIC needed |
