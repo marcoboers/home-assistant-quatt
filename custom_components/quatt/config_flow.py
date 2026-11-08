@@ -45,6 +45,7 @@ from .const import (
     CONF_HOME_BATTERY_QR_URL,
     CONF_HOME_BATTERY_SERIAL,
     CONF_HOME_BATTERY_UUID,
+    CONF_LOCAL_API_ENABLED,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     CONF_REMOTE_CIC,
@@ -816,7 +817,14 @@ class QuattOptionsFlowHandler(OptionsFlow):
         }
 
         # Add option to add remote API if not already configured
-        if not has_remote:
+        if has_remote:
+            schema_dict[
+                vol.Optional(
+                    CONF_LOCAL_API_ENABLED,
+                    default=self.config_entry.options.get(CONF_LOCAL_API_ENABLED, True),
+                )
+            ] = selector.BooleanSelector()
+        else:
             schema_dict[vol.Optional("add_remote", default=False)] = (
                 selector.BooleanSelector()
             )

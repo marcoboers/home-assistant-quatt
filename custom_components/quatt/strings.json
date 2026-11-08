@@ -92,6 +92,7 @@
             "init": {
                 "description": "Quatt options",
                 "data": {
+                    "local_api_enabled": "Use local CiC connection",
                     "scan_interval": "Local update interval (seconds)",
                     "remote_scan_interval": "Remote mobile API update interval (minutes)",
                     "power_sensor": "Power sensor (optional)",
@@ -99,6 +100,7 @@
                     "energy_password": "Quatt Energy password"
                 },
                 "data_description": {
+                    "local_api_enabled": "Turn off to use the previously paired Remote Mobile API while the CiC is offline. Local entities become unavailable.",
                     "scan_interval": "Number of seconds between requesting information from the Quatt.",
                     "remote_scan_interval": "Number of minutes between requesting information from the mobile Quatt API.",
                     "power_sensor": "External energy sensor that measures the current energy consumption of the Quatt.",

@@ -92,6 +92,7 @@
             "init": {
                 "description": "Quatt opties",
                 "data": {
+                    "local_api_enabled": "Lokale CiC-verbinding gebruiken",
                     "scan_interval": "Lokaal update-interval (seconden)",
                     "remote_scan_interval": "Externe mobiele API update-interval (minuten)",
                     "power_sensor": "Vermogenssensor (optioneel)",
@@ -99,6 +100,7 @@
                     "energy_password": "Quatt Energy wachtwoord"
                 },
                 "data_description": {
+                    "local_api_enabled": "Schakel uit om de eerder gekoppelde Remote Mobile API te gebruiken terwijl de CiC uit staat. Lokale entiteiten worden dan onbeschikbaar.",
                     "scan_interval": "Aantal seconden tussen het opvragen van informatie van de Quatt.",
                     "remote_scan_interval": "Aantal minuten tussen het opvragen van gegevens via de mobiele Quatt API.",
                     "power_sensor": "Externe energiesensor die het huidige energieverbruik van de Quatt meet.",

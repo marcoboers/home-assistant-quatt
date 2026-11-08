@@ -91,6 +91,7 @@ To change the options of a device, go to `Settings` → `Devices & services` →
 
 | Option | Default | Description |
 |---|---|---|
+| Use local CiC connection | on | Shown after Remote Mobile API pairing. Turn off to use the cloud while the CiC is offline. |
 | Local update interval (seconds) | `10` | Seconds between requests to the local CIC API (5–600). |
 | Remote mobile API update interval (minutes) | `1` | Minutes between requests to the Quatt mobile API (1–10). Only used when the Remote Mobile API is enabled. |
 | Power sensor | — | Optional external sensor that measures the power consumption of the Quatt. Used for the **COP** sensor, see [Heat pump](heat-pump.md#cic). |

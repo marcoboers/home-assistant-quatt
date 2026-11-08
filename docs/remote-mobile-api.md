@@ -88,3 +88,16 @@ _Screenshot from an earlier version, in which the name was asked in the same dia
 6. The integration reloads with the remote API sensors and controls available
 
 The update interval of the remote API can be changed in the [Options](configuration.md#cic-heat-pump).
+
+## Using the cloud with an offline CIC
+
+After pairing the Remote Mobile API, you can turn off **Use local CiC connection**
+under **Settings → Devices & services → Quatt → Configure**. The integration
+reloads using the stored cloud credentials and installation ID, so
+`quatt.get_cic_insights` can export cloud history while the CIC is offline.
+Local entities become unavailable in this mode. Turn the option back on when
+you want to read the local CIC again.
+
+The initial pairing still requires the CIC button. If the stored cloud
+credentials can no longer be refreshed, complete pairing again with the CIC
+online.

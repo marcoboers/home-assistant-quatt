@@ -16,6 +16,7 @@ CARD_MOUNT = "/quatt-dashboard-card"
 CONF_POWER_SENSOR = "power_sensor"
 CONF_REMOTE_CIC = "cic"
 CONF_LOCAL_CIC = "ip_address"
+CONF_LOCAL_API_ENABLED = "local_api_enabled"
 
 # Home battery config keys
 CONF_HOME_BATTERY_SERIAL = "home_battery_serial"

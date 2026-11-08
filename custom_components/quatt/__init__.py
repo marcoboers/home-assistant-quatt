@@ -44,6 +44,7 @@ from .const import (
     CONF_ENERGY_PASSWORD,
     CONF_ENERGY_USERNAME,
     CONF_HOME_BATTERY_SERIAL,
+    CONF_LOCAL_API_ENABLED,
     CONF_LOCAL_CIC,
     CONF_POWER_SENSOR,
     CONF_REMOTE_CIC,
@@ -557,23 +558,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await home_battery_coordinator.async_config_entry_first_refresh()
         coordinators["home_battery"] = home_battery_coordinator
     else:
-        local_client = QuattCicLocalApiClient(
-            ip_address=entry.data[CONF_LOCAL_CIC],
-            session=async_get_clientsession(hass),
-        )
+        if not has_remote or entry.options.get(CONF_LOCAL_API_ENABLED, True):
+            local_client = QuattCicLocalApiClient(
+                ip_address=entry.data[CONF_LOCAL_CIC],
+                session=async_get_clientsession(hass),
+            )
 
-        local_coordinator = QuattCicLocalDataUpdateCoordinator(
-            hass=hass,
-            update_interval=timedelta(
-                seconds=entry.options.get(
-                    CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
-                )
-            ),
-            client=local_client,
-        )
+            local_coordinator = QuattCicLocalDataUpdateCoordinator(
+                hass=hass,
+                update_interval=timedelta(
+                    seconds=entry.options.get(
+                        CONF_SCAN_INTERVAL, DEFAULT_LOCAL_SCAN_INTERVAL
+                    )
+                ),
+                client=local_client,
+            )
 
-        await local_coordinator.async_config_entry_first_refresh()
-        coordinators["cic_local"] = local_coordinator
+            await local_coordinator.async_config_entry_first_refresh()
+            coordinators["cic_local"] = local_coordinator
 
         # Set up remote coordinator if configured
         if has_remote:
