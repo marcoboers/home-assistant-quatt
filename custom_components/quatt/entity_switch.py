@@ -46,6 +46,27 @@ class QuattSettingSwitch(QuattSwitch):
         return await remote_client.update_cic_settings(settings)
 
 
+class QuattHeatingOptionSwitch(QuattSwitch):
+    """Switch for a heating option (e.g. avoid gas boiler use).
+
+    The value is read from the CIC data like other settings, but written via
+    the installation's predictiveHeating endpoint, as the Quatt app does.
+    """
+
+    async def _perform_api_update(self, state: bool) -> bool:
+        """Perform heating option update."""
+        remote_client = self.coordinator.client
+        if not isinstance(remote_client, QuattCicRemoteApiClient):
+            _LOGGER.error(
+                "Cannot update %s: remote client required", self.entity_description.key
+            )
+            return False
+
+        return await remote_client.update_predictive_heating(
+            {self.entity_description.key: state}
+        )
+
+
 class QuattAllElectricBoostSwitch(QuattSwitch):
     """Switch entity for the all-electric heat battery boost.
 
