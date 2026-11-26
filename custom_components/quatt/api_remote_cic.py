@@ -385,6 +385,33 @@ class QuattCicRemoteApiClient(QuattApiClient):
         _LOGGER.error("CIC settings update failed with status %s", status)
         return False
 
+    async def update_predictive_heating(self, settings: dict[str, Any]) -> bool:
+        """Update the installation's heating options.
+
+        The Quatt app writes "Avoid using gas" (``avoidGasBoilerUse``) and
+        "Predictive heating" (``predictiveHeatingEnabled``) through this
+        endpoint; partial bodies are accepted. The values are read back via
+        the CIC data.
+        """
+        if not self._auth.is_authenticated:
+            _LOGGER.error("Cannot update heating options: not authenticated")
+            return False
+        if not self._installation_id:
+            _LOGGER.error("Cannot update heating options: installation id unknown")
+            return False
+
+        status, _data = await self._auth.request(
+            "PATCH",
+            f"/me/installation/{self._installation_id}/predictiveHeating",
+            json_body=settings,
+            expected_statuses=(200, 201, 204),
+        )
+        if status in (200, 201, 204):
+            _LOGGER.debug("Heating options updated successfully: %s", settings)
+            return True
+        _LOGGER.error("Heating options update failed with status %s", status)
+        return False
+
     async def update_night_window(
         self,
         start_hour: int | None,

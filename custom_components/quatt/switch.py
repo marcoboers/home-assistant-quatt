@@ -30,6 +30,7 @@ from .entity_setup import async_setup_entities
 from .entity_switch import (
     QuattAllElectricBoostSwitch,
     QuattEnergyPriceFlagSwitch,
+    QuattHeatingOptionSwitch,
     QuattSettingSwitch,
 )
 
@@ -74,6 +75,16 @@ SWITCHES = {
                 mobile_api=True,
             ),
             quatt_entity_class=QuattSettingSwitch,
+        ),
+        QuattSwitchEntityDescription(
+            key="avoidGasBoilerUse",
+            name="Avoid gas boiler use",
+            icon="mdi:fire-off",
+            quatt_features=QuattFeatureFlags(
+                hybrid=True,
+                mobile_api=True,
+            ),
+            quatt_entity_class=QuattHeatingOptionSwitch,
         ),
     ],
     DEVICE_HEAT_BATTERY_ID: [

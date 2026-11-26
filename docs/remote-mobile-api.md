@@ -34,6 +34,7 @@ In addition, the remote API exposes settings from the Quatt app as controls on t
 - **Night time start** and **Night time end**: the night time window, in 30-minute steps, plus a **Reset night time window** button that restores the Quatt defaults
 - **Max water temperature**: the maximum central heating water temperature
 - **Use pricing to limit heatpump** and **Avoid nighttime charging**: the corresponding switches from the Quatt app
+- **Avoid gas boiler use** (Hybrid only): the "Avoid using gas" (*Voorkom gasgebruik*) switch under Heating options from the Quatt app. When on, the system does not use gas except in safety-critical situations, which can make heating slower
 
 ## Heat battery boost
 
