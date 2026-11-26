@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 import json
 import logging
@@ -204,12 +205,22 @@ async def test_config_entries_do_not_share_storage(
     assert removed.states[0].tracking_since == (NOW + timedelta(days=1)).isoformat()
 
 
+@asynccontextmanager
+async def running_home_assistant(config_dir: Path) -> AsyncIterator[HomeAssistant]:
+    """Start a test instance and shut it down before reopening its storage."""
+    async with async_test_home_assistant(config_dir=str(config_dir)) as hass:
+        try:
+            yield hass
+        finally:
+            await hass.async_stop(force=True)
+
+
 @pytest.mark.asyncio
 async def test_restart_and_backup_restore(tmp_path: Path) -> None:
     """A new HA instance restores disk data, including an older backup snapshot."""
     original_dir = tmp_path / "original"
     restore_dir = tmp_path / "restored"
-    async with async_test_home_assistant(config_dir=str(original_dir)) as first_hass:
+    async with running_home_assistant(original_dir) as first_hass:
         counter = CompressorStartCounter(first_hass, "saved-entry")
         await counter.async_update(payload(30, 0), NOW)
         storage_file = original_dir / ".storage" / "quatt.compressor_starts.saved-entry"
@@ -217,9 +228,7 @@ async def test_restart_and_backup_restore(tmp_path: Path) -> None:
         await counter.async_update(payload(0, 0), NOW + timedelta(minutes=1))
         await counter.async_update(payload(30, 0), NOW + timedelta(minutes=2))
 
-    async with async_test_home_assistant(
-        config_dir=str(original_dir)
-    ) as restarted_hass:
+    async with running_home_assistant(original_dir) as restarted_hass:
         counter = CompressorStartCounter(restarted_hass, "saved-entry")
         await counter.async_update(payload(40, 0), NOW + timedelta(minutes=3))
         assert counter.states[0] == CompressorStartState(2, True, NOW.isoformat())
@@ -227,7 +236,7 @@ async def test_restart_and_backup_restore(tmp_path: Path) -> None:
     restored_file = restore_dir / ".storage" / storage_file.name
     restored_file.parent.mkdir(parents=True)
     restored_file.write_bytes(backup_bytes)
-    async with async_test_home_assistant(config_dir=str(restore_dir)) as restored_hass:
+    async with running_home_assistant(restore_dir) as restored_hass:
         counter = CompressorStartCounter(restored_hass, "saved-entry")
         await counter.async_update(payload(40, 0), NOW + timedelta(days=1))
         assert counter.states[0] == CompressorStartState(1, True, NOW.isoformat())
@@ -416,22 +425,22 @@ async def test_counter_entity_selection(
     entities = await async_setup_entities(
         hass, remote_coordinator, config_entry, remote, SENSORS, "sensor"
     )
-    counters = [
-        entity
-        for entity in entities
-        if isinstance(entity, QuattObservedCompressorStartsSensor)
-    ]
-    assert [
-        next(iter(entity.device_info["identifiers"]))[1] for entity in counters
-    ] == [f"{config_entry.unique_id}:{device_id}" for device_id in expected]
-    tracking_dates = [
-        entity
-        for entity in entities
-        if isinstance(entity, QuattCompressorTrackingSinceSensor)
-    ]
-    assert [
-        next(iter(entity.device_info["identifiers"]))[1] for entity in tracking_dates
-    ] == [f"{config_entry.unique_id}:{device_id}" for device_id in expected]
+    for sensor_type in (
+        QuattObservedCompressorStartsSensor,
+        QuattCompressorTrackingSinceSensor,
+    ):
+        identifiers = []
+        for entity in entities:
+            if isinstance(entity, sensor_type):
+                info = entity.device_info
+                assert info is not None
+                identifiers.append(
+                    info["identifiers"] if isinstance(info, dict) else info.identifiers
+                )
+        assert identifiers == [
+            {(DOMAIN, f"{config_entry.unique_id}:{device_id}")}
+            for device_id in expected
+        ]
 
 
 def make_entity_platform(
@@ -522,8 +531,11 @@ async def test_entity_reload_preserves_name_id_and_counter(
         registry.async_get(entity_id).id,
         registry.async_get(date_entity_id).id,
     )
-    registry.async_update_entity(entity_id, name="My compressor counter")
+    custom_name = "My compressor counter"
+    registry.async_update_entity(entity_id, name=custom_name)
     await hass.async_block_till_done()
+    friendly_name = hass.states.get(entity_id).attributes["friendly_name"]
+    assert friendly_name.endswith(custom_name)
     await platform.async_reset()
 
     # Both local and remote setup perform registry cleanup on a real reload.
@@ -545,7 +557,7 @@ async def test_entity_reload_preserves_name_id_and_counter(
     )
     assert registry.async_get(entity_id).id == original_ids[0]
     assert registry.async_get(date_entity_id).id == original_ids[1]
-    assert registry.async_get(entity_id).name == "My compressor counter"
+    assert registry.async_get(entity_id).name == custom_name
     remote_coordinator.compressor_starts = CompressorStartCounter(
         hass, remote_coordinator.config_entry.entry_id
     )
@@ -561,10 +573,7 @@ async def test_entity_reload_preserves_name_id_and_counter(
     assert recreated.entity_id == entity_id
     assert hass.states.get(entity_id).state == "1"
     assert hass.states.get(entity_id).attributes["tracking_since"] == since
-    assert (
-        hass.states.get(entity_id).attributes["friendly_name"]
-        == "My compressor counter"
-    )
+    assert hass.states.get(entity_id).attributes["friendly_name"] == friendly_name
     await platform.async_reset()
 
 

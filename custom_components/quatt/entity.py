@@ -161,28 +161,24 @@ class QuattEntity(CoordinatorEntity[QuattDataUpdateCoordinator]):
             f"{self._hub_id}:{device_id}:{unique_id_key or sensor_key}"
         )
 
-        attach_to_hub = device_kind == QuattDeviceKind.HUB
-        is_service_device = device_kind == QuattDeviceKind.SERVICE
+        device_identifier = self._hub_id
+        hub_link = {}
+        if device_kind != QuattDeviceKind.HUB:
+            device_identifier = f"{self._hub_id}:{device_id}"
+            hub_link = hub_link_info(self._hub_id, coordinator.hub_device_id)
 
-        if attach_to_hub:
-            self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, self._hub_id)},
-                name=device_name,
-                manufacturer=NAME,
-                model="—",
-                entry_type=DeviceEntryType.SERVICE if is_service_device else None,
-            )
-        else:
-            self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, f"{self._hub_id}:{device_id}")},
-                name=device_name,
-                manufacturer=NAME,
-                model="—",
-                entry_type=DeviceEntryType.SERVICE if is_service_device else None,
-            )
-            self._attr_device_info.update(
-                hub_link_info(self._hub_id, coordinator.hub_device_id)
-            )
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_identifier)},
+            name=device_name,
+            manufacturer=NAME,
+            model="—",
+            entry_type=(
+                DeviceEntryType.SERVICE
+                if device_kind == QuattDeviceKind.SERVICE
+                else None
+            ),
+            **hub_link,
+        )
 
     def _current_chill_index(self) -> int | None:
         """Return the current Chill list index for this entity's device."""
