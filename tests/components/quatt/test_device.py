@@ -189,8 +189,11 @@ async def test_hub_registered_before_platforms_and_reused_on_reload(
                 device_kind=kind,
             )
             assert entity.unique_id == f"{hub_identifier}:{kind.value}:value"
+            info = entity.device_info
+            assert info is not None
+            info_kwargs = info if isinstance(info, dict) else info.as_dict()
             registered_device = registry.async_get_or_create(
-                config_entry_id=entry.entry_id, **entity.device_info
+                config_entry_id=entry.entry_id, **info_kwargs
             )
             device_ids.append(registered_device.id)
             registered_entity = entity_registry.async_get_or_create(

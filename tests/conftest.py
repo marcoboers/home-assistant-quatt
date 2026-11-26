@@ -27,7 +27,11 @@ core_tests_package = types.ModuleType("tests")
 core_tests_package.__path__ = [str(CORE_TESTS_PATH)]
 sys.modules["tests"] = core_tests_package
 
-core_tests_common = import_module("tests.common")
+if (CORE_TESTS_PATH / "common.py").is_file():
+    core_tests_common = import_module("tests.common")
+else:
+    core_tests_common = import_module("pytest_homeassistant.common")
+    sys.modules["tests.common"] = core_tests_common
 MockConfigEntry = core_tests_common.MockConfigEntry
 async_test_home_assistant = core_tests_common.async_test_home_assistant
 
@@ -36,7 +40,10 @@ async_test_home_assistant = core_tests_common.async_test_home_assistant
 async def hass_fixture() -> AsyncGenerator[HomeAssistant]:
     """Return a Home Assistant instance for Quatt tests."""
     async with async_test_home_assistant() as test_hass:
-        yield test_hass
+        try:
+            yield test_hass
+        finally:
+            await test_hass.async_stop(force=True)
 
 
 @pytest.fixture
